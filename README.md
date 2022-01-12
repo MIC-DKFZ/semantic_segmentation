@@ -1,3 +1,7 @@
+
+# !!!IN PROGRESS!!!
+
+
 # Requirements
 ## Dependecies
 Install the needed packages by:
@@ -191,53 +195,4 @@ elif cfg.lr_scheduler == "MYSCHEDULER":
 lr_scheduler is your custom scheduler. The config is needed to tell Pytorch Lightning how to call your scheduler.
 For example the *interval* parameter can set to *step* or *epoch*, and accordingly a lr_scheduler.step() is executed after each step or only at the end of the epoch.
 
-
-
-
-# Defining the Baseline
-
-HRNET is used to define a baseline because it is the most basic model in these experiments, allowing for fast development in comparison.
-
-Using a **SGD Optimizer** with a **learning rate of 0.01**, a **weight decay of 0.0005** and a **momentum of 0.9** has established itself as a kind of standard for SOTA semantic segmentation methods, at least for the cityscapes dataset.
-Therefore this is also done here.
-Similar ist behaves with the learning rate scheduler.
-A **polynomial learning rate scheduler** with an exponent of 0.9 is used.
-The used **data augmentation** for the baseline is oriented on the HRNET paper for getting comparable results. 
-Therefore random scaling in the range of 0.5 to 2 is done, followed by random cropping to a size of 1024 by 512 and random horizontal flipping.
-A batch size of 12 is also adapted from the paper, experiment regarding this will follow.
-
-## Number of Epochs and Mixed Precision
-
-As it can be seen in the following graph, using Mixed Precision has a positive effect on the results of the model.
-Using mixed precision als has the advantage of decreasing the runtime of the models.
-Additionally the model reaches it peak earlier. 
-With using mixed precision and 400 epochs the model clearly  
-Therefore for the baseline the following parameters are set: **epochs=400 and mixed_precision=true** 
-
-
-![Epochs](Epochs.png)
-
-## Lossfunction
-
-It can be seen that RMI loss gives the best results for the model. For both CE and RMI loss using weigths to catch class imbalances has a positive effect.
-Since CE is much more efficient than RMI, it is used for the baseline with keeping the better results of RMI in mind and using them for futher experiments.
-
-![](LossFunction1.png) ![](LossFunction2.png)
-
-
-## Summarizing the Baseline
-- Optimizer: SGD
-  - lr: 0.01
-  - wd: 0.0005
-  - momentum: 0.9
-- Learning Rate Scheduler: polynomial
-  - exponent: 0.9
-- Number of Epochs: 400
-- Batchsize: 12
-- Lossfunction: cross entropy loss
-- Mixed Precision: True
-- Data Augmentation:
-  - Random Scale: 0.5 - 2
-  - Random Crop: 1024x512
-  - Random Horizontal Flip
 

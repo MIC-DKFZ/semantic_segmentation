@@ -1,12 +1,25 @@
 #Walktrough the config jungle
 
-Hydra is used to ... therefore the config files are of main importance.
 
-Hydra is used for managing the config files. So maybe make youself familar with Hydra before reading further.
-If you want to adopt thinks you should condiser the order of hydras default list which looks like the following:
+
+## Basics
+In this repository [Hydra](https://hydra.cc/) is used for configuring and managing experiments.
+Therefore configuration files are of major importance which is why they get explained in more detail in the following.
+Hydra automatically loads and composes the different configuration files and allows to dynamically overriding values at runtime via the command line.
+The commandline syntax of Hydra is straight forward and elements can be changed, added or removed in the following way:
+````shell
+python main.py  parameter_to_change=<new_value>  +parameter_to_add=<a_value>  ~parameter_to_delete
+#Example
+python main.py  lr=0.1  +data_format="png"  ~momentum   
+````
+Hydra uses *.yaml* files to specifie a configuration. 
+In this repository the *baseline.yaml* can be seen as the main file and from there further configs are composed.
+Each model(also dataset, environment, etc) has an own config file which contain model specific parameters
+The subfolder *models/* contains the configurations for different models, the subfolder *datasets/* contains the configurations for different datasets and so on for the remaining subfolders where the names speak for themselves.
+Hydra composes the final config from the default list(in *baseline.yaml*) which looks like this:
 ````yaml
 baseline.yaml
-------------------------
+_____________________
 defaults:
   - _self_
   - callbacks: default
@@ -15,6 +28,18 @@ defaults:
   - datasets: Cityscape_19
   - environment: local
 ````
+One can change the used model by passing:```python main.py models=hrn_ocr```(and analogues for the remaining the other ones).
+This tells Hydra to load the *hrn_ocr.yaml* config from the *models/* folder.
+
+
+The need for different configuration files arises from the fact that different models and datasets require different parameters and only those relevant to the current experiment should be loaded.
+Therefore, each model or dataset has its own config and Hydra then merges the configs corresponding to the experiment.
+
+The default list instructs Hydra how to build the output config
+
+Hydra is used for managing the config files. So maybe make youself familar with Hydra before reading further.
+If you want to adopt thinks you should condiser the order of hydras default list which looks like the following:
+
 later packages will overwrite the previous ones. For example in the baseline.yaml a batch_size=6 is defined. 
 If you set batch_size=3 in the enviroment package(local.yaml) this one will be used for training,
 This gives you the freedom to define a baseline(baseline.yaml) and change relevant thinks which are dataset, model or environment specific.
@@ -26,31 +51,44 @@ The most defauls parameters are defined in baseline.yaml. Callbacks and data_aug
 Model parameters are specified in models and analogues datasert parameters are specified in datasets
 The environment package is used for changing environment dependent parameters to make it easier to switch between differen enviroments like a local machine and a gpu-cluster.
 
-
+## Configure the Configuration
 ### Models
-you can switch between each of the supported models by:
-```python main.py models=hrn_ocr```. In this case the hrn_ocr model is used. Additional parameters which are *MODEL.PRETRAINED* and *MODEL.INIT_WEIGHTS* which are set to true by default.
-They can be disabled by```python main.py models=MODEL.PRETRAINED=false MODEL.INIT_WEIGHTS=false``` if you want to train from scratch.
-The currently supported models are: *hrnet*, *hrnet_ocr*, *hrnet_ocr_aspp*, *hrnet_ocr_ms*
+The following models are supported:
+- **hrnet**: High Resolution Network
+- **hrnet_ocr**: ...
+- **hrnet_ocr_aspp**: ..
+- **hrnet_ocr_ms**: ...
+
+A model can be selected by passing for exampl:```python main.py models=hrn_ocr_ms```.
+By default *hrnet* is used.
+Besides the selection of the models other parameters are provided
+- **MODEL.PRETRAINED**: Indicate if pretrained weights (on ImageNet) should be used, True by default
+- **MODEL.INIT_WEIGHTS**: Indicate if weights should be Initialized from a normal distributionused, True by default
+
+They can be disabled by:```python main.py MODEL.PRETRAINED=false MODEL.INIT_WEIGHTS=false```
+
 
 ### Datasets
-changing between different datasets works in the same way as for models by:
-```python main.py models=Cityscape_Coarse```. The currently supported datasets are *Cityscape* and *Cityscape_Coarse*
+Currently the folloing Datasets are supported:
+- **Cityscape_19**: Cityscapes dataset with fine annotated imgages. Contains 19 classes and 2975 training images
+- **Cityscape_Coarse_19**: cityscape dataset with coarse annotated images. Contains 19 classes and ~20.000 training images
+
+A datasets can be selected by: ```python main.py models=Cityscape_Coarse_19```
 
 ### Basic Training parameters
-the following training parameters can be changed in the *baseline.yaml* directly or can be overwriten from the command line in the following way: 
+The following training parameters can be changed in the *baseline.yaml* directly or can be overwriten from the command line in the following way: 
 `` python main.py parameter = new_value`` 
- - **epochs:** number of epochs for training
+ - **epochs:** number of epochs for training.
  - **batch_size:** defines the batch size during training. 
- - **val_batch_size:** defines the batch size during validation and testing. By default it is set to the same value as batch_size, so just ignore this if you want the same batch size for training and validation.
- - **num_workers:** number of workers for the dataloaders
- - **lr:** initial learning rate for training
+ - **val_batch_size:** defines the batch size during validation and testing. Is set to batch_size if not specified.
+ - **num_workers:** number of workers for the dataloaders.
+ - **lr:** initial learning rate for training.
  - **wd:** weight decay (optimizer parameter)
  - **momentum:** momentum (optimizer parameter)
- - **lossfunction:** defines the lossfunction which should be used. Give the name of the lossfunction like: ``lossfunction="CE"`` for using Cross Entropy Loss.
-If you have multiple model outputs, pass a list of lossfunctions, where the order inside the list corresponds to the order of the models outputs. 
-For example: ``lossfunction=["RMI","CE"]`` if you want to use RMI loss for the primary model output and Cross Entropy for the secondary output. 
-Use the following name/abbreviation for getting the corresponding loss.
+ - **lossfunction:** defines the lossfunction to be used and can be set by: ``lossfunction="CE"`` for using Cross Entropy Loss.
+If the model has multiple output a list of lossfunctions can be passed, where the order inside the list corresponds to the order of the models outputs.
+For example: ``lossfunction=["RMI","CE"]`` if the RMI loss should be used for the primary model output and Cross Entropy for the secondary output. 
+The following losses are supported and can be selected by using the corresponding name/abbreviation:
    - "CE": Cross Entropy Loss
    - "wCE": Cross Entropy Loss with weighting classes
    - "RMI": ...
@@ -59,8 +97,8 @@ Use the following name/abbreviation for getting the corresponding loss.
    - "DC_CE": ..
    - "TOPK": ...
    - "TOPK_CE": ..
- - **lossweight**: if you use multiple model outputs you probably want to weight them differently. 
-For two outputs this can be done in the following way: ``lossweight=[1, 0.4]``. In this case the primary loss is weighted by 1 while the second output is weighted less with 0.4.
+ - **lossweight**: For multiple losses it may be usefull to weight the losses differently.
+For two outputs this can be done in the following way: ``lossweight=[1, 0.4]`` to weight the primary loss by 1 while the second output is weighted less with 0.4.
 If not specified no weighting is done.
  - **optimizer**: defines the optimizer to use. Currently only sgd is supported (default: ``optimizer="sgd"``)
    - "sgd": stochastic gradient Descent

@@ -28,7 +28,6 @@ hydra:
           - datasets
           - environment
 
-override_${hydra:job:override_dirname}: "testing"
 comment: ""
 num_gpus:
 num_workers: 8

@@ -1,0 +1,70 @@
+#@package _global_
+defaults:
+  - _self_
+  - callbacks: default
+  - data_augmentations: default
+  - models: hrnet
+  - datasets: Cityscape_19
+  - environment: local
+
+  - override hydra/hydra_logging: colorlog
+  - override hydra/job_logging: colorlog
+
+#hydra.job.config.override_dirname: "3"
+
+hydra:
+  output_subdir: hydra
+  run:
+    dir: ${LOGDIR}/${DATASET.NAME}/${MODEL.NAME}/${hydra.job.override_dirname}/${now:%Y-%m-%d_%H-%M-%S}
+  sweep:
+    dir: ${hydra.run.dir}_mr
+    subdir: ${hydra.job.num}
+  job:
+    config:
+      override_dirname:
+        item_sep: "_"
+        exclude_keys:
+          - models
+          - datasets
+          - environment
+
+override_${hydra:job:override_dirname}: "testing"
+comment: ""
+num_gpus:
+num_workers: 8
+batch_size: 6
+val_batch_size: ${batch_size}
+epochs: 400
+optimizer: sgd
+lr_scheduler: poly
+lr: 0.01 #LR: 0.01445439770745928
+wd: 0.0005
+momentum: 0.9
+lossfunction: [ "wCE", "wCE", "wCE", "wCE"]
+lossweight:   [1.0, 0.4, 0.05, 0.05]
+pl_trainer:
+  precision: 16
+  sync_batchnorm: True
+  benchmark: True
+  limit_train_batches: 0.01
+  limit_val_batches: 0.1
+  #  track_grad_norm: 2
+  #  reload_dataloaders_every_epoch: true
+  #  accumulate_grad_batches: 2
+
+#WORK_DIR: ${hydra:runtime.cwd}/
+MODEL:
+  PRETRAINED: true
+  INIT_WEIGHTS: true
+  ADAPTED_PRETRAINED_WEIGHTS: ${hydra:runtime.cwd}/${MODEL.PRETRAINED_WEIGHTS}
+
+datamodule:
+  _target_: datasets.DataModules.BaseDataModule
+  num_workers: ${num_workers}
+  batch_size: ${batch_size}
+  val_batch_size: ${val_batch_size}
+  augmentations: ${AUGMENTATIONS}
+  train_size: ${DATASET.SIZE.TRAIN}
+  dataset: ${dataset}
+  #  _target_: ${DATASET.FILE} #datasets.Cityscape.Cityscape_dataset
+  #  root: ${DATASET.ROOT}

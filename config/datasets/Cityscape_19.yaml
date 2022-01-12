@@ -1,0 +1,45 @@
+#@package _global_
+
+#SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
+dataset:
+    _target_: datasets.Cityscape.Cityscape_dataset
+    root: ${DATASET.ROOT}
+
+DATASET:
+  #PATH PARAMETERS FOR THIS DATASET
+  ROOT: "/home/l727r/Desktop/Cityscape"
+  CLUSTER_ROOT:
+    LABELS: /gpu/data/OE0441/l727r/Cityscape
+    IMAGES: /gpu/data/common/cityscapes
+  ##NEEDED PARAMETERS
+  NAME: "Cityscape"
+  NUM_CLASSES: 19
+  IGNORE_INDEX: 255
+  #NEEDED IF POLY LR is used
+  SIZE:
+    TRAIN: 2975
+    VAL: 500
+    TEST: 1525
+  #NEEDED IF WEIGHTED LOSSFUNCTIONS ARE USED
+  CLASS_WEIGHTS: [ 0.8373, 0.918, 0.866, 1.0345,1.0166, 0.9969, 0.9754, 1.0489, 0.8786, 1.0023, 0.9539, 0.9843, 1.1116, 0.9037, 1.0865, 1.0955, 1.0865, 1.1529, 1.0507 ]
+  #OPTIONAL - JUST FOR NICER LOGGING RESULTS
+  CLASS_LABELS:
+    - road
+    - sidewalk
+    - building
+    - wall
+    - fence
+    - pole
+    - traffic light
+    - traffic sign
+    - vegetation
+    - terrain
+    - sky
+    - person
+    - rider
+    - car
+    - truck
+    - bus
+    - train
+    - motorcycle
+    - bicycle

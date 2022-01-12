@@ -1,0 +1,8 @@
+#@package _global_
+LOGDIR: /gpu/checkpoints/OE0441/l727r
+
+DATASET:
+  ROOT: ${DATASET.CLUSTER_ROOT}
+
+pl_trainer:
+    enable_progress_bar: false

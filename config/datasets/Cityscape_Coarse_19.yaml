@@ -1,0 +1,55 @@
+#@package _global_
+pl_trainer:
+  reload_dataloaders_every_epoch: true
+
+dataset:
+  _target_: datasets.DataModules.Cityscape_Coarse
+  coarse_size: ${DATASET.SIZE.COARSE}
+  start_portion: ${DATASET.COARSE_DATA.START_PORTION}
+  max_coarse_epoch: ${DATASET.COARSE_DATA.MAX_COARSE_EPOCH}
+  dataset_extra:
+    _target_: ${DATASET.FILE_EXTRA} #datasets.Cityscape.Cityscape_dataset
+    root: ${DATASET.ROOT}
+
+DATASET:
+  NAME: "Cityscape_Coarse"
+  ROOT: "/home/l727r/Desktop/Cityscape"
+  FILE: "datasets.Cityscape.Cityscape_dataset"
+  FILE_EXTRA: "datasets.Cityscape_Coarse.Cityscape_coarse_dataset"
+  CLUSTER_ROOT:
+    LABELS: /gpu/data/OE0441/l727r/Cityscape
+    IMAGES: /gpu/data/common/cityscapes
+  NUM_CLASSES: 19
+  IGNORE_INDEX: 255
+  CLASS_WEIGHTS: [0.8373, 0.918, 0.866, 1.0345,1.0166,
+                  0.9969, 0.9754, 1.0489, 0.8786, 1.0023,
+                  0.9539, 0.9843,1.1116, 0.9037, 1.0865,
+                  1.0955, 1.0865, 1.1529, 1.0507]
+  SIZE:
+    TRAIN: 2975
+    VAL: 500
+    TEST: 1525
+    COARSE: 19997
+  COARSE_DATA:
+    START_PORTION: 1.0
+    MAX_COARSE_EPOCH: 360
+  CLASS_LABELS:
+    - road
+    - sidewalk
+    - building
+    - wall
+    - fence
+    - pole
+    - traffic light
+    - traffic sign
+    - vegetation
+    - terrain
+    - sky
+    - person
+    - rider
+    - car
+    - truck
+    - bus
+    - train
+    - motorcycle
+    - bicycle

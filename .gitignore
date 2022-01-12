@@ -1,0 +1,14 @@
+*.ipynb
+*.png
+*.jpg
+*.sh
+*.ckpt
+.idea
+
+*__pycache__*
+logs/
+lightning_logs
+pretrained/*
+.idea/
+docs
+models/edit

@@ -2,6 +2,7 @@ import numpy as np
 import albumentations as A
 
 from pytorch_lightning import LightningDataModule
+import torch
 from torch.utils.data import DataLoader
 from datasets.Cityscape import Cityscape_dataset
 from datasets.Cityscape_Coarse import Cityscape_coarse_dataset
@@ -10,6 +11,19 @@ import hydra
 from omegaconf import OmegaConf
 import logging
 log = logging.getLogger(__name__)
+
+def collate_fn(batch):
+
+    img=[x[0] for x in batch]
+    img=torch.stack((img), dim=0)
+
+    labels = [x[1] for x in batch]
+    labels = torch.stack((labels), dim=0)
+
+    org = [x[2] for x in batch]
+
+    return (img,labels,org)
+
 
 class BaseDataModule(LightningDataModule):
     def __init__(self, dataset, batch_size,val_batch_size, num_workers ,augmentations, train_size):
@@ -72,10 +86,10 @@ class BaseDataModule(LightningDataModule):
         return A.Compose(trans)
 
     def train_dataloader(self):
-        return DataLoader(self.CS_train,shuffle=True, pin_memory=True,batch_size=self.batch_size,num_workers=self.num_workers,drop_last=True,persistent_workers=True)
+        return DataLoader(self.CS_train,shuffle=True, pin_memory=True,batch_size=self.batch_size,num_workers=self.num_workers,drop_last=True,persistent_workers=True)#,collate_fn=collate_fn)
 
     def val_dataloader(self):
-        return DataLoader(self.CS_val, pin_memory=True,batch_size=self.val_batch_size,num_workers=self.num_workers,persistent_workers=True)
+        return DataLoader(self.CS_val, pin_memory=True,batch_size=self.val_batch_size,num_workers=self.num_workers,persistent_workers=True,collate_fn=collate_fn)
 
     def test_dataloader(self):
         return DataLoader(self.CS_test,pin_memory=True, batch_size=self.val_batch_size,num_workers=self.num_workers,persistent_workers=True)

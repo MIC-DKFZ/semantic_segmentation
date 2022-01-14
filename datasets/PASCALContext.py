@@ -51,7 +51,7 @@ class PASCALContext_dataset(torch.utils.data.Dataset):
             root_imgs = root.IMAGES
             root_labels = root.LABELS
 
-
+        self.split=split
         imgs_path=os.path.join( root_imgs ,"Images" , split  , "*.jpg" )
 
         masks_path = os.path.join(root_labels, "Annotations", split, "*.png")
@@ -69,16 +69,31 @@ class PASCALContext_dataset(torch.utils.data.Dataset):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         mask=cv2.imread(self.masks[idx],-1)
+        if self.split=="val":
+            mask_o = torch.from_numpy(mask)
+        #transforms2 = A.Compose([
+        #    ToTensorV2()])
 
-        transformed = self.transforms(image=img, mask=mask)
-        img= transformed['image']
-        mask = transformed['mask']
-
+        if self.split in ["val3","test3"]:
+            transformed = self.transforms(image=img)
+            img = transformed['image']
+            mask = torch.from_numpy(mask)  # .unsqueeze(0)
+        else:
+            transformed = self.transforms(image=img, mask=mask)
+            img = transformed['image']
+            mask = transformed['mask']
+        #transformed = transforms2(image=None,mask=mask)
+        #mask = transformed['mask']
+        if self.split=="val":
+            return img, mask.long(),mask_o
+            return img, mask.long(), idx
         return img, mask.long()
 
     def __len__(self):
         return len(self.imgs)
 
+    def get_idx(self,bidx):
+        print(bidx)
 
 def show_voc(img=None, mask=None, alpha=.5, classes=19, mean=[0, 0, 0], std=[1, 1, 1]):
     # (input[channel] - mean[channel]) / std[channel]
@@ -155,7 +170,7 @@ if __name__ == "__main__":
         #A.RandomCrop(width=768, height=768),
         #A.RandomScale(scale_limit=(-0.5,1),always_apply=True,p=1.0),
         #A.PadIfNeeded(min_height=768,min_width=768),
-        #A.Resize(p=1.0,width=1024, height=512),
+        A.Resize(p=1.0,width=480, height=480),
         #A.RandomCrop(width=768, height=768,always_apply=True,p=1.0),
         #A.ColorJitter(brightness=9,contrast=0,saturation=0,hue=0),
         #A.RGBShift(p=1,r_shift_limit=10,g_shift_limit=10,b_shift_limit=10),
@@ -165,17 +180,19 @@ if __name__ == "__main__":
             std=[0.229, 0.224, 0.225],always_apply=True
         ),
         ToTensorV2()])
-
+    print(transforms)
     Path = "/home/l727r/Desktop/Datasets/VOC2010_Context"
     Cityscape_train = PASCALContext_dataset(Path, "train", transforms=transforms)
     #for i in range(0,50):
     img, mask = Cityscape_train[466]
     #print(img.shape)
     #print(torch.unique(mask))
-    out = show_voc(img=img, mask=mask, alpha=1., mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    out.show()
+    out = show_voc(img=img, alpha=1., mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    out1 = show_voc(mask=mask, alpha=1., mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    #out.show()
 
-    #out.save("out.png")
+    out.save("out.png")
+    out1.save("out1.png")
 
     # def collate_fn(batch):
     #    return tuple(zip(*batch))

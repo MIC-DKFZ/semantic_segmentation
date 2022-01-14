@@ -12,6 +12,7 @@ log = logging.getLogger(__name__)
 
 import torch
 from torchmetrics import Metric
+import torch.nn.functional as F
 
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning import LightningModule, Trainer, seed_everything
@@ -43,6 +44,7 @@ class ConfusionMatrix(Metric):
             self.mat += torch.bincount(inds, minlength=n ** 2).reshape(n, n)
 
     def compute(self):
+
         IoU = self.mat.diag() / (self.mat.sum(1) + self.mat.sum(0) - self.mat.diag())
         IoU[IoU.isnan()] = 0
         mIoU = IoU.mean()
@@ -67,10 +69,14 @@ class SegModel(LightningModule):
         self.metric = ConfusionMatrix(config.DATASET.NUM_CLASSES)
         self.register_buffer("best_mIoU", torch.as_tensor(0))
 
+        #self.extra_dataloader=hydra.utils.instantiate(self.dataset, split="val_size")
+        #d=DataLoader(hydra.utils.instantiate(self.dataset, split="val_size"), pin_memory=True, batch_size=self.val_batch_size, num_workers=self.num_workers,
+        #           persistent_workers=True)
+
     def forward(self, x):
         #print(x.shape)
         x = self.model(x)
-
+        print(len(x),x.keys(),list(x.values())[0].shape)
         return x
 
     def configure_optimizers(self):
@@ -110,6 +116,20 @@ class SegModel(LightningModule):
         # with open(os.path.join(self.logger.log_dir,"hparams.yaml"), 'w') as file:
         #    yaml.dump(convert_to_dict(self.config, []),file, allow_unicode=True, default_flow_style=False,sort_keys=False)
 
+    def get_loss2(self, y_pred, y_gt):
+        #print("P",y_pred["out"].shape)
+        loss=0
+        for i,(w,x) in enumerate(zip(self.loss_weights,y_pred.values())):
+            for a,b in zip(x,y_gt):
+                #print(a.shape, b.shape)
+                s1,s2=b.size()
+                a= F.interpolate(a.unsqueeze(0), size=(s1,s2), mode='bilinear', align_corners=True)
+                loss+=self.loss_functions[i](a, b.unsqueeze(0)) * self.loss_weights[i]
+            #print(w,x.shape)
+        #loss = sum([self.loss_functions[i](y, y_gt) * self.loss_weights[i] for i, y in enumerate(y_pred.values())])
+        #print("L",loss)
+        return loss
+
     def get_loss(self, y_pred, y_gt):
 
         loss = sum([self.loss_functions[i](y, y_gt) * self.loss_weights[i] for i, y in enumerate(y_pred.values())])
@@ -117,21 +137,61 @@ class SegModel(LightningModule):
         return loss
 
     def training_step(self, batch, batch_idx):
+        #print("BI",batch_idx)
         x, y_gt = batch
+
+        #x = torch.stack(x, dim=0)
+
         y_pred = self(x)
 
         loss = self.get_loss(y_pred, y_gt)
+        #print(loss)
         self.log("Loss/training_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
         return loss
 
     def validation_step(self, batch, batch_idx):
-        x, y_gt = batch
+
+        x, y_gt,y_org = batch
+        #x, y_gt = batch
+        #print(batch_idx,idx)
+        #self.trainer.datamodule.CS_train.get_idx(batch_idx)
+        #print(x[0].shape)
+        #x=torch.stack(x,dim=0)
+
+        #print("X",x.shape)
+        #print(y_gt)
         y_pred = self(x)
+        #print(y_pred[0])
+        #print(y_gt[0].shape)
+
+
 
         val_loss = self.get_loss(y_pred, y_gt)
         self.log("Loss/validation_loss", val_loss, on_step=True, on_epoch=True, logger=True)
-        self.metric.update(y_gt.flatten(), list(y_pred.values())[0].argmax(1).flatten())
+
+        if True:
+            pred=list(y_pred.values())[0]#y_pred["out"]#y_pred["out"]
+            size=[x.size() for x in y_org]
+            #print(size)
+            pred=[F.interpolate(a.unsqueeze(0), size=s, mode='bilinear', align_corners=False).argmax(1).flatten() for a,s in zip(pred,size)]
+            pred=torch.cat(pred)
+            y_org=torch.cat([y.flatten() for y in y_org])
+
+            self.metric.update(y_org, pred)
+        else:
+
+            self.metric.update(y_gt.flatten(), list(y_pred.values())[0].argmax(1).flatten())
+
+
+        #for p,g in zip(list(y_pred.values())[0],y_gt):
+        #    #print("PG",p.shape,g.shape)
+        #    s1, s2 = g.size()
+        #    p = F.interpolate(p.unsqueeze(0), size=(s1, s2), mode='bilinear', align_corners=True)
+            #loss += self.loss_functions[i](a, b.unsqueeze(0)) * self.loss_weights[i]
+
+        #    self.metric.update(g.flatten(), p.argmax(1).flatten())
+
 
         return val_loss
 
@@ -153,7 +213,8 @@ class SegModel(LightningModule):
 
             dic_IoU = {}
             for id, iou in enumerate(IoU):
-                if self.config.DATASET.CLASS_LABELS is not []:
+                #if self.config.DATASET.CLASS_LABELS is not []:
+                if hasNotEmptyAttr(self.config.DATASET,"CLASS_LABELS"):
                     dic_IoU[str(id) + "-" + self.config.DATASET.CLASS_LABELS[id]] = "%.4f" % iou.item()
                 else:
                     dic_IoU[id] = "%.4f" % iou.item()

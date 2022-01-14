@@ -1,0 +1,27 @@
+#@package _global_
+
+#SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
+dataset:
+    _target_: datasets.PASCALContext.PASCALContext_dataset
+    root: ${DATASET.ROOT}
+
+lossfunction: ["CE","CE","CE","CE"]
+
+DATASET:
+  #PATH PARAMETERS FOR THIS DATASET
+  ROOT: "/home/l727r/Desktop/Datasets/VOC2010_Context"
+  CLUSTER_ROOT:
+    LABELS: /gpu/data/OE0441/l727r/Cityscape
+    IMAGES: /gpu/data/common/cityscapes
+  ##NEEDED PARAMETERS
+  NAME: "PASCALContext"
+  NUM_CLASSES: 60
+  IGNORE_INDEX: -100
+  #NEEDED IF POLY LR is used
+  SIZE:
+    TRAIN: 4998
+    VAL: 5103
+    TEST: 0
+  #NEEDED IF WEIGHTED LOSSFUNCTIONS ARE USED
+  CLASS_LABELS: []
+

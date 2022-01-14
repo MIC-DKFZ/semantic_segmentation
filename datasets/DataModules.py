@@ -89,12 +89,14 @@ class BaseDataModule(LightningDataModule):
         return DataLoader(self.CS_train,shuffle=True, pin_memory=True,batch_size=self.batch_size,num_workers=self.num_workers,drop_last=True,persistent_workers=True)#,collate_fn=collate_fn)
 
     def val_dataloader(self):
-        return DataLoader(self.CS_val, pin_memory=True,batch_size=self.val_batch_size,num_workers=self.num_workers,persistent_workers=True,collate_fn=collate_fn)
+        return DataLoader(self.CS_val, pin_memory=True,batch_size=self.val_batch_size,num_workers=self.num_workers,persistent_workers=True)#,collate_fn=collate_fn)
 
     def test_dataloader(self):
         return DataLoader(self.CS_test,pin_memory=True, batch_size=self.val_batch_size,num_workers=self.num_workers,persistent_workers=True)
 
-
+class PascalModule(BaseDataModule):
+    def val_dataloader(self):
+        return DataLoader(self.CS_val, pin_memory=True,batch_size=self.val_batch_size,num_workers=self.num_workers,persistent_workers=True,collate_fn=collate_fn)
 
 class Cityscape(BaseDataModule):
     def __init__(self,config):

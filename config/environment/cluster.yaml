@@ -1,6 +1,9 @@
 #@package _global_
 LOGDIR: /gpu/checkpoints/OE0441/l727r
 
+CALLBACKS:
+  tqdm_progressbar: ~
+
 DATASET:
   ROOT: ${DATASET.CLUSTER_ROOT}
 

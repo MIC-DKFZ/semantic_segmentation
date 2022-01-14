@@ -74,9 +74,9 @@ class SegModel(LightningModule):
         #           persistent_workers=True)
 
     def forward(self, x):
-        #print(x.shape)
+
         x = self.model(x)
-        print(len(x),x.keys(),list(x.values())[0].shape)
+
         return x
 
     def configure_optimizers(self):
@@ -152,7 +152,10 @@ class SegModel(LightningModule):
 
     def validation_step(self, batch, batch_idx):
 
-        x, y_gt,y_org = batch
+        if len(batch)==3:
+            x, y_gt, y_org=batch
+        else:
+            x, y_gt = batch
         #x, y_gt = batch
         #print(batch_idx,idx)
         #self.trainer.datamodule.CS_train.get_idx(batch_idx)
@@ -170,11 +173,11 @@ class SegModel(LightningModule):
         val_loss = self.get_loss(y_pred, y_gt)
         self.log("Loss/validation_loss", val_loss, on_step=True, on_epoch=True, logger=True)
 
-        if True:
-            pred=list(y_pred.values())[0]#y_pred["out"]#y_pred["out"]
+        if len(batch)==3:
+            pred=list(y_pred.values())[0] #y_pred["out"]#y_pred["out"]
             size=[x.size() for x in y_org]
-            #print(size)
             pred=[F.interpolate(a.unsqueeze(0), size=s, mode='bilinear', align_corners=False).argmax(1).flatten() for a,s in zip(pred,size)]
+
             pred=torch.cat(pred)
             y_org=torch.cat([y.flatten() for y in y_org])
 

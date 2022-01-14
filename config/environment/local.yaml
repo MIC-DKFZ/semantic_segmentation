@@ -1,6 +1,7 @@
 #@package _global_
 CALLBACKS:
   model_checkpoint: ~
+  tqdm_progressbar: ~
 
 LOGDIR: "logs/"
 pl_trainer:

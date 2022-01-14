@@ -1,6 +1,8 @@
 #@package _global_
 
 #SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
+datamodule:
+  _target_: datasets.DataModules.PascalModule
 dataset:
     _target_: datasets.PASCALContext.PASCALContext_dataset
     root: ${DATASET.ROOT}
@@ -10,9 +12,7 @@ lossfunction: ["CE","CE","CE","CE"]
 DATASET:
   #PATH PARAMETERS FOR THIS DATASET
   ROOT: "/home/l727r/Desktop/Datasets/VOC2010_Context"
-  CLUSTER_ROOT:
-    LABELS: /gpu/data/OE0441/l727r/Cityscape
-    IMAGES: /gpu/data/common/cityscapes
+  CLUSTER_ROOT: /gpu/data/OE0441/l727r/VOC2010_Context
   ##NEEDED PARAMETERS
   NAME: "PASCALContext"
   NUM_CLASSES: 60

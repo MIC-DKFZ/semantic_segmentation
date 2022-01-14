@@ -30,8 +30,8 @@ hydra:
 
 comment: ""
 num_gpus:
-num_workers: 12 #8
-batch_size: 12 #6
+num_workers: 10
+batch_size: 6
 val_batch_size: ${batch_size}
 epochs: 400
 optimizer: sgd

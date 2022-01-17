@@ -468,6 +468,8 @@ class HighResolutionNet(nn.Module):
 
         x = self.last_layer(x)
 
+        #if self.training:
+        #    x = F.interpolate(x, size=x_size, mode='bilinear', align_corners=ALIGN_CORNERS)
         x = F.interpolate(x, size=x_size, mode='bilinear', align_corners=ALIGN_CORNERS)
 
         return {"out":x}

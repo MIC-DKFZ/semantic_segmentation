@@ -1,6 +1,12 @@
 #Walktrough the config jungle
 
+## TEst
 
+<details><summary>Click to expand/collapse</summary>
+<p>
+dfdf
+</p>
+</details>
 
 ## Basics
 In this repository [Hydra](https://hydra.cc/) is used for configuring and managing experiments.

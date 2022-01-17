@@ -174,9 +174,9 @@ class SegModel(LightningModule):
         self.log("Loss/validation_loss", val_loss, on_step=True, on_epoch=True, logger=True)
 
         if len(batch)==3:
-            pred=list(y_pred.values())[0] #y_pred["out"]#y_pred["out"]
+            pred=list(y_pred.values())[0]
             size=[x.size() for x in y_org]
-            pred=[F.interpolate(a.unsqueeze(0), size=s, mode='bilinear', align_corners=False).argmax(1).flatten() for a,s in zip(pred,size)]
+            pred=[F.interpolate(p.unsqueeze(0), size=s, mode='bilinear', align_corners=False).argmax(1).flatten() for p,s in zip(pred,size)]
 
             pred=torch.cat(pred)
             y_org=torch.cat([y.flatten() for y in y_org])
@@ -295,15 +295,17 @@ def training_loop(cfg: DictConfig):
 def validation(ckpt_path,hp_path):
 
     hydra.initialize(config_path=hp_path)
-    cfg = hydra.compose(config_name="config",overrides=["MODEL.ADAPTED_PRETRAINED_WEIGHTS=""", "MODEL.PRETRAINED=False","MODEL.MSCALE_TRAINING=true","DATASET.ROOT=/home/l727r/Desktop/Cityscape"])
+    #cfg = hydra.compose(config_name="config",overrides=["MODEL.ADAPTED_PRETRAINED_WEIGHTS=""", "MODEL.PRETRAINED=False","MODEL.MSCALE_TRAINING=true","DATASET.ROOT=/home/l727r/Desktop/Cityscape"])
+    cfg = hydra.compose(config_name="config",overrides=["MODEL.ADAPTED_PRETRAINED_WEIGHTS=""", "MODEL.PRETRAINED=False","DATASET.ROOT=/home/l727r/Desktop/Cityscape"])
     cfg.val_batch_size=1
     model = SegModel.load_from_checkpoint(ckpt_path, config=cfg)
     #print(cfg.dataset)
     #dataModule = getattr(DataModules, cfg.DATASET.NAME)(config=cfg)
     #try:
-    dataModule = hydra.utils.instantiate(cfg.dataset,_recursive_=False)
+    dataModule = hydra.utils.instantiate(cfg.datamodule,_recursive_=False)
     #except:
-    #    dataModule = getattr(DataModules, "BaseDataModule")(config=cfg)
+    #dataModule = getattr(DataModules, "BaseDataModule")(config=cfg)
+
 
 
     trainer = Trainer(
@@ -318,10 +320,35 @@ def validation(ckpt_path,hp_path):
 if __name__ == "__main__":
     training_loop()
 
+
+    '''base="/home/l727r/Desktop/Target_Folder/Cityscape/hrnet_ocr_ms/"
+    folder="MODEL.MSCALE_TRAINING=false_epochs=500"
+    #folder="MODEL.MSCALE_TRAINING=false_epochs=400_lossfunction=wRMI"
+    x=os.listdir(base+folder)
+    #x=x[1:]
+    #print(x)
+    for name in x:
+        #GlobalHydra.instance().clear()
+        #hydra._internal.hydra.GlobalHydra.get_state().clear()
+        hydra.core.global_hydra.GlobalHydra.instance().clear()
+        name=os.path.join(folder,name)
+        print(name)
+        print("/home/l727r/Desktop/Target_Folder/Cityscape/hrnet_ocr_ms/"+name+"/checkpoints/best_epoch*.ckpt")
+
+        ckpt_path=glob.glob("/home/l727r/Desktop/Target_Folder/Cityscape/hrnet_ocr_ms/"+name+"/checkpoints/best_epoch*.ckpt")
+        print(ckpt_path)
+        hp_path="../Target_Folder/Cityscape/hrnet_ocr_ms/MODEL.MSCALE_TRAINING=False_epochs=400/2022-01-05_12-06-13/hydra"
+        #hp_path="../Target_Folder/Cityscape/hrnet_ocr_ms/"+name+"/hydra"
+        validation(ckpt_path[-1],hp_path)
+
     #name="MODEL.MSCALE_TRAINING=False_epochs=400/2022-01-05_12-06-13"
-    #name="MODEL.MSCALE_TRAINING=False_epochs=400/2022-01-07_11-26-26"
+    #"/home/l727r/Desktop/Target_Folder/Cityscape/hrnet_ocr_ms/MODEL.MSCALE_TRAINING=false_epochs=300/2022-01-12_07-50-38"
+    #name="MODEL.MSCALE_TRAINING=false_epochs=300/2022-01-13_08-48-59"
+    #p="MODEL.MSCALE_TRAINING=false_epochs=250"
+
     #ckpt_path=glob.glob("/home/l727r/Desktop/Target_Folder/Cityscape/hrnet_ocr_ms/"+name+"/checkpoints/best_epoch*.ckpt")
     #print(ckpt_path)
+    #hp_path="../Target_Folder/Cityscape/hrnet_ocr_ms/MODEL.MSCALE_TRAINING=False_epochs=400/2022-01-05_12-06-13/hydra"
     #hp_path="../Target_Folder/Cityscape/hrnet_ocr_ms/"+name+"/hydra"
     #validation(ckpt_path[-1],hp_path)
-
+    '''

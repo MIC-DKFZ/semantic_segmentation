@@ -103,8 +103,10 @@ class Cityscape_dataset(torch.utils.data.Dataset):
         else:
             root_imgs = root.IMAGES
             root_labels = root.LABELS
-
-
+        #print("hallo")
+        print(root)
+        if split=="test":
+            split="val"
         imgs_path=os.path.join( root_imgs ,"leftImg8bit_trainvaltest", "leftImg8bit" , split , "*" , "*_leftImg8bit.png" )
 
         masks_path = os.path.join(root_labels, "gtFine_trainvaltest", "gtFine", split, "*", "*_gt*_labelIds_19classes.png")
@@ -116,6 +118,7 @@ class Cityscape_dataset(torch.utils.data.Dataset):
 
         self.transforms=transforms
         log.info("Dataset: Cityscape %s - %s images - %s masks",split,  len(self.imgs),len(self.masks))
+
 
 
     def __getitem__(self, idx):

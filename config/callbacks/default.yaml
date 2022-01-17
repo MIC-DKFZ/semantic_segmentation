@@ -7,7 +7,7 @@ CALLBACKS:
     logging_interval: 'step'
   tqdm_progressbar:
     _target_: pytorch_lightning.callbacks.progress.TQDMProgressBar
-    refresh_rate: 100
+    refresh_rate: 1 #00
   model_summary:
     _target_: pytorch_lightning.callbacks.ModelSummary
     max_depth: 2

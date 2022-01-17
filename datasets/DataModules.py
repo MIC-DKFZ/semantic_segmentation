@@ -37,7 +37,6 @@ class BaseDataModule(LightningDataModule):
         self.dataset=dataset
 
     def setup(self, stage= None):
-
         transforms_train = self.get_augmentations_from_config(self.augmentations.TRAIN)
         transforms_val = self.get_augmentations_from_config(self.augmentations.TEST)
         self.transforms_train=transforms_train

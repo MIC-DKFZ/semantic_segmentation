@@ -8,17 +8,30 @@ Install the needed packages by:
 ````shell
 pip install -r requirements.txt
 ````
-This Repo is build up on the following packages. Maybe you should make yourselve fimilar with their basic usage fist.
-- **Pytorch Lightning:** 
-- **Hydra:** development and planing tool
-- **Albumentation:** Package used for dataaugmentation
+Among others, this repository is mainly built on the following packages.
+You may want to familiarize yourself with their basic use beforehand.
+- **[Pytorch](https://pytorch.org/)**: The machine learning/deep learning library used in this repository.
+- **[Pytorch Lightning](https://www.pytorchlightning.ai/):** 
+An open source framework for organizing PyTorch code and supporting machine learning development.
+It is automating most of the training loop and offers many useful features like mixed precision training.
+Lightning also makes code scalable to any hardware(CPU, GPU, TPU) without changing the model, as well as distributed training on multiple GPUs.
+- **[Hydra](https://hydra.cc/docs/intro/):** Framework to simplify the development, organization, and configuration of machine learning experiments.
+It provides the ability to dynamically create a hierarchical configuration by composition and override it through config files and the command line.
+- **[Albumentations](https://albumentations.ai):** Package for fast and flexible data augmentation in Semantic Segmentation (Albumentations is not limited to segmentation, but only that is used in this repository). 
+Albumentations provides a lot of augmentations that can be used. Also random operations (e.g. random cropping) can be applied directly to images and masks.
 
 
 
 # How To Run
-### Datasetup
-#### Cityscape
-Download the Cityscape dataset from [here](https://www.cityscapes-dataset.com/login/). 
+## Datasetup
+
+How to setup the data. Currently the Cityscapes and Pascal Context Dataset is supported.
+For adding other datasets look at the Customizing part
+
+### Cityscape
+<details><summary>Click to expand/collapse</summary>
+<p>
+Download the Cityscape dataset from [here](https://www.cityscapes-dataset.com/downloads/) . 
 You have to create an account and afterward download: *leftImg8bit_trainvaltest.zip* (11GB)  and *gtFine_trainvaltest.zip* (241MB).
 Unzip them and put them into a folder, the structure of the folder should now look like this:
 
@@ -58,9 +71,55 @@ config/datasets/Cityscape_19.yaml
 DATASET:
   ROOT: home/.../Datasets/cityscapes
 ````
+</p>
+</details>
 
-### Running Code
-you can directly train a model by just executing:
+### PASCAL Context
+<details><summary>Click to expand/collapse</summary>
+<p>
+
+
+Click [here](https://cs.stanford.edu/~roozbeh/pascal-context/trainval.tar.gz) for directly downloading the labels or do it manually by downloading the file *trainval.tar.gz (30.7 MB file)* from [PASCAL-Context](https://cs.stanford.edu/~roozbeh/pascal-context/#download). 
+Click [here](http://host.robots.ox.ac.uk/pascal/VOC/voc2010/VOCtrainval_03-May-2010.tar) for directly downloading the images or do it manually by downloading the file *training/validation data (1.3GB tar file)* from [PASCAL VOC](http://host.robots.ox.ac.uk/pascal/VOC/voc2010/index.html#devkit).
+Unzip both filse and put them into a folder. 
+The structure of you folders should look like this:
+
+````
+Datasets
+    ├── VOCtrainval_03-May-2010/VOCdevkit/VOC2010
+    │   ├── Annotations
+    │   ├── ImageSets
+    │   └── ...
+    └── trainval
+        └──trainval
+            ├── *.mat
+            └── ...
+````
+Since the VOC2010 dataset contains a lot of unnecessary stuff (for this repo), only the needed data is extracted and merged with the transformed label data from *trainval/*.
+Run the following script which creates a new folder structure with only the relevant and transformed data.
+````
+Code
+````
+Afterward you should have a dataset which looks like this.
+````
+Datasets
+    └── VOC2010_Context
+        ├── Annotations
+        │   ├── train
+        │   └── val
+        └── Images
+            ├── train
+            └── val
+````
+</p>
+</details>
+
+## Setup path
+xxx
+
+## Running Code
+
+you can directly run the baseline by:
 ```` 
 python main.py
 ````
@@ -82,6 +141,8 @@ Therefore the *config/* folder explains in detail how the configuration is compo
 LINK
 
 # Customizing
+
+How to add new models, datasets and more.
 
 ## Model
 Defining a custom model is done in two steps, first defining your custom pytorch model and afterwards setting up its config file.
@@ -176,7 +237,7 @@ If you need the data in another format you can use for example *lambda functions
 The optimizer is defined using the *get_optimizer_from_cfg* function in *utils/optimizer*. The inputs of the function are the models *parameters* as well the complete *cfg*. 
 An custom optimizer can be added to *get_optimizer_from_cfg* by:
 ````py    
-elif cfg.optimizer == "MYOPTIMIZER:
+elif cfg.optimizer == "MYOPTIMIZER":
         ...                  #do whatever you need
         return My_Optimizer(...)
 ````
@@ -194,5 +255,7 @@ elif cfg.lr_scheduler == "MYSCHEDULER":
 ````
 lr_scheduler is your custom scheduler. The config is needed to tell Pytorch Lightning how to call your scheduler.
 For example the *interval* parameter can set to *step* or *epoch*, and accordingly a lr_scheduler.step() is executed after each step or only at the end of the epoch.
+
+
 
 

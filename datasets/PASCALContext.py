@@ -95,8 +95,6 @@ class PASCALContext_dataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.imgs)
 
-    def get_idx(self,bidx):
-        print(bidx)
 
 def show_voc(img=None, mask=None, alpha=.5, classes=19, mean=[0, 0, 0], std=[1, 1, 1]):
     # (input[channel] - mean[channel]) / std[channel]

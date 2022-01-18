@@ -180,7 +180,7 @@ Futher the order of the outputs should match the order of your losses in *lossfu
     ````
 ## Dataset
 Defining a custom dataset is done in two steps, first defining your custom pytorch dataset and afterwards setting up its config file.
-1. **Defining your pytorch Dataset**, therby consider that the following structure is required (mainly pytorch basic):
+1. **Defining your pytorch Dataset**, therby consider that the following structure is required (mainly pytorch basic) and see the dummy below:
    - \__init__(self, custom_args, split, transforms):
      - *custom_args*: your custom input arguments (for example data_root etc.). They will be given to your dataset from the config file (see below).
      - *split*: one of the following strings: \["train","val","test"]. To define if train, validation or test set should be returned.
@@ -190,6 +190,37 @@ Defining a custom dataset is done in two steps, first defining your custom pytor
      - with ````img.shape = [c, height, width]```` and ````mask.shape = [height, width]````, where *c* is the number of channels. For example *c=3* if you use RGB data.
    - \__len(self)__:
      - return the number of samples in your dataset, somehtink like: *return len(self.img_files)*
+   ````py
+   class Custom_dataset(torch.utils.data.Dataset):
+    def __init__(self,root,split,transforms):
+        # get your data for the corresponding split
+        if split=="train":
+             self.imgs = ...
+             self.masks = ...
+        if split=="val":
+             self.imgs = ...
+             self.masks = ...
+        
+        #save the transformations
+        self.transforms=transforms
+
+    def __getitem__(self, idx):
+        # reading images and masks as numpy arrays
+        img =cv2.imread(self.imgs[idx])
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # cv2 reads images in BGR order
+
+        mask=cv2.imread(self.masks[idx],-1)
+
+        # thats how you apply Albumentations transformations
+        transformed = self.transforms(image=img, mask=mask)
+        img = transformed['image']
+        mask = transformed['mask']
+        
+        return img, mask.long()
+
+    def __len__(self):
+        return len(self.imgs)
+   ````
 2. **Setting up your dataset config** 
    - Create a *custom_dataset.yaml* file in *config/datasets/*. For the content of the *.yaml* file adopt the following dummy:
    ````yaml 

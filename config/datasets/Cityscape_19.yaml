@@ -6,11 +6,6 @@ dataset:
     root: ${roots.cityscapes}
 
 DATASET:
-  #PATH PARAMETERS FOR THIS DATASET
-  #ROOT: "/home/l727r/Desktop/Cityscape"
-  #CLUSTER_ROOT:
-  #  LABELS: /gpu/data/OE0441/l727r/Cityscape
-  #  IMAGES: /gpu/data/common/cityscapes
   ##NEEDED PARAMETERS
   NAME: "Cityscape"
   NUM_CLASSES: 19

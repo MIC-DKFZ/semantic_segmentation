@@ -7,22 +7,33 @@ from torch.utils.data import DataLoader
 from datasets.Cityscape import Cityscape_dataset
 from datasets.Cityscape_Coarse import Cityscape_coarse_dataset
 from config.utils import hasNotEmptyAttr
+#from torch.nn.utils.rnn import pack_sequence
 import hydra
 from omegaconf import OmegaConf
 import logging
 log = logging.getLogger(__name__)
 
-def collate_fn(batch):
+#def my_collate_fn(batch):
+#    # batch contains a list of tuples of structure (sequence, target)
+#    data = [item[0] for item in batch]
+#    data = pack_sequence(data, enforce_sorted=False)
+#    targets = [item[1] for item in batch]
+#    return [data, targets]
 
-    img=[x[0] for x in batch]
-    img=torch.stack((img), dim=0)
+#def collate_fn(batch):
+#    return tuple(zip(*batch))
 
-    labels = [x[1] for x in batch]
-    labels = torch.stack((labels), dim=0)
+#def collate_fn2(batch):#
 
-    org = [x[2] for x in batch]
+#    img=[x[0] for x in batch]
+#    img=torch.stack((img), dim=0)
 
-    return (img,labels,org)
+#    labels = [x[1] for x in batch]
+#    labels = torch.stack((labels), dim=0)
+
+#    org = [x[2] for x in batch]
+
+#    return (img,labels,org)
 
 
 class BaseDataModule(LightningDataModule):
@@ -95,7 +106,7 @@ class BaseDataModule(LightningDataModule):
 
 class PascalModule(BaseDataModule):
     def val_dataloader(self):
-        return DataLoader(self.CS_val, pin_memory=True,batch_size=self.val_batch_size,num_workers=self.num_workers,persistent_workers=True,collate_fn=collate_fn)
+        return DataLoader(self.CS_val, pin_memory=True,batch_size=self.val_batch_size,num_workers=self.num_workers,persistent_workers=True,collate_fn=my_collate_fn)
 
 class Cityscape(BaseDataModule):
     def __init__(self,config):

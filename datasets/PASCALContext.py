@@ -69,24 +69,27 @@ class PASCALContext_dataset(torch.utils.data.Dataset):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         mask=cv2.imread(self.masks[idx],-1)
-        if self.split=="val":
-            mask_o = torch.from_numpy(mask)
+        #if self.split=="val":
+        #    mask_o = torch.from_numpy(mask)
         #transforms2 = A.Compose([
         #    ToTensorV2()])
 
-        if self.split in ["val3","test3"]:
-            transformed = self.transforms(image=img)
-            img = transformed['image']
-            mask = torch.from_numpy(mask)  # .unsqueeze(0)
-        else:
-            transformed = self.transforms(image=img, mask=mask)
-            img = transformed['image']
-            mask = transformed['mask']
+        #if self.split in ["val3","test3"]:
+        #    transformed = self.transforms(image=img)
+        #    img = transformed['image']
+        #    mask = torch.from_numpy(mask)  # .unsqueeze(0)
+        #else:
+
+        transformed = self.transforms(image=img, mask=mask)
+        img = transformed['image']
+        mask = transformed['mask']
         #transformed = transforms2(image=None,mask=mask)
         #mask = transformed['mask']
-        if self.split=="val":
-            return img, mask.long(),mask_o
-            return img, mask.long(), idx
+        #if self.split=="val":
+        #    return img, mask.long(),mask_o
+        #    return img, mask.long(), idx
+        #sample={"img":img,"mask":mask.long()}
+        #return sample
         return img, mask.long()
 
     def __len__(self):
@@ -168,23 +171,29 @@ if __name__ == "__main__":
 
     transforms = A.Compose([
         #A.RandomCrop(width=768, height=768),
-        #A.RandomScale(scale_limit=(-0.5,1),always_apply=True,p=1.0),
-        #A.PadIfNeeded(min_height=768,min_width=768),
-        A.Resize(p=1.0,width=480, height=480),
-        #A.RandomCrop(width=768, height=768,always_apply=True,p=1.0),
+        A.SmallestMaxSize( max_size= 520),
+        A.RandomScale(scale_limit=(-0.5,1),always_apply=True,p=1.0),
+        A.PadIfNeeded(min_height=520,min_width=520,border_mode=0, value=0,mask_value=0),
+        #A.Resize(p=1.0,width=480, height=480),
+        A.RandomCrop(width=520, height=520,always_apply=True,p=1.0),
         #A.ColorJitter(brightness=9,contrast=0,saturation=0,hue=0),
         #A.RGBShift(p=1,r_shift_limit=10,g_shift_limit=10,b_shift_limit=10),
-        A.HorizontalFlip(p=0.5),
+        #A.HorizontalFlip(p=0.5),
         A.Normalize(
             mean=[0.485, 0.456, 0.406],
             std=[0.229, 0.224, 0.225],always_apply=True
         ),
         ToTensorV2()])
-    print(transforms)
+    #print(transforms)
     Path = "/home/l727r/Desktop/Datasets/VOC2010_Context"
     Cityscape_train = PASCALContext_dataset(Path, "train", transforms=transforms)
+
+
+
+
+
     #for i in range(0,50):
-    img, mask = Cityscape_train[466]
+    img, mask = Cityscape_train[465]
     #print(img.shape)
     #print(torch.unique(mask))
     out = show_voc(img=img, alpha=1., mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])

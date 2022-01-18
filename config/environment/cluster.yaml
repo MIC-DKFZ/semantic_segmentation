@@ -1,11 +1,16 @@
 #@package _global_
-LOGDIR: /gpu/checkpoints/OE0441/l727r
-
 CALLBACKS:
   tqdm_progressbar: ~
+pl_trainer:
+    enable_progress_bar: false
 
 DATASET:
   ROOT: ${DATASET.CLUSTER_ROOT}
 
-pl_trainer:
-    enable_progress_bar: false
+LOGDIR: /gpu/checkpoints/OE0441/l727r
+
+roots:
+  cityscapes:
+      LABELS: /gpu/data/OE0441/l727r/Cityscape
+      IMAGES: /gpu/data/common/cityscapes
+  Pascal_ctx: /gpu/data/OE0441/l727r/VOC2010_Context

@@ -30,7 +30,7 @@ hydra:
 
 comment: ""
 num_gpus:
-num_workers: 10
+num_workers: 12
 batch_size: 6
 val_batch_size: ${batch_size}
 epochs: 400

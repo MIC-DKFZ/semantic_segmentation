@@ -28,6 +28,7 @@ from datasets import DataModules
 from models import hrnet, hrnet_ocr, hrnet_ocr_aspp, hrnet_ocr_ms
 #from models import hrnet_ocr3 as hrnet_ocr
 
+import time
 
 class ConfusionMatrix(Metric):
     def __init__(self, num_classes, dist_sync_on_step=False):
@@ -35,13 +36,25 @@ class ConfusionMatrix(Metric):
 
         self.num_classes = num_classes
         self.add_state("mat", default=torch.zeros((num_classes, num_classes), dtype=torch.int64), dist_reduce_fx="sum")
+        #print("DEV", self.mat.device)
 
     def update(self, gt, pred):
+
         n = self.num_classes  # .item()
+        gt=gt.detach().cpu()
+        pred=pred.detach().cpu()
+
+        #if self.mat.device != gt.device:
+            #print(self.mat.device)
+        #    self.mat=self.mat.to(gt)
+
         with torch.no_grad():
+        #with torch.inference_mode():
             k = (gt >= 0) & (gt < n)
             inds = n * gt[k].to(torch.int64) + pred[k]
-            self.mat += torch.bincount(inds, minlength=n ** 2).reshape(n, n)
+            #inds = n * gt[k] + pred[k]
+            self.mat += torch.bincount(inds, minlength=n ** 2).reshape(n, n).to(self.mat)
+
 
     def compute(self):
 
@@ -63,7 +76,7 @@ class SegModel(LightningModule):
     def __init__(self, config):
         super().__init__()
         self.config = config
-
+        self.num_classes=config.DATASET.NUM_CLASSES
         self.model = eval(config.MODEL.NAME + '.get_seg_model')(config)
 
         self.metric = ConfusionMatrix(config.DATASET.NUM_CLASSES)
@@ -80,6 +93,7 @@ class SegModel(LightningModule):
         return x
 
     def configure_optimizers(self):
+        #self.metric = ConfusionMatrix(self.num_classes)
         ####LOSSFUNCTION####
         print(type(self.config.lossfunction))
         if isinstance(self.config.lossfunction,str):
@@ -139,6 +153,7 @@ class SegModel(LightningModule):
     def training_step(self, batch, batch_idx):
         #print("BI",batch_idx)
         x, y_gt = batch
+        #x, y_gt = batch["img"], batch["mask"]
 
         #x = torch.stack(x, dim=0)
 
@@ -152,10 +167,14 @@ class SegModel(LightningModule):
 
     def validation_step(self, batch, batch_idx):
 
-        if len(batch)==3:
-            x, y_gt, y_org=batch
-        else:
-            x, y_gt = batch
+        #if len(batch)==3:
+        #    x, y_gt, y_org=batch
+        #else:
+        x, y_gt = batch
+
+        #x,y_gt=batch["img"],batch["mask"]
+
+
         #x, y_gt = batch
         #print(batch_idx,idx)
         #self.trainer.datamodule.CS_train.get_idx(batch_idx)
@@ -164,28 +183,27 @@ class SegModel(LightningModule):
 
         #print("X",x.shape)
         #print(y_gt)
+
         y_pred = self(x)
         #print(y_pred[0])
         #print(y_gt[0].shape)
 
 
-
         val_loss = self.get_loss(y_pred, y_gt)
         self.log("Loss/validation_loss", val_loss, on_step=True, on_epoch=True, logger=True)
 
-        if len(batch)==3:
-            pred=list(y_pred.values())[0]
-            size=[x.size() for x in y_org]
-            pred=[F.interpolate(p.unsqueeze(0), size=s, mode='bilinear', align_corners=False).argmax(1).flatten() for p,s in zip(pred,size)]
+        #if len(batch)==3:
+        #    pred=list(y_pred.values())[0]
+        #    size=[x.size() for x in y_org]
+        #    pred=[F.interpolate(p.unsqueeze(0), size=s, mode='bilinear', align_corners=False).argmax(1).flatten() for p,s in zip(pred,size)]
+        #
+        #    pred=torch.cat(pred)
+        #    y_org=torch.cat([y.flatten() for y in y_org])#
 
-            pred=torch.cat(pred)
-            y_org=torch.cat([y.flatten() for y in y_org])
+        #    self.metric.update(y_org, pred)
+        #else:
 
-            self.metric.update(y_org, pred)
-        else:
-
-            self.metric.update(y_gt.flatten(), list(y_pred.values())[0].argmax(1).flatten())
-
+        self.metric.update(y_gt.flatten(), list(y_pred.values())[0].argmax(1).flatten())
 
         #for p,g in zip(list(y_pred.values())[0],y_gt):
         #    #print("PG",p.shape,g.shape)
@@ -208,7 +226,7 @@ class SegModel(LightningModule):
             self.log_dict({"mIoU": mIoU,"step":self.current_epoch}, on_epoch=True, logger=True,sync_dist=True)
             #self.log("mIoU", mIoU, logger=True, sync_dist=True)
 
-            if mIoU > self.best_mIoU:
+            if mIoU > self.best_mIoU.item():
                 self.best_mIoU = mIoU
                 self.metric.save(path=self.logger.log_dir)
             self.log_dict({"mIoU/best_mIoU": self.best_mIoU, "step": self.current_epoch}, on_epoch=True, logger=True,sync_dist=True)

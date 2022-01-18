@@ -2,9 +2,8 @@
 CALLBACKS:
   model_checkpoint: ~
 
-LOGDIR: "logs/"
-pl_trainer:
-  enable_checkpointing: False
+LOGDIR: logs/
 
-#DATASET:
-#  ROOT: ${DATASET.CLUSTER_ROOT}
+roots:
+  cityscapes: /home/l727r/Desktop/Cityscape
+  Pascal_ctx: /home/l727r/Desktop/Datasets/VOC2010_Context

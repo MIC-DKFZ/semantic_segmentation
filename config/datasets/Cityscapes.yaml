@@ -2,12 +2,12 @@
 
 #SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
 dataset:
-    _target_: datasets.Cityscape.Cityscape_dataset
+    _target_: datasets.Cityscapes.Cityscapes_dataset
     root: ${roots.cityscapes}
 
 DATASET:
   ##NEEDED PARAMETERS
-  NAME: "Cityscape"
+  NAME: "Cityscapes"
   NUM_CLASSES: 19
   IGNORE_INDEX: 255
   #NEEDED IF POLY LR is used

@@ -5,30 +5,25 @@
 #  _target_: datasets.DataModules.BaseDataModule #PascalModule
 #  #_target_: datasets.DataModules.PascalModule
 dataset:
-    _target_: datasets.PASCALContext.PASCALContext_dataset
+    _target_: datasets.VOC2010_Context.VOC2010_Context_dataset
     root: ${roots.Pascal_ctx}
 
-
-num_workers: 12
 batch_size: 8 #16
 val_batch_size: ${batch_size}
 epochs: 150 #400
-optimizer: sgd
-lr_scheduler: poly
 lr: 0.001 #0.01 #LR: 0.01445439770745928
 wd: 0.0001 #0.0005
 momentum: 0.9
 lossfunction: ["CE","CE","CE","CE"]
-lossweight:   [1.0, 0.4, 0.05, 0.05]
 
 DATASET:
   #PATH PARAMETERS FOR THIS DATASET
   #ROOT: "/home/l727r/Desktop/Datasets/VOC2010_Context"
   #CLUSTER_ROOT: /gpu/data/OE0441/l727r/VOC2010_Context
   ##NEEDED PARAMETERS
-  NAME: "PASCALContext"
+  NAME: "VOC2010_Context"
   NUM_CLASSES: 60
-  IGNORE_INDEX: -100
+  IGNORE_INDEX: 255
   #NEEDED IF POLY LR is used
   SIZE:
     TRAIN: 4998

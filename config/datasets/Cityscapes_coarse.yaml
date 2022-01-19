@@ -1,0 +1,41 @@
+#@package _global_
+
+dataset:
+    _target_: datasets.Cityscapes_coarse.Cityscapes_coarse_dataset
+    root: ${roots.cityscapes}
+
+
+#epochs: 400
+#lr: 0.001 #LR: 0.01445439770745928
+
+DATASET:
+  NAME: "Cityscapes_coarse"
+  NUM_CLASSES: 19
+  IGNORE_INDEX: 255
+  CLASS_WEIGHTS: [0.8373, 0.918, 0.866, 1.0345,1.0166,
+                  0.9969, 0.9754, 1.0489, 0.8786, 1.0023,
+                  0.9539, 0.9843,1.1116, 0.9037, 1.0865,
+                  1.0955, 1.0865, 1.1529, 1.0507]
+  SIZE:
+    TRAIN: 19997
+    VAL: 500
+  CLASS_LABELS:
+    - road
+    - sidewalk
+    - building
+    - wall
+    - fence
+    - pole
+    - traffic light
+    - traffic sign
+    - vegetation
+    - terrain
+    - sky
+    - person
+    - rider
+    - car
+    - truck
+    - bus
+    - train
+    - motorcycle
+    - bicycle

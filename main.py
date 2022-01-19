@@ -36,28 +36,19 @@ class ConfusionMatrix(Metric):
 
         self.num_classes = num_classes
         self.add_state("mat", default=torch.zeros((num_classes, num_classes), dtype=torch.int64), dist_reduce_fx="sum")
-        #print("DEV", self.mat.device)
 
     def update(self, gt, pred):
 
-        n = self.num_classes  # .item()
+        n = self.num_classes
         gt=gt.detach().cpu()
         pred=pred.detach().cpu()
 
-        #if self.mat.device != gt.device:
-            #print(self.mat.device)
-        #    self.mat=self.mat.to(gt)
-
         with torch.no_grad():
-        #with torch.inference_mode():
             k = (gt >= 0) & (gt < n)
             inds = n * gt[k].to(torch.int64) + pred[k]
-            #inds = n * gt[k] + pred[k]
             self.mat += torch.bincount(inds, minlength=n ** 2).reshape(n, n).to(self.mat)
 
-
     def compute(self):
-
         IoU = self.mat.diag() / (self.mat.sum(1) + self.mat.sum(0) - self.mat.diag())
         IoU[IoU.isnan()] = 0
         mIoU = IoU.mean()
@@ -151,16 +142,12 @@ class SegModel(LightningModule):
         return loss
 
     def training_step(self, batch, batch_idx):
-        #print("BI",batch_idx)
-        x, y_gt = batch
-        #x, y_gt = batch["img"], batch["mask"]
 
-        #x = torch.stack(x, dim=0)
+        x, y_gt = batch
 
         y_pred = self(x)
 
         loss = self.get_loss(y_pred, y_gt)
-        #print(loss)
         self.log("Loss/training_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
         return loss
@@ -256,12 +243,13 @@ class SegModel(LightningModule):
 
         dic_IoU = {}
         for id, iou in enumerate(IoU):
-            if self.config.DATASET.CLASS_LABELS is not []:
+            if hasNotEmptyAttr(self.config.DATASET,"CLASS_LABELS"):
                 dic_IoU[str(id) + "-" + self.config.DATASET.CLASS_LABELS[id]] = "%.4f" % iou.item()
             else:
                 dic_IoU[id] = "%.4f" % iou.item()
         print(dic_IoU)
         print("Mean IoU:","%.4f" % mIoU.item())
+
 
 
 
@@ -285,10 +273,17 @@ def training_loop(cfg: DictConfig):
     log.info('Available GPUs: %s - %s', AVAIL_GPUS, torch.cuda.get_device_name())
     cfg.num_gpus = AVAIL_GPUS
 
-    ### DEFINING MODEL AND DATASET ####
-    #dataModule = getattr(DataModules, cfg.DATASET.NAME)(config=cfg)
+    ### DEFINING DATASET ####
     dataModule=hydra.utils.instantiate(cfg.datamodule,_recursive_=False)
-    model = SegModel(config=cfg)
+
+    ### DEFINING MODEL and load checkpoint if wanted####
+    if hasNotEmptyAttr(cfg,"finetune_from"):
+        # +finetune_from = /home/l727r/Desktop/Target_Folder/Cityscape/hrnet/epochs\=400/2021-12-25_22-04-38_environment\=cluster_epochs\=400/checkpoints/best_epoch\=393_mIoU\=0.8144.ckpt
+        log.info("finetune from: %s", cfg.finetune_from)
+        model = SegModel.load_from_checkpoint(cfg.finetune_from, config=cfg)
+    else:
+        model = SegModel(config=cfg)
+
 
     ### INITIALIAZING TRAINER ####
     trainer_args = getattr(cfg, "pl_trainer") if hasNotEmptyAttr(cfg, "pl_trainer") else {}
@@ -337,7 +332,10 @@ def validation(ckpt_path,hp_path):
 
 if __name__ == "__main__":
     training_loop()
-
+    #path = "/home/l727r/Desktop/Target_Folder/Cityscape/hrnet/epochs\=400/2021-12-25_22-04-38_environment\=cluster_epochs\=400/checkpoints/best_epoch=393_mIoU\=0.8144.ckpt"
+    #checkpoint = torch.load(path)
+    #print(checkpoint.keys())
+    #print(checkpoint["state_dict"])
 
     '''base="/home/l727r/Desktop/Target_Folder/Cityscape/hrnet_ocr_ms/"
     folder="MODEL.MSCALE_TRAINING=false_epochs=500"

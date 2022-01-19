@@ -4,7 +4,7 @@ defaults:
   - callbacks: default
   - data_augmentations: default
   - models: hrnet
-  - datasets: Cityscape_19
+  - datasets: Cityscapes
   - environment: local
 
   - override hydra/hydra_logging: colorlog
@@ -27,6 +27,7 @@ hydra:
           - models
           - datasets
           - environment
+          - finetune_from
 
 comment: ""
 num_gpus:
@@ -65,5 +66,6 @@ datamodule:
   augmentations: ${AUGMENTATIONS}
   train_size: ${DATASET.SIZE.TRAIN}
   dataset: ${dataset}
+
   #  _target_: ${DATASET.FILE} #datasets.Cityscape.Cityscape_dataset
   #  root: ${DATASET.ROOT}

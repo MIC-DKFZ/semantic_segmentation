@@ -95,7 +95,7 @@ label_mapping = {-1: ignore_label, 0: ignore_label,
 
 
 
-class Cityscape_dataset(torch.utils.data.Dataset):
+class Cityscapes_dataset(torch.utils.data.Dataset):
     def __init__(self,root,split="train",transforms=None):
         if isinstance(root, str):
             root_imgs=root
@@ -276,15 +276,15 @@ if __name__ == "__main__":
 
     #for i in range(0,100):
     #    print(A.RandomScale(scale_limit=(1,1),always_apply=True).get_params())
-    cityscapesPath = "/home/l727r/Desktop/Cityscape"
-    Cityscape_train = Cityscape_dataset(cityscapesPath, "train", transforms=transforms)
+    cityscapesPath = "/home/l727r/Desktop/Datasets/cityscapes"
+    Cityscape_train = Cityscapes_dataset(cityscapesPath, "train", transforms=transforms)
     #for i in range(0,50):
     img, mask = Cityscape_train[100]
     print(img.shape)
     print(torch.unique(mask))
     out = show_cityscape(img=img, mask=mask, alpha=0., mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    out.show()
-    #out.save("out.png")
+    #out.show()
+    out.save("out.png")
 
     #transform = Compose([RandomCrop(769), RandomHorizontalFlip(), ToTensor(),
     #                     Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])

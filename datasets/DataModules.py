@@ -1,13 +1,13 @@
 import numpy as np
 import albumentations as A
+import albumentations.pytorch
 
 from pytorch_lightning import LightningDataModule
 import torch
 from torch.utils.data import DataLoader
-from datasets.Cityscape import Cityscape_dataset
-from datasets.Cityscape_Coarse import Cityscape_coarse_dataset
+
 from config.utils import hasNotEmptyAttr
-#from torch.nn.utils.rnn import pack_sequence
+
 import hydra
 from omegaconf import OmegaConf
 import logging
@@ -50,14 +50,15 @@ class BaseDataModule(LightningDataModule):
     def setup(self, stage= None):
         transforms_train = self.get_augmentations_from_config(self.augmentations.TRAIN)
         transforms_val = self.get_augmentations_from_config(self.augmentations.TEST)
-        self.transforms_train=transforms_train
-
+        #self.transforms_train=transforms_train
+        #print(transforms_train)
+        #print(transforms_val)
         if stage in (None, "fit"):
-            self.CS_train = hydra.utils.instantiate(self.dataset, split="train", transforms=transforms_train)
+            self.DS_train = hydra.utils.instantiate(self.dataset, split="train", transforms=transforms_train)
         if stage in (None,"fit","validate"):
-            self.CS_val = hydra.utils.instantiate(self.dataset, split="val", transforms=transforms_val)
+            self.DS_val = hydra.utils.instantiate(self.dataset, split="val", transforms=transforms_val)
         if stage in (None, "test"):
-            self.CS_test = hydra.utils.instantiate(self.dataset, split="test", transforms=transforms_val)
+            self.DS_test = hydra.utils.instantiate(self.dataset, split="test", transforms=transforms_val)
 
     def max_steps(self):
         # dataset size
@@ -96,19 +97,19 @@ class BaseDataModule(LightningDataModule):
         return A.Compose(trans)
 
     def train_dataloader(self):
-        return DataLoader(self.CS_train,shuffle=True, pin_memory=True,batch_size=self.batch_size,num_workers=self.num_workers,drop_last=True,persistent_workers=True)#,collate_fn=collate_fn)
+        return DataLoader(self.DS_train,shuffle=True, pin_memory=True,batch_size=self.batch_size,num_workers=self.num_workers,drop_last=True,persistent_workers=True)#,collate_fn=collate_fn)
 
     def val_dataloader(self):
-        return DataLoader(self.CS_val, pin_memory=True,batch_size=self.val_batch_size,num_workers=self.num_workers,persistent_workers=True)#,collate_fn=collate_fn)
+        return DataLoader(self.DS_val, pin_memory=True,batch_size=self.val_batch_size,num_workers=self.num_workers,persistent_workers=True)#,collate_fn=collate_fn)
 
     def test_dataloader(self):
-        return DataLoader(self.CS_test,pin_memory=True, batch_size=self.val_batch_size,num_workers=self.num_workers,persistent_workers=True)
+        return DataLoader(self.DS_test,pin_memory=True, batch_size=self.val_batch_size,num_workers=self.num_workers,persistent_workers=True)
 
-class PascalModule(BaseDataModule):
-    def val_dataloader(self):
-        return DataLoader(self.CS_val, pin_memory=True,batch_size=self.val_batch_size,num_workers=self.num_workers,persistent_workers=True,collate_fn=my_collate_fn)
+#class PascalModule(BaseDataModule):
+#    def val_dataloader(self):
+#        return DataLoader(self.CS_val, pin_memory=True,batch_size=self.val_batch_size,num_workers=self.num_workers,persistent_workers=True,collate_fn=my_collate_fn)
 
-class Cityscape(BaseDataModule):
+'''class Cityscape(BaseDataModule):
     def __init__(self,config):
         super().__init__(config)
         self.dataset=Cityscape_dataset
@@ -155,4 +156,4 @@ class Cityscape_Coarse(BaseDataModule):
         self.CS_train = hydra.utils.instantiate(self.dataset_extra, split="train", transforms=self.transforms_train, coarse_portion=coarse_portion)
         return DataLoader(self.CS_train, shuffle=True, pin_memory=True, batch_size=self.batch_size,
                           num_workers=self.num_workers, drop_last=True)
-
+'''

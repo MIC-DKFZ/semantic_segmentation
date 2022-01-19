@@ -11,6 +11,6 @@ LOGDIR: /gpu/checkpoints/OE0441/l727r
 
 roots:
   cityscapes:
-      LABELS: /gpu/data/OE0441/l727r/Cityscape
+      LABELS: /gpu/data/OE0441/l727r/cityscapes
       IMAGES: /gpu/data/common/cityscapes
   Pascal_ctx: /gpu/data/OE0441/l727r/VOC2010_Context

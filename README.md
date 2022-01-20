@@ -28,10 +28,11 @@ Albumentations provides a lot of augmentations that can be used. Also random ope
 How to setup the data. Currently the Cityscapes and Pascal Context Dataset is supported.
 For adding other datasets look at the Customizing part
 
-### Cityscape
+### Cityscapes
 <details><summary>Click to expand/collapse</summary>
 <p>
-Download the Cityscape dataset from [here](https://www.cityscapes-dataset.com/downloads/) . 
+
+Download the Cityscape dataset from [here](https://www.cityscapes-dataset.com/downloads/). 
 You have to create an account and afterward download: *leftImg8bit_trainvaltest.zip* (11GB)  and *gtFine_trainvaltest.zip* (241MB).
 Unzip them and put them into a folder, the structure of the folder should now look like this:
 
@@ -60,24 +61,55 @@ To avoid doing this convertion during training this is done in a preprocessing s
 To do this preprocessing run the following code with adjusting the datapath to the location which contains the *gtFine_trainvaltest* folder. 
 This will create a new img for each datasamble with the converted class labeling which will be merged into the folder/data structure of the cityscapes dataset.
 ````
-python creating_CS_19_labels.py home/.../Datasets/cityscapes
+python datasets/utils/process_Cityscapes.py home/.../Datasets/cityscapes
 ````
-After downloading and setting up the datathe path in the config has to be adjusted.
-Open the file *config/datasets/Cityscape_19.yaml* and seacrch for DATASET.ROOT adopt this path to the location of the folder where your *gtFine_trainvaltest* and *leftImg8bit_trainvaltest* are.
-In the above Example set:
+After downloading and setting up the data, the path in the config has to be adjusted.
+Open the file the environment your are using(defaul *config/environment/local.yaml*) and adopt the cityscapes path to the location of the folder where your *gtFine_trainvaltest* and *leftImg8bit_trainvaltest* are.
+For this example this would look like this:
 ````yaml
-config/datasets/Cityscape_19.yaml
+config/environment/local.yaml
 ─────────────────────────────────
-DATASET:
-  ROOT: home/.../Datasets/cityscapes
+paths:
+  cityscapes: /home/.../Datasets/cityscapes
 ````
+</p>
+</details>
+
+### Cityscapes_Coarse
+<details><summary>Click to expand/collapse</summary>
+<p>
+
+The cityscapes dataset also provides 20k additional coarse labeled images. 
+Since  cityscapes_coarse contains no validation data the fine annotated validation set is used for this purpose.
+Therefore first download and process the cityscapes dataset as shown above.
+Afterwards download the cityscapes_coarse dataset from [here](https://www.cityscapes-dataset.com/downloads/). 
+Download *leftImg8bit_trainextra.zip (44GB)* and *gtCoarse.zip (1.3GB)* and unzip them in the same folder as your cityscapes dataset and you should end up with this:
+````
+Datasets/cityscapes
+    ├── leftImg8bit_trainvaltest
+    │   └── leftImg8bit
+    │       └── ...
+    ├── gtFine_trainvaltest
+    │   └── gtFine
+    │       └── ...
+    ├── leftImg8bit_trainextra
+    │   └── leftImg8bit
+    │       └── ...
+    └── gtCoarse
+        └── gtCoarse
+            └── ...
+````
+Afterwards process the cityscapes_coarse dataset in the same way as it was done for cityscapes by:
+````
+python datasets/utils/process_Cityscapes_coarse.py home/.../Datasets/cityscapes
+````
+
 </p>
 </details>
 
 ### PASCAL Context
 <details><summary>Click to expand/collapse</summary>
 <p>
-
 
 Click [here](https://cs.stanford.edu/~roozbeh/pascal-context/trainval.tar.gz) for directly downloading the labels or do it manually by downloading the file *trainval.tar.gz (30.7 MB file)* from [PASCAL-Context](https://cs.stanford.edu/~roozbeh/pascal-context/#download). 
 Click [here](http://host.robots.ox.ac.uk/pascal/VOC/voc2010/VOCtrainval_03-May-2010.tar) for directly downloading the images or do it manually by downloading the file *training/validation data (1.3GB tar file)* from [PASCAL VOC](http://host.robots.ox.ac.uk/pascal/VOC/voc2010/index.html#devkit).
@@ -98,9 +130,10 @@ Datasets
 Since the VOC2010 dataset contains a lot of unnecessary stuff (for this repo), only the needed data is extracted and merged with the transformed label data from *trainval/*.
 Run the following script which creates a new folder structure with only the relevant and transformed data.
 ````
-Code
+python datasets/utils/process_VOC2010_Context.py home/.../Datasets/
 ````
-Afterward you should have a dataset which looks like this.
+Afterward a new dataset is created and the data from *trainval* and *VOCtrainval_03-May-2010*  is not further needed.
+The new dataset looks like this:
 ````
 Datasets
     └── VOC2010_Context
@@ -111,15 +144,22 @@ Datasets
             ├── train
             └── val
 ````
+After downloading and setting up the data, the path in the config has to be adjusted.
+Open the file the environment your are using(defaul *config/environment/local.yaml*) and adopt the cityscapes path to the location of the folder where your *gtFine_trainvaltest* and *leftImg8bit_trainvaltest* are.
+For this example this would look like this:
+````yaml
+config/environment/local.yaml
+─────────────────────────────────
+paths:
+    VOC2010_Context: /home/.../Datasets/VOC2010_Context
+````
+
 </p>
 </details>
 
-## Setup path
-xxx
-
 ## Running Code
 
-you can directly run the baseline by:
+After setting up the data, you can directly run the baseline by:
 ```` 
 python main.py
 ````
@@ -145,6 +185,10 @@ LINK
 How to add new models, datasets and more.
 
 ## Model
+
+<details><summary>Click to expand/collapse</summary>
+<p>
+
 Defining a custom model is done in two steps, first defining your custom pytorch model and afterwards setting up its config file.
 1. **Defining your Pytorch Model**, thereby the following thinks have to be considered:
    - put your *modelfile* into the *models/* folder
@@ -178,7 +222,15 @@ Futher the order of the outputs should match the order of your losses in *lossfu
       PRETRAINED: True         # you could want a parameter to indicate if pretrained weights should be used or not 
       PRETRAINED_WEIGHTS: /pretrained/weights.pth  # give the path to the weights      
     ````
+   
+</p> 
+</details>
+
 ## Dataset
+
+<details><summary>Click to expand/collapse</summary>
+<p>
+
 Defining a custom dataset is done in two steps, first defining your custom pytorch dataset and afterwards setting up its config file.
 1. **Defining your pytorch Dataset**, therby consider that the following structure is required (mainly pytorch basic) and see the dummy below:
    - \__init__(self, custom_args, split, transforms):
@@ -229,8 +281,9 @@ Defining a custom dataset is done in two steps, first defining your custom pytor
    ### _target_: should point to your dataset class
    ### afterwards you can handle your custom input arguments which are used to initialize the dataset
    dataset:
-     _target_: datasets.MyDataset.dataset_class
-     root: ${DATASET.DATA_ROOT}     #data root as example input (in this case a reference to what is defined in DATASET) 
+     _target_: datasets.MyDataset.dataset_class 
+     root: /home/.../Datasets/my_dataset     #the root to the data as an example input
+     #root: ${path.my_dataset}               #the root if defined in config/environment/used_env.yaml
      input1: ...                    #All your other input arguments
      input2: ...
    ### DATASET is used to store information about the dataset which are needed during training
@@ -238,9 +291,7 @@ Defining a custom dataset is done in two steps, first defining your custom pytor
      ## REQUIRED DATASER ARGUMENTS
      NAME:            #Used for the logging directory
      NUM_CLASSES:     #Needed for defining the model and the metrics
-     IGNORE_INDEX:    #Needed for the lossfunction, if no ignore indes set to -100 or another number which do no occur in your dataset
-     ## CUSTOM INPUT ARGUMENTS, SOMETHINK LIKE:
-     DATA_ROOT: /home/user/datasets/mydata  
+     IGNORE_INDEX:    #Needed for the lossfunction, if no ignore indes set to 255 or another number which do no occur in your dataset 
      ## OPTIONAL, BUT NEEDED IF POLY LR SCHEDULER IS USED
      Size:
         TRAIN: 1234 # Size of your training dataset
@@ -251,7 +302,48 @@ Defining a custom dataset is done in two steps, first defining your custom pytor
         - class1
         - class2 ...
    ````
+
+</p>
+</details>
+
+
+## Environment
+<details><summary>Click to expand/collapse</summary>
+<p>
+
+
+An environment config contains everythink with is specific for the environment like paths or specific parameters but 
+also to reach environment specific behaviour by for example enable/disable checkpoint saving or thr progressbar.
+Since the environment config is mearged into the baseline config at last, you can override all parameters from there.
+For adding a new environment config create a *ustom_env.yaml* file in *config/environment/* and adapt the following dummy: 
+
+
+````yaml
+config/envrironment/custom_env.yaml
+_______________________
+
+#@package _global_
+
+#Output directory for logs an checkpoints
+LOGDIR: logs/
+#Paths to datasets
+paths:
+  cityscapes: /home/.../Datasets/cityscapes
+  VOC2010_Context: /home/.../Datasets/VOC2010_Context
+  other_datasets: ...
+#Whatever you need
+CUSTOM_PATH: ...  
+Some_Parameter: ...
+...
+````
+</p>
+</details>
+
 ## Lossfunction
+
+<details><summary>Click to expand/collapse</summary>
+<p>
+
 The lossfunction in defined using the *get_loss_function_from_cfg* function in *utils/lossfunction*.
 Inside the the function your have acess to everthink what you defined inside your config using *cfg.myparameter*.
 To add a custom lossfunction just add the following onto the buttom of the function:
@@ -264,7 +356,14 @@ The lossfunction will be called in the following way:
 ````lossfunction(y_pred, y_gt) ```` with ````y_pred.shape = [batch_size, num_classes, height, width] ```` and ````y_gt.shape = [batch_size, height, width]````.
 If you need the data in another format you can use for example *lambda functions* (look at the definition of "DC_CE" loss in the get_loss_function_from_cfg).
 
+</p>
+</details>
+
 ## Optimizer
+
+<details><summary>Click to expand/collapse</summary>
+<p>
+
 The optimizer is defined using the *get_optimizer_from_cfg* function in *utils/optimizer*. The inputs of the function are the models *parameters* as well the complete *cfg*. 
 An custom optimizer can be added to *get_optimizer_from_cfg* by:
 ````py    
@@ -272,7 +371,15 @@ elif cfg.optimizer == "MYOPTIMIZER":
         ...                  #do whatever you need
         return My_Optimizer(...)
 ````
+
+</p>
+</details>
+
 ## LR Scheduler
+
+<details><summary>Click to expand/collapse</summary>
+<p>
+
 The lr scheduler is defined using the *get_scheduler_from_cfg* function in *utils/lr_scheduler*. 
 The input of the function are the opimizer, max steps and the cfg.
 To add a custom lr scheduler you have to define the scheduler and its config in the following way:
@@ -287,6 +394,7 @@ elif cfg.lr_scheduler == "MYSCHEDULER":
 lr_scheduler is your custom scheduler. The config is needed to tell Pytorch Lightning how to call your scheduler.
 For example the *interval* parameter can set to *step* or *epoch*, and accordingly a lr_scheduler.step() is executed after each step or only at the end of the epoch.
 
-
+</p>
+</details>
 
 

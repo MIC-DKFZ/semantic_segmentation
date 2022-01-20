@@ -9,8 +9,8 @@ DATASET:
 
 LOGDIR: /gpu/checkpoints/OE0441/l727r
 
-roots:
+paths:
   cityscapes:
       LABELS: /gpu/data/OE0441/l727r/cityscapes
       IMAGES: /gpu/data/common/cityscapes
-  Pascal_ctx: /gpu/data/OE0441/l727r/VOC2010_Context
+  VOC2010_Context: /gpu/data/OE0441/l727r/VOC2010_Context

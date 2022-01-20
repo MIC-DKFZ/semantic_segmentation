@@ -2,7 +2,7 @@
 
 dataset:
     _target_: datasets.Cityscapes_coarse.Cityscapes_coarse_dataset
-    root: ${roots.cityscapes}
+    root: ${paths.cityscapes}
 
 
 #epochs: 400

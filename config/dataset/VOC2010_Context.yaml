@@ -6,12 +6,12 @@
 #  #_target_: datasets.DataModules.PascalModule
 dataset:
     _target_: datasets.VOC2010_Context.VOC2010_Context_dataset
-    root: ${roots.Pascal_ctx}
+    root: ${paths.VOC2010_Context}
 
 batch_size: 8 #16
 val_batch_size: ${batch_size}
 epochs: 150 #400
-lr: 0.001 #0.01 #LR: 0.01445439770745928
+lr: 0.004 #0.01 #LR: 0.01445439770745928
 wd: 0.0001 #0.0005
 momentum: 0.9
 lossfunction: ["CE","CE","CE","CE"]

@@ -1,15 +1,11 @@
 import glob
 import logging
-#
-
-
 import os.path
-
 import hydra
-
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
+import numpy as np
 import torch
 from torchmetrics import Metric
 import torch.nn.functional as F
@@ -24,11 +20,11 @@ from utils.loss_function import get_loss_function_from_cfg
 from utils.optimizer import get_optimizer_from_cfg
 from utils.lr_scheduler import get_lr_scheduler_from_cfg
 
-from datasets import DataModules
+#from datasets import DataModules
 from models import hrnet, hrnet_ocr, hrnet_ocr_aspp, hrnet_ocr_ms
 #from models import hrnet_ocr3 as hrnet_ocr
 
-import time
+#import time
 
 class ConfusionMatrix(Metric):
     def __init__(self, num_classes, dist_sync_on_step=False):
@@ -66,16 +62,14 @@ class ConfusionMatrix(Metric):
 class SegModel(LightningModule):
     def __init__(self, config):
         super().__init__()
+
         self.config = config
-        self.num_classes=config.DATASET.NUM_CLASSES
+        #self.num_classes=config.DATASET.NUM_CLASSES
         self.model = eval(config.MODEL.NAME + '.get_seg_model')(config)
 
         self.metric = ConfusionMatrix(config.DATASET.NUM_CLASSES)
         self.register_buffer("best_mIoU", torch.as_tensor(0))
 
-        #self.extra_dataloader=hydra.utils.instantiate(self.dataset, split="val_size")
-        #d=DataLoader(hydra.utils.instantiate(self.dataset, split="val_size"), pin_memory=True, batch_size=self.val_batch_size, num_workers=self.num_workers,
-        #           persistent_workers=True)
 
     def forward(self, x):
 
@@ -84,9 +78,7 @@ class SegModel(LightningModule):
         return x
 
     def configure_optimizers(self):
-        #self.metric = ConfusionMatrix(self.num_classes)
-        ####LOSSFUNCTION####
-        print(type(self.config.lossfunction))
+        #### LOSSFUNCTION ####
         if isinstance(self.config.lossfunction,str):
             self.loss_functions = [get_loss_function_from_cfg(self.config.lossfunction, self.config)]
         else:
@@ -100,10 +92,10 @@ class SegModel(LightningModule):
         log.info("Loss Functions: %s", self.loss_functions)
         log.info("Weighting: %s", self.loss_weights)
 
-        ####OPTIMIZER####
+        #### OPTIMIZER ####
         self.optimizer = get_optimizer_from_cfg(self.parameters(), self.config)
 
-        ####LR SCHEDULER####
+        #### LR SCHEDULER ####
         max_steps = self.trainer.datamodule.max_steps()
         self.lr_scheduler, lr_scheduler_config = get_lr_scheduler_from_cfg(self.optimizer, max_steps, self.config)
 
@@ -117,9 +109,8 @@ class SegModel(LightningModule):
         self.logger.log_hyperparams(
             {"Pretrained": self.config.MODEL.PRETRAINED, "Parameter": num_total, "trainable Parameter": num_train},
             {"mIoU/best_mIoU": self.best_mIoU, "Time/mTrainTime": 0, "Time/mValTime": 0})
-        OmegaConf.save(config=self.config, f=os.path.join(self.logger.log_dir, "hparams.yaml"))
-        # with open(os.path.join(self.logger.log_dir,"hparams.yaml"), 'w') as file:
-        #    yaml.dump(convert_to_dict(self.config, []),file, allow_unicode=True, default_flow_style=False,sort_keys=False)
+        #saving resolved parameters
+        OmegaConf.save(config=self.config, resolve=True, f=os.path.join(self.logger.log_dir, "hparams.yaml"))
 
     def get_loss2(self, y_pred, y_gt):
         #print("P",y_pred["out"].shape)
@@ -276,7 +267,7 @@ def training_loop(cfg: DictConfig):
     ### DEFINING DATASET ####
     dataModule=hydra.utils.instantiate(cfg.datamodule,_recursive_=False)
 
-    ### DEFINING MODEL and load checkpoint if wanted####
+    ### DEFINING MODEL AND LOAD CHECKPOINT IF WANTED####
     if hasNotEmptyAttr(cfg,"finetune_from"):
         # +finetune_from = /home/l727r/Desktop/Target_Folder/Cityscape/hrnet/epochs\=400/2021-12-25_22-04-38_environment\=cluster_epochs\=400/checkpoints/best_epoch\=393_mIoU\=0.8144.ckpt
         log.info("finetune from: %s", cfg.finetune_from)

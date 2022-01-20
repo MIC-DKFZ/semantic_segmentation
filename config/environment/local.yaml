@@ -4,6 +4,6 @@ CALLBACKS:
 
 LOGDIR: logs/
 
-roots:
+paths:
   cityscapes: /home/l727r/Desktop/Datasets/cityscapes
-  Pascal_ctx: /home/l727r/Desktop/Datasets/VOC2010_Context
+  VOC2010_Context: /home/l727r/Desktop/Datasets/VOC2010_Context

@@ -3,8 +3,8 @@ defaults:
   - _self_
   - callbacks: default
   - data_augmentations: default
-  - models: hrnet
-  - datasets: Cityscapes
+  - model: hrnet
+  - dataset: Cityscapes
   - environment: local
 
   - override hydra/hydra_logging: colorlog
@@ -15,21 +15,23 @@ defaults:
 hydra:
   output_subdir: hydra
   run:
-    dir: ${LOGDIR}/${DATASET.NAME}/${MODEL.NAME}/${hydra.job.override_dirname}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: ${LOGDIR}/${DATASET.NAME}/${MODEL.NAME}/${experiment}__${hydra.job.override_dirname}/${now:%Y-%m-%d_%H-%M-%S}
   sweep:
     dir: ${hydra.run.dir}_mr
     subdir: ${hydra.job.num}
   job:
     config:
       override_dirname:
-        item_sep: "_"
+        kv_sep: "_"
+        item_sep: "__"
         exclude_keys:
           - models
           - datasets
           - environment
           - finetune_from
+          - experiment
 
-comment: ""
+experiment: "baseline"
 num_gpus:
 num_workers: 12
 batch_size: 6

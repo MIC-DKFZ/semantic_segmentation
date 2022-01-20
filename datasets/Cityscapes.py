@@ -103,8 +103,7 @@ class Cityscapes_dataset(torch.utils.data.Dataset):
         else:
             root_imgs = root.IMAGES
             root_labels = root.LABELS
-        #print("hallo")
-        print(root)
+
         if split=="test":
             split="val"
         imgs_path=os.path.join( root_imgs ,"leftImg8bit_trainvaltest", "leftImg8bit" , split , "*" , "*_leftImg8bit.png" )

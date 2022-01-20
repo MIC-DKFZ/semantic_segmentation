@@ -65,7 +65,7 @@ class BaseDataModule(LightningDataModule):
         # batch size
         # num gpus
         # epochs
-        # acc?
+        # accumulate_grad_batches
         steps_per_epoch = self.base_size // self.batch_size
         steps_per_gpu = int(np.ceil(steps_per_epoch / self.trainer.gpus))
         acc_steps_per_gpu = int(np.ceil(steps_per_gpu / self.trainer.accumulate_grad_batches))
@@ -97,10 +97,10 @@ class BaseDataModule(LightningDataModule):
         return A.Compose(trans)
 
     def train_dataloader(self):
-        return DataLoader(self.DS_train,shuffle=True, pin_memory=True,batch_size=self.batch_size,num_workers=self.num_workers,drop_last=True,persistent_workers=True)#,collate_fn=collate_fn)
+        return DataLoader(self.DS_train,shuffle=True, pin_memory=True,batch_size=self.batch_size,num_workers=self.num_workers,drop_last=True,persistent_workers=True)
 
     def val_dataloader(self):
-        return DataLoader(self.DS_val, pin_memory=True,batch_size=self.val_batch_size,num_workers=self.num_workers,persistent_workers=True)#,collate_fn=collate_fn)
+        return DataLoader(self.DS_val, pin_memory=True,batch_size=self.val_batch_size,num_workers=self.num_workers,persistent_workers=True)
 
     def test_dataloader(self):
         return DataLoader(self.DS_test,pin_memory=True, batch_size=self.val_batch_size,num_workers=self.num_workers,persistent_workers=True)

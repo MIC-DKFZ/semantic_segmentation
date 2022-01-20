@@ -3,7 +3,7 @@
 #SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
 dataset:
     _target_: datasets.Cityscapes.Cityscapes_dataset
-    root: ${roots.cityscapes}
+    root: ${paths.cityscapes}
 
 DATASET:
   ##NEEDED PARAMETERS

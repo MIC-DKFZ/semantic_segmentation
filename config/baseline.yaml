@@ -10,8 +10,6 @@ defaults:
   - override hydra/hydra_logging: colorlog
   - override hydra/job_logging: colorlog
 
-#hydra.job.config.override_dirname: "3"
-
 hydra:
   output_subdir: hydra
   run:
@@ -25,11 +23,12 @@ hydra:
         kv_sep: "_"
         item_sep: "__"
         exclude_keys:
-          - models
-          - datasets
+          - model
+          - dataset
           - environment
           - finetune_from
           - experiment
+          - LOGDIR
 
 experiment: "baseline"
 num_gpus:
@@ -50,9 +49,9 @@ pl_trainer:
   benchmark: True
   #limit_train_batches: 0.01
   #limit_val_batches: 0.4
-  #  track_grad_norm: 2
-  #  reload_dataloaders_every_epoch: true
-  #  accumulate_grad_batches: 2
+  #track_grad_norm: 2
+  #reload_dataloaders_every_epoch: true
+  #accumulate_grad_batches: 2
 
 #WORK_DIR: ${hydra:runtime.cwd}/
 MODEL:

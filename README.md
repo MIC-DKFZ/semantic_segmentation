@@ -3,13 +3,14 @@
 
 
 # Requirements
-## Dependecies
+
 Install the needed packages by:
 ````shell
 pip install -r requirements.txt
 ````
 Among others, this repository is mainly built on the following packages.
 You may want to familiarize yourself with their basic use beforehand.
+A short introduction to Hydra is given in the *config/* folder.
 - **[Pytorch](https://pytorch.org/)**: The machine learning/deep learning library used in this repository.
 - **[Pytorch Lightning](https://www.pytorchlightning.ai/):** 
 An open source framework for organizing PyTorch code and supporting machine learning development.
@@ -23,7 +24,7 @@ Albumentations provides a lot of augmentations that can be used. Also random ope
 
 
 # How To Run
-## Datasetup
+## Setting up the Data
 
 How to setup the data. Currently the Cityscapes and Pascal Context Dataset is supported.
 For adding other datasets look at the Customizing part
@@ -68,7 +69,7 @@ Open the file the environment your are using(defaul *config/environment/local.ya
 For this example this would look like this:
 ````yaml
 config/environment/local.yaml
-─────────────────────────────────
+─────────────────────────────
 paths:
   cityscapes: /home/.../Datasets/cityscapes
 ````
@@ -149,7 +150,7 @@ Open the file the environment your are using(defaul *config/environment/local.ya
 For this example this would look like this:
 ````yaml
 config/environment/local.yaml
-─────────────────────────────────
+─────────────────────────────
 paths:
     VOC2010_Context: /home/.../Datasets/VOC2010_Context
 ````
@@ -159,26 +160,34 @@ paths:
 
 ## Running Code
 
-After setting up the data, you can directly run the baseline by:
+The following is a **Quickstart** guide on how to run the code.
+A detailed explanation of all configurations and how they can be used can be found in the *config/* folder
+After setting up the data, you can directly run the baseline just by:
 ```` 
 python main.py
 ````
-which woule train the baseline experiment which is to train HRNET on the Cityscape Dataset with default settings.
-To adopt the basic config setting you can edit the */config/baseline.yaml* file directly or use the hydra commandline syntax. 
-To train a ocr model on another dataset without using pretrained weights and with an adopted lr and number of epochs you can run the following:
-```` 
-python main.py models=hrnet_ocr datasets=Pascal lr=0.005 epochs=120 MODEL.PRETRAINED=false
+This trains HRNet on the Cityscape Dataset with default settings.
+To adopt the configuration you can edit the */config/baseline.yaml* file directly or use the hydra commandline syntax. 
+You can change the model from the commandline by:
+````shell 
+python main.py model=hrnet
+python main.py model=hrnet_ocr
+python main.py model=hrnet_ocr_aspp
+python main.py model=hrnet_ocr_ms
 ````
-Another example with adopting the lossfunction and editing the pytorch lightning trainer. 
-In this case the main loss is changed as well as the precision parameter of the lightning trainer and accumulated gradiend batches are added to the trainer.
+In the same way dataset can be changed by:
+````shell 
+python main.py dataset=Cityscapes
+python main.py dataset=Cityscapes_coase
+python main.py dataset=VOC2010_Context
 ````
-python main.py main_loss="RMI" pl_trainer.precision=32 +pl_trainer.accumulate_grad_batches=2
+Also basic hyperparameters needed for training can be set:
 ````
-
+python main.py epochs=400 batch_size=6 val_batch_size=6 num_workers=10 lr=0.001 wd=0.0005 momentum=0.9
+````
 As you can see the basic syntax how to run the code is simple. 
-The crucial thing is to know which parameters you can overwrite and how.
-Therefore the *config/* folder explains in detail how the configuration is composed and which parameters it contains.
-LINK
+The crucial thing is to know which parameters you can configure and how.
+Therefore, the *config/* folder explains in detail how the configuration is composed and which parameters it contains.
 
 # Customizing
 
@@ -320,8 +329,7 @@ For adding a new environment config create a *ustom_env.yaml* file in *config/en
 
 ````yaml
 config/envrironment/custom_env.yaml
-_______________________
-
+─────────────────────────────
 #@package _global_
 
 #Output directory for logs an checkpoints

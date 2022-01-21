@@ -4,9 +4,6 @@ CALLBACKS:
 pl_trainer:
     enable_progress_bar: false
 
-DATASET:
-  ROOT: ${DATASET.CLUSTER_ROOT}
-
 LOGDIR: /gpu/checkpoints/OE0441/l727r
 
 paths:

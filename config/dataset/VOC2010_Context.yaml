@@ -1,9 +1,10 @@
 #@package _global_
 
+#DEFINING THE DEFAULT DATA AUGMENTATION FOR THIS DATASET
+defaults:
+  - override /data_augmentation: VOC2010_Context
+  - override /hyperparameters: VOC2010_Context
 #SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
-#datamodule:
-#  _target_: datasets.DataModules.BaseDataModule #PascalModule
-#  #_target_: datasets.DataModules.PascalModule
 dataset:
     _target_: datasets.VOC2010_Context.VOC2010_Context_dataset
     root: ${paths.VOC2010_Context}

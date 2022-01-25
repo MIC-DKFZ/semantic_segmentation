@@ -135,7 +135,6 @@ class SegModel(LightningModule):
     def training_step(self, batch, batch_idx):
 
         x, y_gt = batch
-
         y_pred = self(x)
 
         loss = self.get_loss(y_pred, y_gt)
@@ -145,41 +144,12 @@ class SegModel(LightningModule):
 
     def validation_step(self, batch, batch_idx):
 
-        #if len(batch)==3:
-        #    x, y_gt, y_org=batch
-        #else:
         x, y_gt = batch
 
-        #x,y_gt=batch["img"],batch["mask"]
-
-
-        #x, y_gt = batch
-        #print(batch_idx,idx)
-        #self.trainer.datamodule.CS_train.get_idx(batch_idx)
-        #print(x[0].shape)
-        #x=torch.stack(x,dim=0)
-
-        #print("X",x.shape)
-        #print(y_gt)
-
         y_pred = self(x)
-        #print(y_pred[0])
-        #print(y_gt[0].shape)
-
 
         val_loss = self.get_loss(y_pred, y_gt)
         self.log("Loss/validation_loss", val_loss, on_step=True, on_epoch=True, logger=True)
-
-        #if len(batch)==3:
-        #    pred=list(y_pred.values())[0]
-        #    size=[x.size() for x in y_org]
-        #    pred=[F.interpolate(p.unsqueeze(0), size=s, mode='bilinear', align_corners=False).argmax(1).flatten() for p,s in zip(pred,size)]
-        #
-        #    pred=torch.cat(pred)
-        #    y_org=torch.cat([y.flatten() for y in y_org])#
-
-        #    self.metric.update(y_org, pred)
-        #else:
 
         self.metric.update(y_gt.flatten(), list(y_pred.values())[0].argmax(1).flatten())
 
@@ -293,6 +263,7 @@ def training_loop(cfg: DictConfig):
     )
 
     ### START TRAINING ####
+    #dataModule.setup()
     trainer.fit(model, dataModule)
 
 

@@ -1,5 +1,8 @@
 #@package _global_
-
+#DEFINING THE DEFAULT DATA AUGMENTATION FOR THIS DATASET
+defaults:
+  - override /data_augmentation: Cityscapes
+#SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
 dataset:
     _target_: datasets.Cityscapes_coarse.Cityscapes_coarse_dataset
     root: ${paths.cityscapes}

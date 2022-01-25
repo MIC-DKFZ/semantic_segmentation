@@ -446,7 +446,7 @@ class HighResolutionNet(nn.Module):
 
         return None, None, feats
 
-    def init_weights(self, pretrained):
+    def init_weights(self):
         log.info('=> init weights from normal distribution')
         for name, m in self.named_modules():
             if any(part in name for part in {'cls', 'aux', 'ocr'}):
@@ -457,6 +457,8 @@ class HighResolutionNet(nn.Module):
             elif isinstance(m, Norm2d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
+
+    def load_weights(self, pretrained):
         if os.path.isfile(pretrained):
             log.info('=> loading pretrained model {}'.format(pretrained))
             pretrained_dict = torch.load(pretrained,
@@ -480,7 +482,9 @@ def get_backbone_model(cfg):
     global ALIGN_CORNERS
     ALIGN_CORNERS=cfg.MODEL.ALIGN_CORNERS
     model = HighResolutionNet(cfg)
+    if cfg.MODEL.INIT_WEIGHTS:
+        model.init_weights()
     if cfg.MODEL.PRETRAINED:
-        model.init_weights(cfg.MODEL.ADAPTED_PRETRAINED_WEIGHTS)
+        model.load_weights(cfg.MODEL.ADAPTED_PRETRAINED_WEIGHTS)
 
     return model

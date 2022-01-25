@@ -48,11 +48,11 @@ class BaseDataModule(LightningDataModule):
         self.dataset=dataset
 
     def setup(self, stage= None):
-        transforms_train = self.get_augmentations_from_config(self.augmentations.TRAIN)
-        transforms_val = self.get_augmentations_from_config(self.augmentations.TEST)
-        #self.transforms_train=transforms_train
-        #print(transforms_train)
-        #print(transforms_val)
+        transforms_train = self.get_augmentations_from_config(self.augmentations.TRAIN)[0]
+        transforms_val = self.get_augmentations_from_config(self.augmentations.TEST)[0]
+
+        #print("'TRAIN",transforms_train)
+        #print("VAL",transforms_val)
         if stage in (None, "fit"):
             self.DS_train = hydra.utils.instantiate(self.dataset, split="train", transforms=transforms_train)
         if stage in (None,"fit","validate"):
@@ -75,6 +75,41 @@ class BaseDataModule(LightningDataModule):
         return max_steps
 
     def get_augmentations_from_config(self,augmentations):
+
+        if hasNotEmptyAttr(augmentations, "FROM_DICT"):
+            return A.from_dict(OmegaConf.to_container(augmentations.FROM_DICT))
+
+        trans = []
+        for augmentation in augmentations:
+
+            transforms = list(augmentation.keys())
+
+            for transform in transforms:
+                #print("TF",transform)
+                parameters = getattr(augmentation, transform)
+                if parameters == None: parameters = {}
+
+                if "transforms" in list(parameters.keys()):
+                    transforms=self.get_augmentations_from_config(parameters.transforms)
+                    del parameters["transforms"]
+                    func = getattr(A, transform)
+                    trans.append(func(transforms=transforms,**parameters))
+                else:
+                    try:
+                        # try to load the functions from ALbumentations(A)
+                        func = getattr(A, transform)
+                        trans.append(func(**parameters))
+                    except:
+                        try:
+                            # exeption for ToTensorV2 function which is in A.pytorch
+                            func = getattr(A.pytorch, transform)
+                            trans.append(func(**parameters))
+                        except:
+                            print("No Operation Found", transform)
+        return trans
+
+
+    def get_augmentations_from_config2(self,augmentations):
         if hasattr(augmentations, "FROM_DICT"):
             if augmentations.FROM_DICT is not None:
                 return A.from_dict(OmegaConf.to_container(augmentations.FROM_DICT))

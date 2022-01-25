@@ -170,8 +170,8 @@ For more complex files you will end up with lists of dictionaries and dictionari
 ### Basic Hyperparameters
 The following hyperparameters are supported and can be changed in the *baseline.yaml* directly or can be overwritten from the command line as shown below:
  - **epochs:** number of epochs for training.
- - **batch_size:** defines the batch size during training. 
- - **val_batch_size:** defines the batch size during validation and testing. Is set to batch_size if not specified.
+ - **batch_size:** defines the batch size during training (per GPU). 
+ - **val_batch_size:** defines the batch size during validation and testing (also per GPU). Is set to batch_size if not specified.
  - **num_workers:** number of workers for the dataloaders.
  - **lr:** initial learning rate for training.
  - **wd:** weight decay (optimizer parameter)
@@ -194,7 +194,7 @@ The model has two outputs, a primary and an auxiliary one.
 - **hrnet_ocr_aspp**: Additionally including an ASPP module into the ORC model. Again the model has two outputs.
 - **hrnet_ocr_ms**: [Hierarchical Multiscale Attention Network](https://arxiv.org/pdf/2005.10821.pdf). Extends ORC with multiscale and attention. 
 The model has 4 outputs: primary, auxiliary, high_scale_prediction, low_scale_prediction
-```
+```shell
 python main.py model=hrnet
 python main.py model=hrnet_ocr
 python main.py model=hrnet_ocr_aspp
@@ -204,7 +204,9 @@ Besides the selection of the models other parameters are provided and can be ena
 - **MODEL.PRETRAINED**: Indicate if pretrained weights (on ImageNet) should be used.
 - **MODEL.INIT_WEIGHTS**: Indicate if weights should be Initialized from a normal distribution.
 
-```python main.py MODEL.PRETRAINED=false MODEL.INIT_WEIGHTS=false```
+````shell 
+python main.py MODEL.PRETRAINED=false MODEL.INIT_WEIGHTS=false
+````
 
 ### Dataset
 
@@ -217,7 +219,7 @@ For validation the 500 fine annotated images from Cityscape are used.
 - **VOC2010_Context**: [PASCAL Context](https://cs.stanford.edu/~roozbeh/pascal-context/) dataset, which is an extension for the [PASCAL VOC2010 dataset](http://host.robots.ox.ac.uk/pascal/VOC/voc2010/) and contains additional segmentation masks. 
 Currently, only the 60 class setting is supported. 
 It contains 5.105 training and 4.998 validation images.
-```
+```shell
 python main.py dataset=Cityscapes
 python main.py dataset=Cityscapes_coarse
 python main.py dataset=Cityscapes_fine_coarse
@@ -299,7 +301,7 @@ Different environments are stored in the *conifg/environment/* folder and can be
 To add you own environment look at the customization chapter. By default ``environment=local``.
 
 
-````py
+````shell
 python main.py environment=cluster
 python main.py environment=local
 ````

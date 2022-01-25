@@ -15,7 +15,7 @@ A short introduction to Hydra is given in the *config/* folder.
 - **[Pytorch Lightning](https://www.pytorchlightning.ai/):** 
 An open source framework for organizing PyTorch code and supporting machine learning development.
 It is automating most of the training loop and offers many useful features like mixed precision training.
-Lightning also makes code scalable to any hardware(CPU, GPU, TPU) without changing the model, as well as distributed training on multiple GPUs.
+Lightning also makes code scalable to any hardware(CPU, GPU, TPU) without changing the code, as well as distributed training on multiple GPUs.
 - **[Hydra](https://hydra.cc/docs/intro/):** Framework to simplify the development, organization, and configuration of machine learning experiments.
 It provides the ability to dynamically create a hierarchical configuration by composition and override it through config files and the command line.
 - **[Albumentations](https://albumentations.ai):** Package for fast and flexible data augmentation in Semantic Segmentation (Albumentations is not limited to segmentation, but only that is used in this repository). 
@@ -101,7 +101,7 @@ Datasets/cityscapes
             └── ...
 ````
 Afterwards process the cityscapes_coarse dataset in the same way as it was done for cityscapes by:
-````
+````shell
 python datasets/utils/process_Cityscapes_coarse.py home/.../Datasets/cityscapes
 ````
 
@@ -130,7 +130,7 @@ Datasets
 ````
 Since the VOC2010 dataset contains a lot of unnecessary stuff (for this repo), only the needed data is extracted and merged with the transformed label data from *trainval/*.
 Run the following script which creates a new folder structure with only the relevant and transformed data.
-````
+````shell
 python datasets/utils/process_VOC2010_Context.py home/.../Datasets/
 ````
 Afterward a new dataset is created and the data from *trainval* and *VOCtrainval_03-May-2010*  is not further needed.
@@ -163,26 +163,26 @@ paths:
 The following is a **Quickstart** guide on how to run the code.
 A detailed explanation of all configurations and how they can be used can be found in the *config/* folder
 After setting up the data, you can directly run the baseline just by:
-```` 
+````shell
 python main.py
 ````
 This trains HRNet on the Cityscape Dataset with default settings.
 To adopt the configuration you can edit the */config/baseline.yaml* file directly or use the hydra commandline syntax. 
 You can change the model from the commandline by:
-````shell 
+````shell
 python main.py model=hrnet
 python main.py model=hrnet_ocr
 python main.py model=hrnet_ocr_aspp
 python main.py model=hrnet_ocr_ms
 ````
 In the same way dataset can be changed by:
-````shell 
+````shell
 python main.py dataset=Cityscapes
 python main.py dataset=Cityscapes_coase
 python main.py dataset=VOC2010_Context
 ````
 Also basic hyperparameters needed for training can be set:
-````
+````shell
 python main.py epochs=400 batch_size=6 val_batch_size=6 num_workers=10 lr=0.001 wd=0.0005 momentum=0.9
 ````
 As you can see the basic syntax how to run the code is simple. 
@@ -191,7 +191,8 @@ Therefore, the *config/* folder explains in detail how the configuration is comp
 
 # Customizing
 
-How to add new models, datasets and more.
+This section provide all information to add new models, datasets, enviroments, lossfunctions, optimizer, lr scheduler and augmentations.
+Thereby it is recomented to read the corresponding part in *Configure the Configuration* section in the documentation of the *config/* folder to understand the functionality of the corresponding module.
 
 ## Model
 
@@ -405,4 +406,55 @@ For example the *interval* parameter can set to *step* or *epoch*, and according
 </p>
 </details>
 
+## Data Augmentation
 
+<details><summary>Click to expand/collapse</summary>
+<p>
+
+For Data Augmentation the [Albumentations](https://albumentations.ai/docs/) package is used.
+A short introduction to use Albumentations for semantic segmentation is give [here](https://albumentations.ai/docs/getting_started/mask_augmentation/) 
+and an overview about all transformations which are supported by Albumentations is given [here](https://albumentations.ai/docs/getting_started/transforms_and_targets/).
+Thereby this repository provides a simple API for defining data augmentations.
+To define custom data augmentations adopt the following example and put it into *config/data_augmentations/custom_augmentation.yaml*.
+Train and Test transformations are defined separatly using *AUGMENTATIONS.TEST* and *AUGMENTATIONS.TRAIN* (see example).
+Thereby different Albumentations transformations are listed in list format, while there parameters are given as dicts.
+Some transformations like *Compose()* or *OneOf()* need other transformations as input.
+Therefore, recursively define these transformations in the *transforms* parameter of the outer transformation(Compose, OneOf, ...) like it can be seen in the example.
+Consider that only [Albumentations transformations](https://albumentations.ai/docs/getting_started/transforms_and_targets/) are supported.
+Typically, an Albumentation transformation pipeline consists of an outer *Compose* containing the list of all operations and the last operation is a *ToTensorV2*.
+
+````yaml
+config/data_augmentations/custom_augmentation.yaml
+─────────────────────────────
+#@package _global_
+AUGMENTATIONS:
+
+  TEST:
+    - Compose:
+        transforms:
+           - Normalize:
+              mean: [ 0.485, 0.456, 0.406 ]
+              std: [ 0.229, 0.224, 0.225 ]
+           - ToTensorV2:
+  TRAIN:
+    - Compose:
+        transforms:
+          # Dummy structure
+          - Albumentations_transformation:
+              parameter1: ...
+              parameter2: ...
+              ...
+          #some example transformations
+          - RandomCrop:
+              height: 512
+              width: 1024
+          - HorizontalFlip:
+              p: 0.5
+          -  ...    # put other transformations here
+          - Normalize:
+              mean: [ 0.485, 0.456, 0.406 ]
+              std: [ 0.229, 0.224, 0.225 ]
+          - ToTensorV2:
+````
+</p>
+</details>

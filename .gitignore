@@ -6,6 +6,7 @@
 .idea
 
 *__pycache__*
+time/
 logs/
 lightning_logs
 pretrained/*

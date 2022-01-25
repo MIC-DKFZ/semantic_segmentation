@@ -490,7 +490,7 @@ class HighResolutionNet(nn.Module):
                                if k in model_dict.keys()}
             model_dict.update(pretrained_dict)
             self.load_state_dict(model_dict)
-            #del model_dict
+            del model_dict,pretrained_dict
 
 
 def get_seg_model(cfg):

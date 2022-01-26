@@ -109,7 +109,7 @@ class BaseDataModule(LightningDataModule):
         return trans
 
 
-    def get_augmentations_from_config2(self,augmentations):
+    def get_augmentations_from_config_old(self,augmentations):
         if hasattr(augmentations, "FROM_DICT"):
             if augmentations.FROM_DICT is not None:
                 return A.from_dict(OmegaConf.to_container(augmentations.FROM_DICT))

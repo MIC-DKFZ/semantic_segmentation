@@ -195,8 +195,35 @@ class SegModel(LightningModule):
 
     def test_step(self, batch, batch_idx):
         x, y_gt = batch
-        y_pred = self(x)
-        self.metric.update(y_gt.flatten(), y_pred["out"].argmax(1).flatten())
+
+        if hasTrueAttr(self.config,"multiscale"):
+            total_pred = None
+            x_size = x.size(2), x.size(3)
+            for scale in self.config.multiscales:
+                #print(scale)
+                s_size=int(x_size[0]*scale),int(x_size[1]*scale)
+                x_s=F.interpolate(x, s_size, mode='bilinear', align_corners=self.config.MODEL.ALIGN_CORNERS)
+                y_pred=self(x_s)["out"]
+                y_pred=F.interpolate(y_pred, x_size, mode='bilinear', align_corners=self.config.MODEL.ALIGN_CORNERS)
+
+                if True:
+                    x_flip=torch.flip(x_s, [3])
+
+                    y_flip = self(x_flip)["out"]
+                    y_flip = torch.flip(y_flip, [3])
+                    y_flip = F.interpolate(y_flip, x_size, mode='bilinear',
+                                           align_corners=self.config.MODEL.ALIGN_CORNERS)
+                    y_pred+=y_flip
+                    y_pred/=2
+
+                if total_pred==None:
+                    total_pred=y_pred
+                else:
+                    total_pred+=y_pred
+            self.metric.update(y_gt.flatten(), total_pred.argmax(1).flatten())
+        else:
+            y_pred = self(x)
+            self.metric.update(y_gt.flatten(), y_pred["out"].argmax(1).flatten())
 
     def on_test_epoch_end(self) -> None:
 
@@ -269,9 +296,11 @@ def training_loop(cfg: DictConfig):
 
 def validation(ckpt_path,hp_path):
 
-    hydra.initialize(config_path=hp_path)
+    #hydra.initialize(config_path=hp_path)
+    hydra.initialize(config_path="config")
     #cfg = hydra.compose(config_name="config",overrides=["MODEL.ADAPTED_PRETRAINED_WEIGHTS=""", "MODEL.PRETRAINED=False","MODEL.MSCALE_TRAINING=true","DATASET.ROOT=/home/l727r/Desktop/Cityscape"])
-    cfg = hydra.compose(config_name="config",overrides=["MODEL.ADAPTED_PRETRAINED_WEIGHTS=""", "MODEL.PRETRAINED=False","DATASET.ROOT=/home/l727r/Desktop/Cityscape"])
+    #cfg = hydra.compose(config_name="config",overrides=["MODEL.ADAPTED_PRETRAINED_WEIGHTS=""", "MODEL.PRETRAINED=False","DATASET.ROOT=/home/l727r/Desktop/Cityscape"])
+    cfg = hydra.compose(config_name="baseline",overrides=["model=hrnet_ocr_ms","MODEL.MSCALE_TRAINING=true","MODEL.ADAPTED_PRETRAINED_WEIGHTS=""", "MODEL.PRETRAINED=False",])
     cfg.val_batch_size=1
     model = SegModel.load_from_checkpoint(ckpt_path, config=cfg)
     #print(cfg.dataset)
@@ -293,14 +322,16 @@ def validation(ckpt_path,hp_path):
 
 
 if __name__ == "__main__":
-    training_loop()
+    #training_loop()
     #path = "/home/l727r/Desktop/Target_Folder/Cityscape/hrnet/epochs\=400/2021-12-25_22-04-38_environment\=cluster_epochs\=400/checkpoints/best_epoch=393_mIoU\=0.8144.ckpt"
     #checkpoint = torch.load(path)
     #print(checkpoint.keys())
     #print(checkpoint["state_dict"])
 
-    '''base="/home/l727r/Desktop/Target_Folder/Cityscape/hrnet_ocr_ms/"
-    folder="MODEL.MSCALE_TRAINING=false_epochs=500"
+    base="/home/l727r/Desktop/Target_Folder/Cityscape/hrnet_ocr_ms/"
+    #F:\Desktop\Target_Folder\Cityscape\hrnet_ocr_ms\baseline__MODEL.MSCALE_TRAINING_False__epochs_65__lr_0.001
+    #F:\Desktop\Target_Folder\Cityscape\hrnet_ocr_ms\baseline__MODEL.INIT_WEIGHTS_False__MODEL.MSCALE_TRAINING_False__MODEL.PRETRAINED_False__epochs_400
+    folder="baseline__MODEL.MSCALE_TRAINING_False__epochs_65__lr_0.001"#"MODEL.MSCALE_TRAINING=false_epochs=500"
     #folder="MODEL.MSCALE_TRAINING=false_epochs=400_lossfunction=wRMI"
     x=os.listdir(base+folder)
     #x=x[1:]
@@ -329,4 +360,4 @@ if __name__ == "__main__":
     #hp_path="../Target_Folder/Cityscape/hrnet_ocr_ms/MODEL.MSCALE_TRAINING=False_epochs=400/2022-01-05_12-06-13/hydra"
     #hp_path="../Target_Folder/Cityscape/hrnet_ocr_ms/"+name+"/hydra"
     #validation(ckpt_path[-1],hp_path)
-    '''
+

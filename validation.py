@@ -6,8 +6,47 @@ import glob
 from main import SegModel
 from omegaconf import OmegaConf
 from os.path import relpath
+from pytorch_lightning import loggers as pl_loggers
 
-def validation(ckpt_path,hp_path):
+
+
+def validation(ckpt_path,path):
+    #path=path+"validation"
+
+    hydra.initialize(config_path="config")
+    #hydra.run.dir = path
+    #hydra.initialize(config_dir="config")
+    # cfg = hydra.compose(config_name="config",overrides=["MODEL.ADAPTED_PRETRAINED_WEIGHTS=""", "MODEL.PRETRAINED=False","MODEL.MSCALE_TRAINING=true","DATASET.ROOT=/home/l727r/Desktop/Cityscape"])
+    # cfg = hydra.compose(config_name="config",overrides=["MODEL.ADAPTED_PRETRAINED_WEIGHTS=""", "MODEL.PRETRAINED=False","DATASET.ROOT=/home/l727r/Desktop/Cityscape"])
+    cfg = hydra.compose(config_name="baseline", overrides=["model=hrnet", "dataset=VOC2010_Context",
+                                                           "MODEL.ADAPTED_PRETRAINED_WEIGHTS=""",
+                                                           "MODEL.PRETRAINED=False",
+                                                           "+multiscale=True",
+                                                           "+multiscales=[0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]",
+                                                           ])
+    cfg.val_batch_size = 1
+
+
+    #x=str("hydra.run.dir="+path)
+    #print(x)
+    model = SegModel.load_from_checkpoint(ckpt_path, config=cfg)
+    # print(cfg.dataset)
+    # dataModule = getattr(DataModules, cfg.DATASET.NAME)(config=cfg)
+    # try:
+    dataModule = hydra.utils.instantiate(cfg.datamodule, _recursive_=False)
+    # except:
+    # dataModule = getattr(DataModules, "BaseDataModule")(config=cfg)
+    #tb_logger = pl_loggers.TensorBoardLogger(save_dir=".", name="", version="", default_hp_metric=False)
+    trainer = Trainer(
+        gpus=torch.cuda.device_count(),
+        precision=16,
+        benchmark=True,
+        #logger = tb_logger,
+    )
+
+    trainer.test(model, dataModule)
+
+def validation_old(ckpt_path,hp_path):
 
     hydra.initialize(config_path=hp_path)
     #cfg = hydra.compose(config_name="config",overrides=["MODEL.ADAPTED_PRETRAINED_WEIGHTS=""", "MODEL.PRETRAINED=False","MODEL.MSCALE_TRAINING=true","DATASET.ROOT=/home/l727r/Desktop/Cityscape"])
@@ -20,7 +59,7 @@ def validation(ckpt_path,hp_path):
     cfg.val_batch_size=1
     #cfg.AUGMENTATIONS.TEST={'Normalize': {'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225]}}
     cfg.AUGMENTATIONS.TEST.PadIfNeeded.mask_value=255#{'Normalize': {'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225]}}
-
+    print(OmegaConf.to_yaml(cfg))
     model = SegModel.load_from_checkpoint(ckpt_path, config=cfg)
     #print(cfg.dataset)
     #dataModule = getattr(DataModules, cfg.DATASET.NAME)(config=cfg)
@@ -37,19 +76,20 @@ def validation(ckpt_path,hp_path):
         benchmark= True
     )
 
-    trainer.test(model,dataModule)
+    #trainer.test(model,dataModule)
 
 
-
+import sys
 if __name__ == "__main__":
     path= "/home/l727r/Desktop/Target_Folder/PASCALContext/hrnet/data_augmentations=PASCALContext_epochs=200/2022-01-18_16-05-09/"
-
+    #sys.argv.append('hydra.run.dir="hydra.run.dir=/home/l727r/Desktop/Target_Folder/PASCALContext/hrnet/data_augmentations\=PASCALContext_epochs\=200/2022-01-18_16-05-09"')
     ckpt_path = glob.glob( path + "checkpoints/best_epoch*.ckpt")[0]
 
-    hp_path=path+"hydra"
+    #hp_path=path+"hydra"
 
-    hp_path=relpath(path+"hydra", '.')
-    validation(ckpt_path,hp_path)
+    #hp_path=relpath(path+"hydra", '.')
+    #print(hp_path)
+    validation(ckpt_path,path)
 
     #print(get_augmentations_from_config(cfg.AUGMENTATIONS.TRAIN))
     #print(hp_path)

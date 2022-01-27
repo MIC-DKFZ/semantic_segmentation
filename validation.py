@@ -23,9 +23,11 @@ def validation(ckpt_path,path):
                                                            "MODEL.PRETRAINED=False",
                                                            "+multiscale=True",
                                                            "+multiscales=[0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]",
-                                                           ])
-    cfg.val_batch_size = 1
 
+                                                           ])
+    cfg.val_batch_size =1
+    cfg.AUGMENTATIONS.TEST=[{'Compose': {'transforms': [{'Normalize': {'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225]}}, {'ToTensorV2': None}]}}]
+    print(cfg)
 
     #x=str("hydra.run.dir="+path)
     #print(x)

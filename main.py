@@ -322,13 +322,13 @@ def validation(ckpt_path,hp_path):
 
 
 if __name__ == "__main__":
-    #training_loop()
+    training_loop()
     #path = "/home/l727r/Desktop/Target_Folder/Cityscape/hrnet/epochs\=400/2021-12-25_22-04-38_environment\=cluster_epochs\=400/checkpoints/best_epoch=393_mIoU\=0.8144.ckpt"
     #checkpoint = torch.load(path)
     #print(checkpoint.keys())
     #print(checkpoint["state_dict"])
 
-    base="/home/l727r/Desktop/Target_Folder/Cityscape/hrnet_ocr_ms/"
+    '''base="/home/l727r/Desktop/Target_Folder/Cityscape/hrnet_ocr_ms/"
     #F:\Desktop\Target_Folder\Cityscape\hrnet_ocr_ms\baseline__MODEL.MSCALE_TRAINING_False__epochs_65__lr_0.001
     #F:\Desktop\Target_Folder\Cityscape\hrnet_ocr_ms\baseline__MODEL.INIT_WEIGHTS_False__MODEL.MSCALE_TRAINING_False__MODEL.PRETRAINED_False__epochs_400
     folder="baseline__MODEL.MSCALE_TRAINING_False__epochs_65__lr_0.001"#"MODEL.MSCALE_TRAINING=false_epochs=500"
@@ -359,5 +359,5 @@ if __name__ == "__main__":
     #print(ckpt_path)
     #hp_path="../Target_Folder/Cityscape/hrnet_ocr_ms/MODEL.MSCALE_TRAINING=False_epochs=400/2022-01-05_12-06-13/hydra"
     #hp_path="../Target_Folder/Cityscape/hrnet_ocr_ms/"+name+"/hydra"
-    #validation(ckpt_path[-1],hp_path)
+    #validation(ckpt_path[-1],hp_path)'''
 

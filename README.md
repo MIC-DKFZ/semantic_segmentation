@@ -1,8 +1,10 @@
-
 # !!!IN PROGRESS!!!
 
+<<<<<<< HEAD
 # Semantic Segmentation Framework using Pytorch Lightning
 
+=======
+>>>>>>> bf523325fc72664d9aac7ec221d42c6f3673f839
 # Requirements
 
 Install the needed packages by:

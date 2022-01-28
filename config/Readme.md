@@ -1,7 +1,3 @@
-TODO:
-- Data Augmentation
-- Maybe initialization using hydra
-
 # Walkthrough the Config Jungle
 
 In this repository [Hydra](https://hydra.cc/) is used for configuring and managing experiments.
@@ -167,7 +163,15 @@ For more complex files you will end up with lists of dictionaries and dictionari
 
 # Configure the Configuration
 
-### Basic Hyperparameters
+In the following each configuration group is explained in detail.
+Thereby first the provided functionality is explained and afterwards it is described how to customize them and add for example a new model or dataset to the framework.
+
+
+## Basic Hyperparameters
+
+**<details><summary>Configure</summary>**
+<p>
+
 The following hyperparameters are supported and can be changed in the *baseline.yaml* directly or can be overwritten from the command line as shown below:
  - **epochs:** number of epochs for training.
  - **batch_size:** defines the batch size during training (per GPU). 
@@ -185,7 +189,21 @@ The following hyperparameters are supported and can be changed in the *baseline.
  python main.py epochs=100 batch_size=7 val_batch_size=3 num_workers=4 lr=0.001 wd=0.0001 momentum=0.8 
  python main.py lr_scheduler=poly_epoch optimizre=sgd
   ```` 
-### Model
+
+</p>
+</details>
+
+**<details><summary>Customize</summary>**
+<p>
+
+</p>
+</details>
+
+## Model
+
+**<details><summary>Configure</summary>**
+<p>
+
 Currently, the following models are supported, and they can be selected as shown below. By default hrnet is used.
 - **hrnet**: [High-Resolution Network (HRNet)](https://arxiv.org/pdf/1904.04514.pdf). Segmentation model with a single output.
 - **hrnet_ocr**: [Object-Contextual Representations (OCR)](https://arxiv.org/pdf/1909.11065.pdf). 
@@ -208,7 +226,58 @@ Besides the selection of the models other parameters are provided and can be ena
 python main.py MODEL.PRETRAINED=false MODEL.INIT_WEIGHTS=false
 ````
 
-### Dataset
+</p>
+ </details>
+
+</p>
+</details>
+
+**<details><summary>Customize</summary>**
+<p>
+
+Defining a custom model is done in two steps, first defining your custom pytorch model and afterwards setting up its config file.
+1. **Defining your Pytorch Model**, thereby the following thinks have to be considered:
+   - put your *modelfile* into the *models/* folder
+   - Your file has to contain a *get_seg_model* function which gets the config(cfg) and returns your model.
+     In this fcuntion you load your model model and may intialize it with pretrained weight or do whatever you want. The function should look like this:
+   ````py
+   def get_seg_model(cfg):
+        #you can get everthink you need from the config, e.g. the number of classes, like this:
+        num_classes=cfg.DATASET.NUM_CLASSES
+        ...
+        model=MyModel(num_classes, ...)
+        ...
+        return model 
+    ````
+   - **Model Output**: Your model should **return a dict** which contain all the models outputs. The naming can be arbitrary.
+   For example if you have one ourput return as follows: ``return {"out": model_prediction}``. If you have multiple output to it analogues:
+``return {"main": model_prediction, "aux": aux_out}``.
+It should be noted that the **order of the outputs is relevant**. Only the first output is used for updating the metric during validation.
+Futher the order of the outputs should match the order of your losses in *lossfunction* and the weights in *lossweights*.(see *config/* for more details on that)
+   
+2. **Setting up your model config**
+   - Create a *custom_model.yaml* file in *config/models/*. For the content of the *.yaml* file adopt the following dummy.
+   ````yaml 
+   #@package _global_
+   #MODEL IS USED TO STORE INFORMATION WHICH ARE NEEDED FOR YOUR MODEL  
+   MODEL:
+      #REQUIRED MODEL ARGUMENTS
+      NAME: MyModel            #Name of the file in models/ which contains you get_seg_model function
+                               # In this case the get_seg_mode() funtion is in models/MyModel.py
+      #YOUR ARGUMENTS, FOR EXAMPLE SOMETHINNK LIKE THAT
+      PRETRAINED: True         # you could want a parameter to indicate if pretrained weights should be used or not 
+      PRETRAINED_WEIGHTS: /pretrained/weights.pth  # give the path to the weights      
+    ````
+   
+
+</p>
+</details>
+
+
+## Dataset
+
+**<details><summary>Configure</summary>**
+<p>
 
 Currently, the following datasets are supported, and they can be selected as shown below. By default, the cityscapes dataset is used.
 - **Cityscapes**: [Cityscapes dataset](https://www.cityscapes-dataset.com/) with using fine annotated images. Contains 19 classes and 2.975 training and 500 validation images.
@@ -225,8 +294,95 @@ python main.py dataset=Cityscapes_coarse
 python main.py dataset=Cityscapes_fine_coarse
 python main.py dataset=VOC2010_Context
 ```
+</p>
+ </details>
 
-### Lossfunction
+</p>
+</details>
+
+**<details><summary>Customize</summary>**
+<p>
+
+Defining a custom dataset is done in two steps, first defining your custom pytorch dataset and afterwards setting up its config file.
+1. **Defining your pytorch Dataset**, therby consider that the following structure is required (mainly pytorch basic) and see the dummy below:
+   - \__init__(self, custom_args, split, transforms):
+     - *custom_args*: your custom input arguments (for example data_root etc.). They will be given to your dataset from the config file (see below).
+     - *split*: one of the following strings: \["train","val","test"]. To define if train, validation or test set should be returned.
+     - *transforms*: Albumentation transformations
+   - \__getitem__(self, idx):
+     - getting some index and should the output should look similat to: *return img, mask* 
+     - with ````img.shape = [c, height, width]```` and ````mask.shape = [height, width]````, where *c* is the number of channels. For example *c=3* if you use RGB data.
+   - \__len(self)__:
+     - return the number of samples in your dataset, somehtink like: *return len(self.img_files)*
+   ````py
+   class Custom_dataset(torch.utils.data.Dataset):
+    def __init__(self,root,split,transforms):
+        # get your data for the corresponding split
+        if split=="train":
+             self.imgs = ...
+             self.masks = ...
+        if split=="val":
+             self.imgs = ...
+             self.masks = ...
+        
+        #save the transformations
+        self.transforms=transforms
+
+    def __getitem__(self, idx):
+        # reading images and masks as numpy arrays
+        img =cv2.imread(self.imgs[idx])
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # cv2 reads images in BGR order
+
+        mask=cv2.imread(self.masks[idx],-1)
+
+        # thats how you apply Albumentations transformations
+        transformed = self.transforms(image=img, mask=mask)
+        img = transformed['image']
+        mask = transformed['mask']
+        
+        return img, mask.long()
+
+    def __len__(self):
+        return len(self.imgs)
+   ````
+2. **Setting up your dataset config** 
+   - Create a *custom_dataset.yaml* file in *config/datasets/*. For the content of the *.yaml* file adopt the following dummy:
+   ````yaml 
+   #@package _global_
+   ### dataset is used to initialize your custom dataset, 
+   ### _target_: should point to your dataset class
+   ### afterwards you can handle your custom input arguments which are used to initialize the dataset
+   dataset:
+     _target_: datasets.MyDataset.dataset_class 
+     root: /home/.../Datasets/my_dataset     #the root to the data as an example input
+     #root: ${path.my_dataset}               #the root if defined in config/environment/used_env.yaml
+     input1: ...                    #All your other input arguments
+     input2: ...
+   ### DATASET is used to store information about the dataset which are needed during training
+   DATASET:
+     ## REQUIRED DATASER ARGUMENTS
+     NAME:            #Used for the logging directory
+     NUM_CLASSES:     #Needed for defining the model and the metrics
+     IGNORE_INDEX:    #Needed for the lossfunction, if no ignore indes set to 255 or another number which do no occur in your dataset 
+     ## OPTIONAL, BUT NEEDED IF POLY LR SCHEDULER IS USED
+     Size:
+        TRAIN: 1234 # Size of your training dataset
+     ## OPTIONAL, BUT NEEDED IF WEIGHTED LOSSFUNCTIONS ARE USED
+     CLASS_WEIGHTS: [ 0.9, 1.1, ...]
+     ##OPTIONAL, ONLY NEEDED FOR NICER LOGGING
+     CLASS_LABELS:
+        - class1
+        - class2 ...
+   ````
+
+</p>
+</details>
+
+
+## Lossfunction
+
+**<details><summary>Configure</summary>**
+<p>
 
 There are two parameters to define the functionality of the lossfunction. 
 The *lossfunction* parameter is used to define one or multiple lossfunctions.
@@ -262,8 +418,37 @@ For the supported models the number of outputs looks like this:
 - hrnet_ocr_aspp: 2 outputs *[primary, auxiliary]*
 - hrnet_ocr_ms: 4 outputs *[primary, auxiliary, high_scale_prediction, low_scale_prediction]*
 
+</p>
+ </details>
 
-### Pytorch Lightning Trainer
+</p>
+</details>
+
+**<details><summary>Customize</summary>**
+<p>
+
+The lossfunction in defined using the *get_loss_function_from_cfg* function in *utils/lossfunction*.
+Inside the the function your have acess to everthink what you defined inside your config using *cfg.myparameter*.
+To add a custom lossfunction just add the following onto the buttom of the function:
+````py 
+elif LOSSFUNCTION == "MYLOSS":
+        ...                  #do whatever you need
+        loss_function = MyLoss(...)
+````
+The lossfunction will be called in the following way:
+````lossfunction(y_pred, y_gt) ```` with ````y_pred.shape = [batch_size, num_classes, height, width] ```` and ````y_gt.shape = [batch_size, height, width]````.
+If you need the data in another format you can use for example *lambda functions* (look at the definition of "DC_CE" loss in the get_loss_function_from_cfg).
+
+
+</p>
+</details>
+
+
+## Pytorch Lightning Trainer
+
+**<details><summary>Configure</summary>**
+<p>
+
 Since Pytorch Lightning is used as training framework, with the trainer class as central unit, 
 there is also the possibility to give arguments to the trainer from the config.
 The *pl_trainer* entry in the baseline.yaml is used for this purpose.
@@ -294,22 +479,142 @@ The effected parameters are:
 - *logger*: tb_logger is used by default
 - *strategy*: ddp if multiple gpus are used, else None
 
-### Environment
+</p>
+ </details>
+
+</p>
+</details>
+
+**<details><summary>Customize</summary>**
+<p>
+
+</p>
+</details>
+
+
+## Environment
+
+**<details><summary>Configure</summary>**
+<p>
 
 If you run code on different devices (e.g. on your local machine and a gpu-cluster) it can make sense to group all environment specific settings, e.g. paths or hyperparameters like the batch size, to enable easy switching between them. 
 Different environments are stored in the *conifg/environment/* folder and can be used in the following way. 
 To add you own environment look at the customization chapter. By default ``environment=local``.
-
 
 ````shell
 python main.py environment=cluster
 python main.py environment=local
 ````
 
-### Data Augmentations
+</p>
+ </details>
+
+</p>
+</details>
+
+**<details><summary>Customize</summary>**
+<p>
+
+An environment config contains everythink with is specific for the environment like paths or specific parameters but 
+also to reach environment specific behaviour by for example enable/disable checkpoint saving or thr progressbar.
+Since the environment config is mearged into the baseline config at last, you can override all parameters from there.
+For adding a new environment config create a *ustom_env.yaml* file in *config/environment/* and adapt the following dummy: 
+
+
+````yaml
+config/envrironment/custom_env.yaml
+─────────────────────────────
+#@package _global_
+
+#Output directory for logs an checkpoints
+LOGDIR: logs/
+#Paths to datasets
+paths:
+  cityscapes: /home/.../Datasets/cityscapes
+  VOC2010_Context: /home/.../Datasets/VOC2010_Context
+  other_datasets: ...
+#Whatever you need
+CUSTOM_PATH: ...  
+Some_Parameter: ...
+...
+````
+
+</p>
+</details>
+
+
+## Data Augmentations
+
+**<details><summary>Configure</summary>**
+<p>
 
 Some predefined data augmentation pipelines are provided (see in the *conifg/data_augmentation/* folder). 
 For the provided datasets the augmentation with the corresponding name is used by default.
 Another data augmentation can be used by the following command. 
 To create a custom data_augmentation pipeling look at he customization part
+````shell
+python main.py data_augmentation=VOC2010_Context
+python main.py data_augmentation=Custom_augmentation
+````
 
+
+</p>
+ </details>
+
+</p>
+</details>
+
+**<details><summary>Customize</summary>**
+<p>
+
+For Data Augmentation the [Albumentations](https://albumentations.ai/docs/) package is used.
+A short introduction to use Albumentations for semantic segmentation is give [here](https://albumentations.ai/docs/getting_started/mask_augmentation/) 
+and an overview about all transformations which are supported by Albumentations is given [here](https://albumentations.ai/docs/getting_started/transforms_and_targets/).
+Thereby this repository provides a simple API for defining data augmentations.
+To define custom data augmentations adopt the following example and put it into *config/data_augmentations/custom_augmentation.yaml*.
+Train and Test transformations are defined separatly using *AUGMENTATIONS.TEST* and *AUGMENTATIONS.TRAIN* (see example).
+Thereby different Albumentations transformations are listed in list format, while there parameters are given as dicts.
+Some transformations like *Compose()* or *OneOf()* need other transformations as input.
+Therefore, recursively define these transformations in the *transforms* parameter of the outer transformation(Compose, OneOf, ...) like it can be seen in the example.
+Consider that only [Albumentations transformations](https://albumentations.ai/docs/getting_started/transforms_and_targets/) are supported.
+Typically, an Albumentation transformation pipeline consists of an outer *Compose* containing the list of all operations and the last operation is a *ToTensorV2*.
+
+````yaml
+config/data_augmentations/custom_augmentation.yaml
+─────────────────────────────
+#@package _global_
+AUGMENTATIONS:
+
+  TEST:
+    - Compose:
+        transforms:
+           - Normalize:
+              mean: [ 0.485, 0.456, 0.406 ]
+              std: [ 0.229, 0.224, 0.225 ]
+           - ToTensorV2:
+  TRAIN:
+    - Compose:
+        transforms:
+          # Dummy structure
+          - Albumentations_transformation:
+              parameter1: ...
+              parameter2: ...
+              ...
+          #some example transformations
+          - RandomCrop:
+              height: 512
+              width: 1024
+          #Nested Transformation
+          - OneOf:
+              transforms:
+                - HorizontalFlip:
+                    p: 0.5
+          -  ...    # put other transformations here
+          - Normalize:
+              mean: [ 0.485, 0.456, 0.406 ]
+              std: [ 0.229, 0.224, 0.225 ]
+          - ToTensorV2:
+````
+
+</p>
+</details>

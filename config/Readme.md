@@ -169,7 +169,7 @@ Thereby first the provided functionality is explained and afterwards it is descr
 
 ## Basic Hyperparameters
 
-**<details><summary>Configure</summary>**
+<details><summary>Configure</summary>
 <p>
 
 The following hyperparameters are supported and can be changed in the *baseline.yaml* directly or can be overwritten from the command line as shown below:
@@ -193,7 +193,7 @@ The following hyperparameters are supported and can be changed in the *baseline.
 </p>
 </details>
 
-**<details><summary>Customize</summary>**
+<details><summary>Customize</summary>
 <p>
 
 </p>
@@ -201,7 +201,7 @@ The following hyperparameters are supported and can be changed in the *baseline.
 
 ## Model
 
-**<details><summary>Configure</summary>**
+<details><summary>Configure</summary>
 <p>
 
 Currently, the following models are supported, and they can be selected as shown below. By default hrnet is used.
@@ -229,10 +229,8 @@ python main.py MODEL.PRETRAINED=false MODEL.INIT_WEIGHTS=false
 </p>
  </details>
 
-</p>
-</details>
 
-**<details><summary>Customize</summary>**
+<details><summary>Customize</summary>
 <p>
 
 Defining a custom model is done in two steps, first defining your custom pytorch model and afterwards setting up its config file.
@@ -276,7 +274,7 @@ Futher the order of the outputs should match the order of your losses in *lossfu
 
 ## Dataset
 
-**<details><summary>Configure</summary>**
+<details><summary>Configure</summary>**
 <p>
 
 Currently, the following datasets are supported, and they can be selected as shown below. By default, the cityscapes dataset is used.
@@ -297,10 +295,8 @@ python main.py dataset=VOC2010_Context
 </p>
  </details>
 
-</p>
-</details>
 
-**<details><summary>Customize</summary>**
+<details><summary>Customize</summary>
 <p>
 
 Defining a custom dataset is done in two steps, first defining your custom pytorch dataset and afterwards setting up its config file.
@@ -381,7 +377,7 @@ Defining a custom dataset is done in two steps, first defining your custom pytor
 
 ## Lossfunction
 
-**<details><summary>Configure</summary>**
+<details><summary>Configure</summary>
 <p>
 
 There are two parameters to define the functionality of the lossfunction. 
@@ -421,10 +417,8 @@ For the supported models the number of outputs looks like this:
 </p>
  </details>
 
-</p>
-</details>
 
-**<details><summary>Customize</summary>**
+<details><summary>Customize</summary>
 <p>
 
 The lossfunction in defined using the *get_loss_function_from_cfg* function in *utils/lossfunction*.
@@ -446,7 +440,7 @@ If you need the data in another format you can use for example *lambda functions
 
 ## Pytorch Lightning Trainer
 
-**<details><summary>Configure</summary>**
+<details><summary>Configure</summary>
 <p>
 
 Since Pytorch Lightning is used as training framework, with the trainer class as central unit, 
@@ -482,10 +476,8 @@ The effected parameters are:
 </p>
  </details>
 
-</p>
-</details>
 
-**<details><summary>Customize</summary>**
+<details><summary>Customize</summary>
 <p>
 
 </p>
@@ -494,7 +486,7 @@ The effected parameters are:
 
 ## Environment
 
-**<details><summary>Configure</summary>**
+<details><summary>Configure</summary>
 <p>
 
 If you run code on different devices (e.g. on your local machine and a gpu-cluster) it can make sense to group all environment specific settings, e.g. paths or hyperparameters like the batch size, to enable easy switching between them. 
@@ -509,10 +501,7 @@ python main.py environment=local
 </p>
  </details>
 
-</p>
-</details>
-
-**<details><summary>Customize</summary>**
+<details><summary>Customize</summary>
 <p>
 
 An environment config contains everythink with is specific for the environment like paths or specific parameters but 
@@ -545,7 +534,7 @@ Some_Parameter: ...
 
 ## Data Augmentations
 
-**<details><summary>Configure</summary>**
+<details><summary>Configure</summary>
 <p>
 
 Some predefined data augmentation pipelines are provided (see in the *conifg/data_augmentation/* folder). 
@@ -559,12 +548,9 @@ python main.py data_augmentation=Custom_augmentation
 
 
 </p>
- </details>
-
-</p>
 </details>
 
-**<details><summary>Customize</summary>**
+<details><summary>Customize</summary>
 <p>
 
 For Data Augmentation the [Albumentations](https://albumentations.ai/docs/) package is used.

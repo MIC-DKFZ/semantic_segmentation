@@ -307,7 +307,9 @@ python main.py environment=local
 ````
 
 ### Data Augmentations
-####################
-MISSING
-####################
+
+Some predefined data augmentation pipelines are provided (see in the *conifg/data_augmentation/* folder). 
+For the provided datasets the augmentation with the corresponding name is used by default.
+Another data augmentation can be used by the following command. 
+To create a custom data_augmentation pipeling look at he customization part
 

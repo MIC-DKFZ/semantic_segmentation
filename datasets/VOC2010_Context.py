@@ -43,7 +43,7 @@ PALETTE = [[120, 120, 120], [180, 120, 120], [6, 230, 230], [80, 50, 50],
 
 
 class VOC2010_Context_dataset(torch.utils.data.Dataset):
-    def __init__(self,root,split="train",transforms=None):
+    def __init__(self,root,split="train",num_classes=60,ignore_index=255,transforms=None):
         if isinstance(root, str):
             root_imgs=root
             root_labels=root
@@ -52,6 +52,8 @@ class VOC2010_Context_dataset(torch.utils.data.Dataset):
             root_labels = root.LABELS
 
         self.split=split
+        self.ignore_index=ignore_index
+        self.num_classes=num_classes
         if split=="test": split="val"
         imgs_path=os.path.join( root_imgs ,"Images" , split  , "*.jpg" )
 
@@ -65,11 +67,19 @@ class VOC2010_Context_dataset(torch.utils.data.Dataset):
         print("Dataset: VOC2010_Context",split,  len(self.imgs),len(self.masks))
 
 
+    def reduce_num_classes(self,mask):
+        mask=mask-1
+        mask[mask==-1]=self.ignore_index
+        return mask
+
     def __getitem__(self, idx):
         img =cv2.imread(self.imgs[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         mask=cv2.imread(self.masks[idx],-1)
+
+        if self.num_classes==59:
+            mask=self.reduce_num_classes(mask)
         #if self.split=="val":
         #    mask_o = torch.from_numpy(mask)
         #transforms2 = A.Compose([

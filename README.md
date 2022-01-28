@@ -1,29 +1,7 @@
 # !!!IN PROGRESS!!!
 
-<<<<<<< HEAD
+
 # Semantic Segmentation Framework using Pytorch Lightning
-
-=======
->>>>>>> bf523325fc72664d9aac7ec221d42c6f3673f839
-# Requirements
-
-Install the needed packages by:
-````shell
-pip install -r requirements.txt
-````
-Among others, this repository is mainly built on the following packages.
-You may want to familiarize yourself with their basic use beforehand.
-A short introduction to Hydra is given in the *config/* folder.
-- **[Pytorch](https://pytorch.org/)**: The machine learning/deep learning library used in this repository.
-- **[Pytorch Lightning](https://www.pytorchlightning.ai/):** 
-An open source framework for organizing PyTorch code and supporting machine learning development.
-It is automating most of the training loop and offers many useful features like mixed precision training.
-Lightning also makes code scalable to any hardware(CPU, GPU, TPU) without changing the code, as well as distributed training on multiple GPUs.
-- **[Hydra](https://hydra.cc/docs/intro/):** Framework to simplify the development, organization, and configuration of machine learning experiments.
-It provides the ability to dynamically create a hierarchical configuration by composition and override it through config files and the command line.
-- **[Albumentations](https://albumentations.ai):** Package for fast and flexible data augmentation in Semantic Segmentation (Albumentations is not limited to segmentation, but only that is used in this repository). 
-Albumentations provides a lot of augmentations that can be used. Also random operations (e.g. random cropping) can be applied directly to images and masks.
-
 
 
 # How To Run

@@ -30,6 +30,8 @@ AUGMENTATIONS:
   TEST:
     - Compose:
         transforms:
+          - LongestMaxSize:
+              max_size: 500
           - PadIfNeeded:
               min_height: 500
               min_width: 500

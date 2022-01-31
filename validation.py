@@ -1,17 +1,114 @@
+import logging
+log = logging.getLogger(__name__)
 import hydra
 from pytorch_lightning import Trainer
 import torch
 import os
 import glob
 from main import SegModel
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf,open_dict
 from os.path import relpath
 from pytorch_lightning import loggers as pl_loggers
 
 
 
-def validation(ckpt_path,path):
+def get_test_config(cfg):
+
+    if cfg.MODEL.NAME == "hrnet_ocr_ms":
+        cfg.MODEL.MSCALE_TRAINING = True
+        cfg.val_batch_size = 1
+
+    if cfg.DATASET.NAME == "VOC2010_Context" or cfg.DATASET.NAME == "VOC2010_Context_60":
+        cfg.val_batch_size = 1
+        cfg.MODEL.PRETRAINED = False
+        cfg.AUGMENTATIONS.TEST = [{'Compose': {
+            'transforms': [{'Normalize': {'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225]}},
+                           {'ToTensorV2': None}]}}]
+        #OmegaConf.update(cfg, "multiscale", {"zonk": 30})
+        cfg.extra_testing= {"multiscale": True, "scales": [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0], "flip": True}
+
+    return cfg
+
+def extra_testing(path):
+        print(path)
+        hydra.core.global_hydra.GlobalHydra.instance().clear()
+        print(os.getcwd())
+
+
+        #hydra.initialize(config_path="config")
+
+        #overrides=OmegaConf.load('hydra/overrides.yaml')
+        config=OmegaConf.load('hydra/config.yaml')
+
+        if config.MODEL.NAME == "hrnet_ocr_ms":
+            config.MODEL.MSCALE_TRAINING = True
+
+        if config.DATASET.NAME == "VOC2010_Context" or config.DATASET.NAME == "VOC2010_Context_60":
+            config.val_batch_size = 1
+            config.MODEL.PRETRAINED = False
+            config.AUGMENTATIONS.TEST = [{'Compose': {
+                'transforms': [{'Normalize': {'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225]}},
+                               {'ToTensorV2': None}]}}]
+            # OmegaConf.update(cfg, "multiscale", {"zonk": 30})
+            config.extra_testing = {"multiscale": True, "scales": [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0], "flip": True}
+
+        cfg=config
+
+        ckpt_path = glob.glob("checkpoints/best*")
+        if ckpt_path != []:
+            model = SegModel.load_from_checkpoint(ckpt_path[0], config=cfg)
+        else:
+            model = SegModel(config=cfg)
+        dataModule = hydra.utils.instantiate(cfg.datamodule, _recursive_=False)
+
+        trainer = Trainer(
+            gpus=torch.cuda.device_count(),
+
+            logger=None,
+            # pl_loggers.TensorBoardLogger(save_dir="./", name="validation", version="", default_hp_metric=False),
+            enable_checkpointing=False,
+
+            precision=16,
+            benchmark=True,
+
+            sync_batchnorm=True,
+            strategy='ddp' if torch.cuda.device_count() > 1 else None,
+        )
+
+        trainer.test(model, dataModule)
+
+        '''if hasTrueAttr(cfg, "extra_testing"):
+        #log.info("#####START EXTRA TESTING EPOCH#####")
+
+        cfg=get_test_config(cfg)
+
+        ckpt_path=glob.glob("checkpoints/best*")
+        if ckpt_path!=[]:
+            model = SegModel.load_from_checkpoint(ckpt_path[0], config=cfg)
+        else:
+            model = SegModel(config=cfg)
+        dataModule = hydra.utils.instantiate(cfg.datamodule, _recursive_=False)
+
+        trainer = Trainer(
+            gpus=AVAIL_GPUS,
+
+            logger=None,#pl_loggers.TensorBoardLogger(save_dir="./", name="validation", version="", default_hp_metric=False),
+            enable_checkpointing = False,
+
+            precision=16,
+            benchmark= True,
+
+            sync_batchnorm=True,
+            strategy='ddp' if AVAIL_GPUS > 1 else None,
+        )
+
+        trainer.test(model, dataModule)'''
+
+def validation2(path):
     #path=path+"validation"
+    os.chdir(path)
+
+    ckpt_path = glob.glob(path + "checkpoints/best_epoch*.ckpt")[0]
 
     hydra.initialize(config_path="config")
     #hydra.run.dir = path
@@ -91,7 +188,7 @@ if __name__ == "__main__":
 
     #hp_path=relpath(path+"hydra", '.')
     #print(hp_path)
-    validation(ckpt_path,path)
+    validation2(path)
 
     #print(get_augmentations_from_config(cfg.AUGMENTATIONS.TRAIN))
     #print(hp_path)

@@ -3,7 +3,7 @@
 #DEFAULT LIST
 defaults:
   - _self_
-  - ptional hyperparameters:
+  - optional hyperparameters:
   - callbacks: default
   - data_augmentation: default
   - model: hrnet
@@ -53,8 +53,8 @@ pl_trainer:
   precision: 16
   sync_batchnorm: True
   benchmark: True
-  #limit_train_batches: 0.01
-  #limit_val_batches: 0.4
+  limit_train_batches: 0.01
+  limit_val_batches: 0.01
   #track_grad_norm: 2
   #reload_dataloaders_every_epoch: true
   #accumulate_grad_batches: 2

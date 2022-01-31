@@ -11,14 +11,6 @@ dataset:
     ignore_index: ${DATASET.IGNORE_INDEX}
     num_classes: ${DATASET.NUM_CLASSES}
 
-batch_size: 8 #16
-val_batch_size: ${batch_size}
-epochs: 150 #400
-lr: 0.004 #0.01 #LR: 0.01445439770745928
-wd: 0.0001 #0.0005
-momentum: 0.9
-lossfunction: ["CE","CE","CE","CE"]
-
 DATASET:
   #PATH PARAMETERS FOR THIS DATASET
   #ROOT: "/home/l727r/Desktop/Datasets/VOC2010_Context"

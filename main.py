@@ -20,6 +20,8 @@ from utils.loss_function import get_loss_function_from_cfg
 from utils.optimizer import get_optimizer_from_cfg
 from utils.lr_scheduler import get_lr_scheduler_from_cfg
 
+
+
 #from datasets import DataModules
 from models import hrnet, hrnet_ocr, hrnet_ocr_aspp, hrnet_ocr_ms
 #from models import hrnet_ocr3 as hrnet_ocr
@@ -54,6 +56,10 @@ class ConfusionMatrix(Metric):
         path = os.path.join(path, "ConfusionMatrix.pt")
         torch.save(self.mat.cpu(), path)
 
+    def save_named(self, path, name):
+        path = os.path.join(path, "ConfusionMatrix_"+name+".pt")
+        torch.save(self.mat.cpu(), path)
+
     def reset(self):
         if self.mat is not None:
             self.mat.zero_()
@@ -69,7 +75,6 @@ class SegModel(LightningModule):
 
         self.metric = ConfusionMatrix(config.DATASET.NUM_CLASSES)
         self.register_buffer("best_mIoU", torch.as_tensor(0))
-
 
     def forward(self, x):
 
@@ -111,20 +116,6 @@ class SegModel(LightningModule):
             {"mIoU/best_mIoU": self.best_mIoU, "Time/mTrainTime": 0, "Time/mValTime": 0})
         #saving resolved parameters
         OmegaConf.save(config=self.config, resolve=True, f=os.path.join(self.logger.log_dir, "hparams.yaml"))
-
-    def get_loss2(self, y_pred, y_gt):
-        #print("P",y_pred["out"].shape)
-        loss=0
-        for i,(w,x) in enumerate(zip(self.loss_weights,y_pred.values())):
-            for a,b in zip(x,y_gt):
-                #print(a.shape, b.shape)
-                s1,s2=b.size()
-                a= F.interpolate(a.unsqueeze(0), size=(s1,s2), mode='bilinear', align_corners=True)
-                loss+=self.loss_functions[i](a, b.unsqueeze(0)) * self.loss_weights[i]
-            #print(w,x.shape)
-        #loss = sum([self.loss_functions[i](y, y_gt) * self.loss_weights[i] for i, y in enumerate(y_pred.values())])
-        #print("L",loss)
-        return loss
 
     def get_loss(self, y_pred, y_gt):
 
@@ -188,7 +179,7 @@ class SegModel(LightningModule):
                 else:
                     dic_IoU[id] = "%.4f" % iou.item()
 
-            if self.global_rank == 0:
+            if self.trainer.is_global_zero:
                 log.info("EPOCH: %s", self.current_epoch)
                 log.info("Best mIoU %.4f      Mean IoU: %.4f", self.best_mIoU, mIoU.item())
                 log.info(dic_IoU)
@@ -196,17 +187,17 @@ class SegModel(LightningModule):
     def test_step(self, batch, batch_idx):
         x, y_gt = batch
 
-        if hasTrueAttr(self.config,"multiscale"):
+        if hasTrueAttr(self.config.extra_testing,"multiscale"):
             total_pred = None
             x_size = x.size(2), x.size(3)
-            for scale in self.config.multiscales:
+            for scale in self.config.extra_testing.scales:
                 #print(scale)
                 s_size=int(x_size[0]*scale),int(x_size[1]*scale)
                 x_s=F.interpolate(x, s_size, mode='bilinear', align_corners=self.config.MODEL.ALIGN_CORNERS)
                 y_pred=self(x_s)["out"]
                 y_pred=F.interpolate(y_pred, x_size, mode='bilinear', align_corners=self.config.MODEL.ALIGN_CORNERS)
 
-                if True:
+                if self.config.extra_testing.flip:
                     x_flip=torch.flip(x_s, [3])
 
                     y_flip = self(x_flip)["out"]
@@ -235,8 +226,15 @@ class SegModel(LightningModule):
                 dic_IoU[str(id) + "-" + self.config.DATASET.CLASS_LABELS[id]] = "%.4f" % iou.item()
             else:
                 dic_IoU[id] = "%.4f" % iou.item()
-        print(dic_IoU)
-        print("Mean IoU:","%.4f" % mIoU.item())
+
+        if self.trainer.is_global_zero:
+            log.info("EPOCH: %s", self.current_epoch)
+            log.info(dic_IoU)
+            log.info("Best mIoU %.4f", mIoU.item())
+
+            self.metric.save_named(path="./",name="%.4f" % mIoU.item())
+            #print(dic_IoU)
+            #print("Mean IoU:","%.4f" % mIoU.item())
 
 
 
@@ -281,10 +279,8 @@ def training_loop(cfg: DictConfig):
 
         callbacks=callbacks,
         logger=tb_logger,
-        #enable_checkpointing=True if cfg else False,
 
         strategy='ddp' if AVAIL_GPUS > 1 else None,
-        #strategy=DDPPlugin(find_unused_parameters=False) if AVAIL_GPUS > 1 else None,
 
         **trainer_args
     )
@@ -293,8 +289,17 @@ def training_loop(cfg: DictConfig):
     #dataModule.setup()
     trainer.fit(model, dataModule)
 
+    ###OPTIONAL TESTING, USED WHEN MODEL IS TESTED UNDER DIFFERENT CONDITIONS THAN TRAINING
+    #if cfg.train:
+    if hasTrueAttr(cfg, "extra_testing"):
+        from validation import extra_testing
+        extra_testing(os.getcwd())
 
-def validation(ckpt_path,hp_path):
+
+
+
+
+def validation2(ckpt_path,hp_path):
 
     #hydra.initialize(config_path=hp_path)
     hydra.initialize(config_path="config")
@@ -322,6 +327,7 @@ def validation(ckpt_path,hp_path):
 
 
 if __name__ == "__main__":
+
     training_loop()
     #path = "/home/l727r/Desktop/Target_Folder/Cityscape/hrnet/epochs\=400/2021-12-25_22-04-38_environment\=cluster_epochs\=400/checkpoints/best_epoch=393_mIoU\=0.8144.ckpt"
     #checkpoint = torch.load(path)

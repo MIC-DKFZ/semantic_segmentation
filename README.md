@@ -1,8 +1,14 @@
-# !!!IN PROGRESS!!!
-
-
 # Semantic Segmentation Framework using Pytorch Lightning
 
+
+This repository contains a framework for training semantic segmentation models on different dataset.
+Several models and datasets are already provided, and in addition, the possibility to add additional models and datasets as well as lossfunctions and optimizers is given.
+
+This repository offers the possibility to compare different state-of-the-art segmentation models under the same conditions on different data sets.
+
+
+The following contains information about how to [set up the data](##Setting-up-the-Data) and how to [run the code](#Running-Code).
+Additionally the [*config/* folder](/config) contains a full explanation of all available configurations and how to csutomize the code to your needs.
 
 ##### References
 This repository adopts code from the following sources:
@@ -12,7 +18,7 @@ This repository adopts code from the following sources:
 - **RMI** (Region Mutual Information Loss for Semantic Segmentation, [paper](https://arxiv.org/pdf/1910.12037.pdf), [source code](https://github.com/ZJULearning/RMI))
 - **DC** (Dice Loss), **DC+CE** (combination from Dice and Cross Entropy Loss), **TOPK**, **TOPK+CE** all are borrowed from nnUNet ([paper](https://www.nature.com/articles/s41592-020-01008-z), [source code](https://github.com/MIC-DKFZ/nnUNet))
 # How To Run
-[Link](/config)
+
 ## Requirements
 
 Install the needed packages by:
@@ -32,8 +38,7 @@ It provides the ability to dynamically create a hierarchical configuration by co
 - **[Albumentations](https://albumentations.ai):** Package for fast and flexible data augmentation in Semantic Segmentation (Albumentations is not limited to segmentation, but only that is used in this repository). 
 Albumentations provides a lot of augmentations that can be used. Also random operations (e.g. random cropping) can be applied directly to images and masks.
 
-
-
+  
 ## Setting up the Data
 
 How to setup the data. Currently the Cityscapes and Pascal Context Dataset is supported.
@@ -197,4 +202,6 @@ python main.py epochs=400 batch_size=6 val_batch_size=6 num_workers=10 lr=0.001 
 ````
 As you can see the basic syntax how to run the code is simple. 
 The crucial thing is to know which parameters you can configure and how.
-Therefore, the *config/* folder explains in detail how the configuration is composed and which parameters it contains.
+Therefore, the [*config/* folder](/config) explains in detail how the configuration is composed and which parameters it contains.
+
+#Experiments

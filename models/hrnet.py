@@ -1,8 +1,14 @@
-# ------------------------------------------------------------------------------
-# Copyright (c) Microsoft
-# Licensed under the MIT License.
-# Written by Ke Sun (sunk@mail.ustc.edu.cn)
-# ------------------------------------------------------------------------------
+'''
+------------------------------------------------------------------------------
+Code slightly adapted and mainly from:
+https://github.com/HRNet/HRNet-Semantic-Segmentation/blob/HRNet-OCR/lib/models/seg_hrnet.py
+        ------------------------------------------------------------------------------
+        Copyright (c) Microsoft
+        Licensed under the MIT License.
+        Written by Ke Sun (sunk@mail.ustc.edu.cn), Jingyi Xie (hsfzxjy@gmail.com)
+        ------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+'''
 
 from __future__ import absolute_import
 from __future__ import division

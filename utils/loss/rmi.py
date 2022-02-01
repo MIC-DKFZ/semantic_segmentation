@@ -1,8 +1,13 @@
 #coding=utf-8
-
 """
-The implementation of the paper:
-Region Mutual Information Loss for Semantic Segmentation.
+------------------------------------------------------------------------------
+Code slightly adapted and mainly from:
+https://github.com/ZJULearning/RMI/tree/master/losses/rmi
+		------------------------------------------------------------------------------
+		The implementation of the paper:
+		Region Mutual Information Loss for Semantic Segmentation.
+		------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 """
 
 # python 2.X, 3.X compatibility

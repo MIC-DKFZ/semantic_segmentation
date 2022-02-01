@@ -1,5 +1,10 @@
 #coding=utf-8
-
+'''
+------------------------------------------------------------------------------
+Code slightly adapted and mainly from:
+https://github.com/ZJULearning/RMI/tree/master/losses/rmi
+------------------------------------------------------------------------------
+'''
 # python 2.X, 3.X compatibility
 from __future__ import print_function
 from __future__ import division

@@ -1,6 +1,4 @@
 # @package _global_
-#defaults:
-#- override data_augmentations: PASCALContext #default
 
 batch_size: 8 #16
 val_batch_size: ${batch_size}

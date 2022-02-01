@@ -61,9 +61,15 @@ def extra_testing(path):
             model = SegModel(config=cfg)
         dataModule = hydra.utils.instantiate(cfg.datamodule, _recursive_=False)
 
+        callbacks = []
+        for _, cb_conf in cfg.CALLBACKS.items():
+            if cb_conf is not None:
+                cb = hydra.utils.instantiate(cb_conf)
+                callbacks.append(cb)
+
         trainer = Trainer(
             gpus=torch.cuda.device_count(),
-
+            callbacks=callbacks,
             logger=None,
             # pl_loggers.TensorBoardLogger(save_dir="./", name="validation", version="", default_hp_metric=False),
             enable_checkpointing=False,

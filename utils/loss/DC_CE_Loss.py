@@ -1,3 +1,11 @@
+'''
+------------------------------------------------------------------------------
+Code slightly adapted and mainly from:
+https://github.com/MIC-DKFZ/nnUNet/tree/master/nnunet/training/loss_functions
+------------------------------------------------------------------------------
+'''
+
+
 import torch
 from torch import nn, Tensor
 #from nnunet.utilities.nd_softmax import softmax_helper

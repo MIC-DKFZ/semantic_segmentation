@@ -1,3 +1,10 @@
+'''
+------------------------------------------------------------------------------
+Code slightly adapted and mainly from:
+https://github.com/MIC-DKFZ/nnUNet/tree/master/nnunet/training/loss_functions
+------------------------------------------------------------------------------
+'''
+
 from torch.nn.modules.loss import _Loss
 from typing import List
 from torch import Tensor

@@ -1,11 +1,18 @@
-# Most of the code below is from the following repo:
-#  https://github.com/HRNet/HRNet-Semantic-Segmentation/tree/HRNet-OCR
-#
-# ------------------------------------------------------------------------------
-# Copyright (c) Microsoft
-# Licensed under the MIT License.
-# Written by Ke Sun (sunk@mail.ustc.edu.cn), Jingyi Xie (hsfzxjy@gmail.com)
-# ------------------------------------------------------------------------------
+''''
+------------------------------------------------------------------------------
+Code slightly adapted and mainly from:
+https://github.com/NVIDIA/semantic-segmentation/blob/main/network/hrnetv2.py
+        ------------------------------------------------------------------------------
+        Most of the code below is from the following repo:
+        https://github.com/HRNet/HRNet-Semantic-Segmentation/tree/HRNet-OCR
+                ------------------------------------------------------------------------------
+                Copyright (c) Microsoft
+                Licensed under the MIT License.
+                Written by Ke Sun (sunk@mail.ustc.edu.cn), Jingyi Xie (hsfzxjy@gmail.com)
+                ------------------------------------------------------------------------------
+        ------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+'''
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function

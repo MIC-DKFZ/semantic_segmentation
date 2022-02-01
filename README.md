@@ -177,7 +177,7 @@ paths:
 ## Running Code
 
 The following is a **Quickstart** guide on how to run the code.
-A detailed explanation of all configurations and how they can be used can be found in the *config/* folder
+A detailed explanation of all configurations and how they can be used can be found in the [*config/* folder](/config). 
 After setting up the data, you can directly run the baseline just by:
 ````shell
 python main.py
@@ -206,6 +206,17 @@ The crucial thing is to know which parameters you can configure and how.
 Therefore, the [*config/* folder](/config) explains in detail how the configuration is composed and which parameters it contains.
 Some more examples on how to run the code are given below in the experiment section.
 
-#Experiments
+# Experiments
 
+## Cityscapes
+
+### Mixed Precision + Epochs + Batch Size ?
+
+### Different Models
+
+### Differnt Loss Funcitons 
+
+### Available Data
+
+## PASCAL VOC2010 Context
 

@@ -7,7 +7,7 @@ Several models and datasets are already provided, and in addition, the possibili
 This repository offers the possibility to compare different state-of-the-art segmentation models under the same conditions on different data sets.
 
 
-The following contains information about how to [set up the data](##Setting-up-the-Data) and how to [run the code](#Running-Code).
+The following contains information about how to [set up the data](#setting-up-the-data) and how to [run the code](#running-code).
 Additionally the [*config/* folder](/config) contains a full explanation of all available configurations and how to csutomize the code to your needs.
 
 ##### References

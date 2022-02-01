@@ -1,22 +1,23 @@
 # Semantic Segmentation Framework using Pytorch Lightning
 
+This repository contains an easy-to-use and flexibly customizable framework for training semantic segmentation models.
+This provides the ability to compare different state-of-the-art (SOTA) segmentation models under same conditions on different datasets.
+Several architectures like [High-Resolution Network (HRNet)](https://arxiv.org/pdf/1904.04514.pdf), [Object Contextual Representation (OCR)]((https://arxiv.org/pdf/1909.11065.pdf)) and [Hierarchical Multi-Scale Attention (MS OCR)]((https://arxiv.org/pdf/2005.10821.pdf)) are already supported, 
+as well as relevant datasets like [Cityscapes](https://www.cityscapes-dataset.com/) (coarse and fine) and [PASCAL VOC2010 Context](https://cs.stanford.edu/~roozbeh/pascal-context/) (59 and 60 classes).
+Additionally, feautures like RMI loss, mixed precision or multi-GPU training are provided among others.
+This repository used new and upcoming packages such as Pytorch Lightning and Hydra and is designed to be extended with additional models and datasets as well as other optimizers and lossfunctions.
 
-This repository contains a framework for training semantic segmentation models on different dataset.
-Several models and datasets are already provided, and in addition, the possibility to add additional models and datasets as well as lossfunctions and optimizers is given.
+The following contains information about how to [set up the data](#setting-up-the-data) and [run the code](#running-code).
+A comparison between different SOTA approaches(HRNet, OCR, MS OCR) on the Cityscapes and PASCAL VOC Context datasets is shown in the [experiments](#experiments) section.
+For an advanced use of this framework, the [***config/* folder**](/config#walkthrough-the-config-jungle) contains a full explanation of all available configurations and how to customize the code to your needs.
 
-This repository offers the possibility to compare different state-of-the-art segmentation models under the same conditions on different data sets.
-
-
-The following contains information about how to [set up the data](#setting-up-the-data) and how to [run the code](#running-code).
-Additionally the [*config/* folder](/config) contains a full explanation of all available configurations and how to csutomize the code to your needs.
-
-##### References
+### References
 This repository adopts code from the following sources:
 - **HRNet** ( High-Resolution Representations for Semantic Segmentation, [paper](https://arxiv.org/pdf/1904.04514.pdf), [source code](https://github.com/HRNet/HRNet-Semantic-Segmentation))
 - **OCR** (Object Contextual Representation, [paper](https://arxiv.org/pdf/1909.11065.pdf), [source code](https://github.com/HRNet/HRNet-Semantic-Segmentation))
 - **MS OCR** (Hierarchical Multi-Scale Attention for Semantic Segmentation, [paper](https://arxiv.org/pdf/2005.10821.pdf), [source code](https://github.com/NVIDIA/semantic-segmentation/tree/main/network))
 - **RMI** (Region Mutual Information Loss for Semantic Segmentation, [paper](https://arxiv.org/pdf/1910.12037.pdf), [source code](https://github.com/ZJULearning/RMI))
-- **DC** (Dice Loss), **DC+CE** (combination from Dice and Cross Entropy Loss), **TOPK**, **TOPK+CE** all are borrowed from nnUNet ([paper](https://www.nature.com/articles/s41592-020-01008-z), [source code](https://github.com/MIC-DKFZ/nnUNet))
+- **DC** (Dice Loss), **DC+CE** (combination from Dice and Cross Entropy Loss), **TOPK**, **TOPK+CE** are all from nnUNet ([paper](https://www.nature.com/articles/s41592-020-01008-z), [source code](https://github.com/MIC-DKFZ/nnUNet))
 # How To Run
 
 ## Requirements
@@ -48,7 +49,7 @@ For adding other datasets look at the Customizing part
 <details><summary>Click to expand/collapse</summary>
 <p>
 
-Download the Cityscape dataset from [here](https://www.cityscapes-dataset.com/downloads/). 
+Download the Cityscapes dataset from [here](https://www.cityscapes-dataset.com/downloads/). 
 You have to create an account and afterward download: *leftImg8bit_trainvaltest.zip* (11GB)  and *gtFine_trainvaltest.zip* (241MB).
 Unzip them and put them into a folder, the structure of the folder should now look like this:
 
@@ -203,5 +204,8 @@ python main.py epochs=400 batch_size=6 val_batch_size=6 num_workers=10 lr=0.001 
 As you can see the basic syntax how to run the code is simple. 
 The crucial thing is to know which parameters you can configure and how.
 Therefore, the [*config/* folder](/config) explains in detail how the configuration is composed and which parameters it contains.
+Some more examples on how to run the code are given below in the experiment section.
 
 #Experiments
+
+

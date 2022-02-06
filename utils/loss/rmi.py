@@ -20,7 +20,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import utils.loss.rmi_utils as rmi_utils
-
+import logging
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
 _euler_num = 2.718281828				# 	euler number
 _pi = 3.14159265						# 	pi
@@ -154,6 +156,8 @@ class RMILoss(nn.Module):
 		return final_loss
 
 	def rmi_lower_bound(self, labels_4D, probs_4D):
+		#print("X",labels_4D.device)
+		#print("X",probs_4D.device)
 		"""
 		calculate the lower bound of the region mutual information.
 		Args:
@@ -200,10 +204,12 @@ class RMILoss(nn.Module):
 		pr_cov = torch.matmul(pr_vectors, pr_vectors.transpose(2, 3))
 		# https://github.com/pytorch/pytorch/issues/7500
 		# waiting for batched torch.cholesky_inverse()
-		pr_cov_inv = torch.inverse(pr_cov + diag_matrix.type_as(pr_cov) * _POS_ALPHA)
+
+		#pr_cov_inv=torch.inverse(pr_cov + diag_matrix.type_as(pr_cov) * _POS_ALPHA)
+
 		# if the dimension of the point is less than 9, you can use the below function
 		# to acceleration computational speed.
-		#pr_cov_inv = utils.batch_cholesky_inverse(pr_cov + diag_matrix.type_as(pr_cov) * _POS_ALPHA)
+		pr_cov_inv = rmi_utils.batch_cholesky_inverse(pr_cov + diag_matrix.type_as(pr_cov) * _POS_ALPHA)
 
 		la_pr_cov = torch.matmul(la_vectors, pr_vectors.transpose(2, 3))
 		# the approxiamation of the variance, det(c A) = c^n det(A), A is in n x n shape;

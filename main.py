@@ -4,7 +4,7 @@ import os.path
 import hydra
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
-
+import sys
 import numpy as np
 import torch
 from torchmetrics import Metric
@@ -123,6 +123,12 @@ class SegModel(LightningModule):
 
         return loss
 
+    def get_val_loss(self, y_pred, y_gt):
+
+        loss = sum([F.cross_entropy(y, y_gt,ignore_index=self.config.DATASET.IGNORE_INDEX) * self.loss_weights[i] for i, y in enumerate(y_pred.values())])
+
+        return loss
+
     def training_step(self, batch, batch_idx):
 
         x, y_gt = batch
@@ -139,7 +145,7 @@ class SegModel(LightningModule):
 
         y_pred = self(x)
 
-        val_loss = self.get_loss(y_pred, y_gt)
+        val_loss = self.get_val_loss(y_pred, y_gt)
         self.log("Loss/validation_loss", val_loss, on_step=True, on_epoch=True, logger=True)
 
         self.metric.update(y_gt.flatten(), list(y_pred.values())[0].argmax(1).flatten())
@@ -187,15 +193,20 @@ class SegModel(LightningModule):
     def test_step(self, batch, batch_idx):
         x, y_gt = batch
 
-        if hasTrueAttr(self.config.extra_testing,"multiscale"):
-            total_pred = None
-            x_size = x.size(2), x.size(3)
-            for scale in self.config.extra_testing.scales:
-                #print(scale)
-                s_size=int(x_size[0]*scale),int(x_size[1]*scale)
-                x_s=F.interpolate(x, s_size, mode='bilinear', align_corners=self.config.MODEL.ALIGN_CORNERS)
-                y_pred=self(x_s)["out"]
-                y_pred=F.interpolate(y_pred, x_size, mode='bilinear', align_corners=self.config.MODEL.ALIGN_CORNERS)
+        #if hasTrueAttr(self.config.extra_testing,"multiscale"):
+        total_pred = None
+        x_size = x.size(2), x.size(3)
+
+        if hasNotEmptyAttr(self.config,"MS_Testing.SCALE"):
+            scales=self.config.MS_Testing.SCALE
+        else:
+            scales=[1]
+
+        for scale in scales:
+            s_size=int(x_size[0]*scale),int(x_size[1]*scale)
+            x_s=F.interpolate(x, s_size, mode='bilinear', align_corners=self.config.MODEL.ALIGN_CORNERS)
+            y_pred=self(x_s)["out"]
+            y_pred=F.interpolate(y_pred, x_size, mode='bilinear', align_corners=self.config.MODEL.ALIGN_CORNERS)
 
                 if self.config.extra_testing.flip:
                     x_flip=torch.flip(x_s, [3])
@@ -232,7 +243,7 @@ class SegModel(LightningModule):
             log.info(dic_IoU)
             log.info("Best mIoU %.4f", mIoU.item())
 
-            self.metric.save_named(path="./",name="%.4f" % mIoU.item())
+            self.metric.save_named(path=self.logger.log_dir,name="%.4f" % mIoU.item())
             #print(dic_IoU)
             #print("Mean IoU:","%.4f" % mIoU.item())
 
@@ -241,6 +252,7 @@ class SegModel(LightningModule):
 
 @hydra.main(config_path="config", config_name="baseline")
 def training_loop(cfg: DictConfig):
+    print(os.getcwd())
     ### SEEDING IF GIVEN BY CONFIG ####
     if hasNotEmptyAttr(cfg, "seed"):
         seed_everything(cfg.seed, workers=True)
@@ -257,6 +269,8 @@ def training_loop(cfg: DictConfig):
 
     AVAIL_GPUS = torch.cuda.device_count()
     log.info('Available GPUs: %s - %s', AVAIL_GPUS, torch.cuda.get_device_name())
+    log.info('CUDA version: %s', torch._C._cuda_getCompiledVersion())
+    #print(torch._C._cuda_getCompiledVersion(), 'cuda compiled version')
     cfg.num_gpus = AVAIL_GPUS
 
     ### DEFINING DATASET ####
@@ -270,7 +284,7 @@ def training_loop(cfg: DictConfig):
     else:
         model = SegModel(config=cfg)
 
-
+    print(os.getcwd())
     ### INITIALIAZING TRAINER ####
     trainer_args = getattr(cfg, "pl_trainer") if hasNotEmptyAttr(cfg, "pl_trainer") else {}
     trainer = Trainer(
@@ -286,46 +300,50 @@ def training_loop(cfg: DictConfig):
     )
 
     ### START TRAINING ####
-    #dataModule.setup()
     trainer.fit(model, dataModule)
 
     ###OPTIONAL TESTING, USED WHEN MODEL IS TESTED UNDER DIFFERENT CONDITIONS THAN TRAINING
-    #if cfg.train:
-    if hasTrueAttr(cfg, "extra_testing"):
-        from validation import extra_testing
-        extra_testing(os.getcwd())
+    if hasTrueAttr(cfg, "test_afterwards"):
+        from validation import validation
+        validation(os.getcwd(),[])
 
 
 
-
-
-def validation2(ckpt_path,hp_path):
-
+def validation2(ckpt_path):
+    env=OmegaConf.load("config/environment/local.yaml")
+    print(env)
+    print(os.getcwd())
     #hydra.initialize(config_path=hp_path)
     hydra.initialize(config_path="config")
     #cfg = hydra.compose(config_name="config",overrides=["MODEL.ADAPTED_PRETRAINED_WEIGHTS=""", "MODEL.PRETRAINED=False","MODEL.MSCALE_TRAINING=true","DATASET.ROOT=/home/l727r/Desktop/Cityscape"])
     #cfg = hydra.compose(config_name="config",overrides=["MODEL.ADAPTED_PRETRAINED_WEIGHTS=""", "MODEL.PRETRAINED=False","DATASET.ROOT=/home/l727r/Desktop/Cityscape"])
     cfg = hydra.compose(config_name="baseline",overrides=["model=hrnet_ocr_ms","MODEL.MSCALE_TRAINING=true","MODEL.ADAPTED_PRETRAINED_WEIGHTS=""", "MODEL.PRETRAINED=False",])
-    cfg.val_batch_size=1
-    model = SegModel.load_from_checkpoint(ckpt_path, config=cfg)
+    cfg.val_batch_size = 1
+
+    #os.chdir(ckpt_path)
+    ckpt_file = glob.glob(os.path.join(ckpt_path,"checkpoints","best_*"))[0]
+
+    model = SegModel.load_from_checkpoint(ckpt_file, config=cfg)
     #print(cfg.dataset)
     #dataModule = getattr(DataModules, cfg.DATASET.NAME)(config=cfg)
     #try:
     dataModule = hydra.utils.instantiate(cfg.datamodule,_recursive_=False)
     #except:
     #dataModule = getattr(DataModules, "BaseDataModule")(config=cfg)
-
-
+    tb_logger = pl_loggers.TensorBoardLogger(save_dir=".", name="",version="", sub_dir="validation")#,default_hp_metric=False)
 
     trainer = Trainer(
         gpus=torch.cuda.device_count(),
+
+        logger=tb_logger,
+
         precision= 16,
         benchmark= True
     )
 
     trainer.test(model,dataModule)
 
-
+#sys.argv.append('hydra.run.dir=test/test')
 if __name__ == "__main__":
 
     training_loop()
@@ -333,7 +351,12 @@ if __name__ == "__main__":
     #checkpoint = torch.load(path)
     #print(checkpoint.keys())
     #print(checkpoint["state_dict"])
+    #ckpt_path = glob.glob("/home/l727r/Desktop/Target_Folder/Cityscapes/hrnet_ocr_ms/rmi_coarse__MODEL.MSCALE_TRAINING_False__epochs_5__lossfunction_wRMI,wCE,wCE,wCE__lr_0.001/2022-01-28_11-59-25/checkpoints/*")
+    #print(ckpt_path)
+    #sys.argv.append('hydra.run.dir=test/test')
 
+    #chpt_path="/home/l727r/Desktop/Target_Folder/Cityscapes/hrnet_ocr_ms/rmi_coarse__MODEL.MSCALE_TRAINING_False__epochs_5__lossfunction_wRMI,wCE,wCE,wCE__lr_0.001/2022-01-28_11-59-25/"
+    #validation()
     '''base="/home/l727r/Desktop/Target_Folder/Cityscape/hrnet_ocr_ms/"
     #F:\Desktop\Target_Folder\Cityscape\hrnet_ocr_ms\baseline__MODEL.MSCALE_TRAINING_False__epochs_65__lr_0.001
     #F:\Desktop\Target_Folder\Cityscape\hrnet_ocr_ms\baseline__MODEL.INIT_WEIGHTS_False__MODEL.MSCALE_TRAINING_False__MODEL.PRETRAINED_False__epochs_400

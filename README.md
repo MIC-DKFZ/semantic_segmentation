@@ -208,15 +208,226 @@ Some more examples on how to run the code are given below in the experiment sect
 
 # Experiments
 
+**Experiments are done on two GPUs. 
+If you want to rerun some experiments with a different number of GPUs you have to adjust the batch_size, since batch_size defines the batch size per GPU.**
+
+If not further specified the experiments are run on two GPUS.
+If you want to run some of them on a different number of GPUs, you should adjust the batch_size as it is defined per GPU
+For each experiment 3 runs are taken
+
 ## Cityscapes
 
-### Mixed Precision + Epochs + Batch Size ?
+### Time Complexity
+
+The following figure shows the training and inference time of each model, as well as the number of parameters.
+It can be seen that the number of parameters is in a similar range for all models, but still as the number of parameters increases, the time complexity of the models also increases.
+Thereby OCR-ASPP has by far the highest training time.
+Using an additional scale to MS OCR highly increases the inference time of the model. 
+That's why MS OCR [0.5, 1.] is used for training only for inference MS OCR [0.5, 1., 2] is used (that's why both have the same training time)
+The runtime measurements are done using a single NVIDIA GeForce RTX 3090. 
+To fit on a single GPU, the batch_size is reduced compared to the baseline.
+
+
+
+![](docs/Time_Complexity.png)
+
+
+
+
+### Defining the Baseline
+
+#### Number of Epochs and Batch Size
+
+Looking at further hyperparameters, it can be seen that the batch size in particular is critical.
+For good results a large batch size is mandatory, so a GPU with sufficient memory or multiple GPUs with synchronized batch normalization should be used.
+If these hardware requirements cannot be fulfilled, [accumulate gradient batches](https://pytorch-lightning.readthedocs.io/en/stable/advanced/training_tricks.html#accumulate-gradients) can be used instead.
+This will not have exactly the same effect but will still help to increase the effective batch size.
+With the number of epochs, the fluctuation is much smaller, but a suitable value is still important.
+Resulting from the experiments, a batch size of 12 and 400 epochs are used for further experiments.
+
+![](docs/Epochs_Batch_Size.png)
+
+<details><summary>Scrips</summary>
+<p>
+
+Running HRNet for different number of epochs
+````shell
+
+python main.py epochs=150
+python main.py epochs=200
+python main.py epochs=250
+python main.py epochs=300
+python main.py epochs=350
+python main.py epochs=400
+python main.py epochs=450
+python main.py epochs=500
+````
+Running HRNet with different batch sizes (ON A SINGLE GPU)
+````shell
+#for the same number of epochs
+python main.py batch_size=4 epochs=400
+python main.py batch_size=6 epochs=400
+python main.py batch_size=8 epochs=400
+python main.py batch_size=10 epochs=400
+python main.py batch_size=12 epochs=400
+python main.py batch_size=14 epochs=400
+````
+````shell
+#for the same number of steps
+python main.py batch_size=4 epochs=134
+python main.py batch_size=6 epochs=201
+python main.py batch_size=8 epochs=268
+python main.py batch_size=10 epochs=334
+python main.py batch_size=12 epochs=400
+python main.py batch_size=14 epochs=468
+````
+
+</p>
+</details>
+
+#### Mixed Precision 
+
+The use of Mixed Precision reduces the training time of the models by 20 to 30%.
+In addition, Mixed Precision was able to improve the results in these experiments.
+Since Mixed Precision has a positive effect and the training time is drastically reduced, Mixed Precision is used as default for further experiments.
+
+![](docs/Mixed_Precision.png)
+
+<details><summary>Scrips</summary>
+<p>
+
+Training with Mixed Precision
+````shell
+python main.py epochs=150
+python main.py epochs=200
+python main.py epochs=250
+python main.py epochs=300
+python main.py epochs=350
+python main.py epochs=400
+python main.py epochs=450
+python main.py epochs=500
+````
+Training without Mixed Precision
+````shell
+python main.py pl_trainer.precision=32 epochs=150
+python main.py pl_trainer.precision=32 epochs=200
+python main.py pl_trainer.precision=32 epochs=250
+python main.py pl_trainer.precision=32 epochs=300
+python main.py pl_trainer.precision=32 epochs=350
+python main.py pl_trainer.precision=32 epochs=400
+python main.py pl_trainer.precision=32 epochs=450
+python main.py pl_trainer.precision=32 epochs=500
+````
+
+</p>
+</details>
+
 
 ### Different Models
 
+![](docs/Models_Basic.png)
+
+<details><summary>Scrips</summary>
+<p>
+
+Training the different Models
+````shell
+python main.py model=hrnet
+python main.py model=hrnet_ocr
+python main.py model=hrnet_ocr_aspp
+python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False
+````
+
+</p>
+</details>
+
+
 ### Differnt Loss Funcitons 
 
+![](docs/Lossfunctions.png)
+
+<details><summary>Scrips</summary>
+<p>
+
+Training HRNet with different Lossfunctions
+````shell
+python main.py lossfunction=CE
+python main.py lossfunction=wCE
+python main.py lossfunction=RMI
+python main.py lossfunction=wRMI
+python main.py lossfunction=DC
+python main.py lossfunction=DC_CE
+python main.py lossfunction=TOPK
+python main.py lossfunction=DC_TOPK
+````
+
+</p>
+</details>
+
+### Close look at RMI loss 
+
+![](docs/RMI_Loss.png)
+
+<details><summary>Scrips</summary>
+<p>
+
+````shell
+#Running HRNet with CE and RMI loss
+python main.py lossfunction=wCE
+python main.py lossfunction=wRMI
+#Running OCR with CE and RMI loss
+python main.py model=hrnet_ocr lossfunction=[wCE,wCE]
+python main.py model=hrnet_ocr lossfunction=[wRMI,wCE]
+#Running OCR + ASPP with CE and RMI loss
+python main.py model=hrnet_ocr_aspp lossfunction=[wCE,wCE]
+python main.py model=hrnet_ocr_aspp lossfunction=[wRMI,wCE]
+#Running MS OCR with CE and RMI loss
+python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False lossfunction=[wCE,wCE,wCE,wCE]
+python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False lossfunction=[wRMI,wCE,wCE,wCE]
+````
+
+</p>
+</details>
+
 ### Available Data
+
+![](docs/Data.png)
+
+<details><summary>Scrips</summary>
+<p>
+
+Training Models without pretraining on ImageNet
+````shell
+python main.py model=hrnet MODEL.PRETRAINED=False MODEL.INIT_WEIGHTS=False
+python main.py model=hrnet_ocr MODEL.PRETRAINED=False MODEL.INIT_WEIGHTS=False
+python main.py model=hrnet_ocr_aspp MODEL.PRETRAINED=False MODEL.INIT_WEIGHTS=False
+python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False MODEL.PRETRAINED=False MODEL.INIT_WEIGHTS=False
+````
+Training Models with pretrained weights on ImageNet
+````shell
+#Running Different Models
+python main.py model=hrnet
+python main.py model=hrnet_ocr
+python main.py model=hrnet_ocr_aspp
+python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False
+````
+Training Models with coarse data
+````shell
+#HRNET
+python main.py model=hrnet
+python main.py model=hrnet dataset=Cityscapes_coarse epochs=25 +finetune_from=<path.to.ckpt.of.previous.line>
+python main.py model=hrnet epochs=65 +finetune_from=<path.to.ckpt.of.previous.line>
+#MS OCR
+python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False
+python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False dataset=Cityscapes_coarse epochs=25 +finetune_from=<path.to.ckpt.of.previous.line>
+python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False epochs=65 +finetune_from=<path.to.ckpt.of.previous.line>
+````
+
+
+</p>
+</details>
+
+
 
 ## PASCAL VOC2010 Context
 

@@ -226,7 +226,14 @@ For each experiment 3 runs are taken
 
 ## Cityscapes
 
-Results on Cityscapes val set
+The following experiments were performed under the following training settings and the reported results are for the Cityscapes validation set.
+Stochastic Gradient Descent(SGD) with *momentum = 0.9* and *weight decay = 0.0005* is used for optimization. 
+The models are trained with an initial learning rate of 0.01 and a polynomial learning rate scheduler.
+These setting have established themselves as a kind of standard for cityscapes and are therefore also used here.
+Additionally, the batch size is set to 12 and the number of epochs to 400. (see [Defining the Baseline](#defining_the_baseline))
+For data augmentation the images are randomly scaled to a range of [0.5, 2] and randomly cropped to a size of 1024x512 afterwards.
+Otherwise, only random flipping and normalization is performed.
+
 
 ### Time Complexity
 

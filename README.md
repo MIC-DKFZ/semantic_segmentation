@@ -217,12 +217,9 @@ Some more examples on how to run the code are given below in the experiment sect
 
 # Experiments
 
-**Experiments are done on two GPUs. 
-If you want to rerun some experiments with a different number of GPUs you have to adjust the batch_size, since batch_size defines the batch size per GPU.**
-
 If not further specified the experiments are run on two GPUS.
 If you want to run some of them on a different number of GPUs, you should adjust the batch_size as it is defined per GPU
-For each experiment 3 runs are taken
+For each experiment and reported results, 3 runs were made.
 
 ## Cityscapes
 

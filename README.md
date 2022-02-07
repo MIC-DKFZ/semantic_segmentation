@@ -17,6 +17,7 @@ TODO
   - axis labels are wrong
 - img lossfunction
   - remove black line around circles (not in the other plots)
+  - maybe use other results for DC loss
 
 ### References
 This repository adopts code from the following sources:
@@ -471,3 +472,4 @@ python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False epochs=65 +finetun
 
 ## PASCAL VOC2010 Context
 
+**IN PROGRESS**

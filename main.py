@@ -191,14 +191,13 @@ class SegModel(LightningModule):
                 log.info(dic_IoU)
 
     def test_step(self, batch, batch_idx):
-        x, y_gt = batch
 
-        #if hasTrueAttr(self.config.extra_testing,"multiscale"):
+        x, y_gt = batch
         total_pred = None
         x_size = x.size(2), x.size(3)
 
-        if hasNotEmptyAttr(self.config,"MS_Testing.SCALE"):
-            scales=self.config.MS_Testing.SCALE
+        if hasNotEmptyAttr(self.config.TESTING,"SCALES") and hasTrueAttr(self.config.TESTING,"MS_TESTING") :
+            scales=self.config.TESTING.SCALES
         else:
             scales=[1]
 
@@ -208,24 +207,21 @@ class SegModel(LightningModule):
             y_pred=self(x_s)["out"]
             y_pred=F.interpolate(y_pred, x_size, mode='bilinear', align_corners=self.config.MODEL.ALIGN_CORNERS)
 
-                if self.config.extra_testing.flip:
-                    x_flip=torch.flip(x_s, [3])
+            if hasTrueAttr(self.config.TESTING,"FLIP"):
+                x_flip=torch.flip(x_s, [3])
 
-                    y_flip = self(x_flip)["out"]
-                    y_flip = torch.flip(y_flip, [3])
-                    y_flip = F.interpolate(y_flip, x_size, mode='bilinear',
-                                           align_corners=self.config.MODEL.ALIGN_CORNERS)
-                    y_pred+=y_flip
-                    y_pred/=2
+                y_flip = self(x_flip)["out"]
+                y_flip = torch.flip(y_flip, [3])
+                y_flip = F.interpolate(y_flip, x_size, mode='bilinear',
+                                       align_corners=self.config.MODEL.ALIGN_CORNERS)
+                y_pred+=y_flip
+                y_pred/=2
 
-                if total_pred==None:
-                    total_pred=y_pred
-                else:
-                    total_pred+=y_pred
-            self.metric.update(y_gt.flatten(), total_pred.argmax(1).flatten())
-        else:
-            y_pred = self(x)
-            self.metric.update(y_gt.flatten(), y_pred["out"].argmax(1).flatten())
+            if total_pred==None:
+                total_pred=y_pred
+            else:
+                total_pred+=y_pred
+        self.metric.update(y_gt.flatten(), total_pred.argmax(1).flatten())
 
     def on_test_epoch_end(self) -> None:
 

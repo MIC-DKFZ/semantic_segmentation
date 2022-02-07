@@ -16,9 +16,12 @@ from tqdm import tqdm
 import argparse
 from config.utils import hasTrueAttr, hasNotEmptyAttr
 
-MS_Testing:
-    Scales: ...
-    Flip: ...
+
+#TESTING
+#    TEST_AFTERWARDS
+#    SCALES
+#    FLIP
+
 
 
 def get_test_config(cfg):
@@ -40,20 +43,20 @@ def get_test_config(cfg):
 
     if cfg.DATASET.NAME == "VOC2010_Context" or cfg.DATASET.NAME == "VOC2010_Context_60":
         cfg.val_batch_size = 1
-        cfg.AUGMENTATIONS.TEST = [{'Compose': {
-            'transforms': [{'Normalize': {'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225]}},
-                           {'ToTensorV2': None}]}}]
+        #cfg.AUGMENTATIONS.TEST = [{'Compose': {
+        #    'transforms': [{'Normalize': {'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225]}},
+        #                   {'ToTensorV2': None}]}}]
 
 
 
-        cfg.extra_testing= {"multiscale": True, "scales": [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0], "flip": True}
-    x=OmegaConf.create({"a": {"b": 10}})
-    OmegaConf.set_struct(cfg, True)
-    with open_dict(cfg):
-        cfg.x = {"a": {"b": 10}}#x
+        #cfg.TESTING= {"MS_TESTING": True, "SCALES": [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0], "FLIP": True}
+        #x=OmegaConf.create({"a": {"b": 10}})
+        OmegaConf.set_struct(cfg, True)
+        with open_dict(cfg):
+            cfg.TESTING = {"MS_TESTING": True, "SCALES": [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0], "FLIP": True}
 
     print(cfg)
-    print(x)
+    #print(x)
     return cfg
 
 def extra_testing(path):
@@ -296,7 +299,7 @@ def validation(ckpt_dir,hydra_args):
     cfg = hydra.compose(config_name="baseline", overrides=overrides+hydra_args+train_overrides)
 
     cfg=get_test_config(cfg)
-    return
+    #return
     ckpt_file = glob.glob(os.path.join("checkpoints", "best_*"))[0]
 
     model = SegModel.load_from_checkpoint(ckpt_file, config=cfg)

@@ -26,14 +26,15 @@ class BaseDataModule(LightningDataModule):
 
     def setup(self, stage= None):
         transforms_train = self.get_augmentations_from_config(self.augmentations.TRAIN)[0]
-        transforms_val = self.get_augmentations_from_config(self.augmentations.TEST)[0]
+        transforms_val = self.get_augmentations_from_config(self.augmentations.VALIDATION)[0]
+        transforms_test = self.get_augmentations_from_config(self.augmentations.TEST)[0]
 
         if stage in (None, "fit"):
             self.DS_train = hydra.utils.instantiate(self.dataset, split="train", transforms=transforms_train)
         if stage in (None,"fit","validate"):
             self.DS_val = hydra.utils.instantiate(self.dataset, split="val", transforms=transforms_val)
         if stage in (None, "test"):
-            self.DS_test = hydra.utils.instantiate(self.dataset, split="test", transforms=transforms_val)
+            self.DS_test = hydra.utils.instantiate(self.dataset, split="test", transforms=transforms_test)
 
     def max_steps(self):
         # dataset size

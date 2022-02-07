@@ -229,7 +229,7 @@ To fit on a single GPU, the batch_size is reduced compared to the baseline.
 
 
 
-![](docs/Time_Complexity.png)
+![](imgs/Time_Complexity.png)
 
 
 
@@ -245,7 +245,7 @@ This will not have exactly the same effect but will still help to increase the e
 With the number of epochs, the fluctuation is much smaller, but a suitable value is still important.
 Resulting from the experiments, a batch size of 12 and 400 epochs are used for further experiments.
 
-![](docs/Epochs_Batch_Size.png)
+![](imgs/Epochs_Batch_Size.png)
 
 <details><summary>Scrips</summary>
 <p>
@@ -291,7 +291,7 @@ The use of Mixed Precision reduces the training time of the models by 20 to 30%.
 In addition, Mixed Precision was able to improve the results in these experiments.
 Since Mixed Precision has a positive effect and the training time is drastically reduced, Mixed Precision is used as default for further experiments.
 
-![](docs/Mixed_Precision.png)
+![](imgs/Mixed_Precision.png)
 
 <details><summary>Scrips</summary>
 <p>
@@ -325,7 +325,7 @@ python main.py pl_trainer.precision=32 epochs=500
 
 ### Different Models
 
-![](docs/Models_Basic.png)
+![](imgs/Models_Basic.png)
 
 <details><summary>Scrips</summary>
 <p>
@@ -344,7 +344,7 @@ python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False
 
 ### Differnt Loss Funcitons 
 
-![](docs/Lossfunctions.png)
+![](imgs/Lossfunctions.png)
 
 <details><summary>Scrips</summary>
 <p>
@@ -366,7 +366,7 @@ python main.py lossfunction=DC_TOPK
 
 ### Close look at RMI loss 
 
-![](docs/RMI_Loss.png)
+![RMI_Loss](imgs/RMI_Loss.png)
 
 <details><summary>Scrips</summary>
 <p>
@@ -391,7 +391,9 @@ python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False lossfunction=[wRMI
 
 ### Available Data
 
-![](docs/Data.png)
+
+![Data](imgs/Data.png)
+
 
 <details><summary>Scrips</summary>
 <p>

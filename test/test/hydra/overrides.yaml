@@ -1,4 +1,0 @@
-- model=hrnet_ocr_ms
-- MODEL.MSCALE_TRAINING=True
-- val_batch_size=1
-- experiment=inference_time

@@ -233,6 +233,7 @@ These setting have established themselves as a kind of standard for cityscapes a
 Additionally, the batch size is set to 12 and the number of epochs to 400. (see [Defining the Baseline](#defining_the_baseline))
 For data augmentation the images are randomly scaled to a range of [0.5, 2] and randomly cropped to a size of 1024x512 afterwards.
 Otherwise, only random flipping and normalization is performed.
+If not specified, training is done on 2 GPUs (with a batch size of 6 per GPU).
 
 
 ### Time Complexity

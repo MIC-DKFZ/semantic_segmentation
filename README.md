@@ -11,10 +11,18 @@ The following contains information about how to [set up the data](#setting-up-th
 A comparison between different SOTA approaches(HRNet, OCR, MS OCR) on the Cityscapes and PASCAL VOC Context datasets is shown in the [experiments](#experiments) section.
 For an advanced use of this framework, the [***config/* folder**](/config#walkthrough-the-config-jungle) contains a full explanation of all available configurations and how to customize the code to your needs.
 
+TODO
+- img additional Data
+  - coarse + RMI is missing
+  - axis labels are wrong
+- img lossfunction
+  - remove black line around circles (not in the other plots)
+
 ### References
 This repository adopts code from the following sources:
 - **HRNet** ( High-Resolution Representations for Semantic Segmentation, [paper](https://arxiv.org/pdf/1904.04514.pdf), [source code](https://github.com/HRNet/HRNet-Semantic-Segmentation))
 - **OCR** (Object Contextual Representation, [paper](https://arxiv.org/pdf/1909.11065.pdf), [source code](https://github.com/HRNet/HRNet-Semantic-Segmentation))
+- **OCR + ASPP** (Combines OCR with an ASPP module, [source code](https://github.com/NVIDIA/semantic-segmentation/tree/main/network))
 - **MS OCR** (Hierarchical Multi-Scale Attention for Semantic Segmentation, [paper](https://arxiv.org/pdf/2005.10821.pdf), [source code](https://github.com/NVIDIA/semantic-segmentation/tree/main/network))
 - **RMI** (Region Mutual Information Loss for Semantic Segmentation, [paper](https://arxiv.org/pdf/1910.12037.pdf), [source code](https://github.com/ZJULearning/RMI))
 - **DC** (Dice Loss), **DC+CE** (combination from Dice and Cross Entropy Loss), **TOPK**, **TOPK+CE** are all from nnUNet ([paper](https://www.nature.com/articles/s41592-020-01008-z), [source code](https://github.com/MIC-DKFZ/nnUNet))
@@ -217,6 +225,8 @@ For each experiment 3 runs are taken
 
 ## Cityscapes
 
+Results on Cityscapes val set
+
 ### Time Complexity
 
 The following figure shows the training and inference time of each model, as well as the number of parameters.
@@ -243,6 +253,7 @@ For good results a large batch size is mandatory, so a GPU with sufficient memor
 If these hardware requirements cannot be fulfilled, [accumulate gradient batches](https://pytorch-lightning.readthedocs.io/en/stable/advanced/training_tricks.html#accumulate-gradients) can be used instead.
 This will not have exactly the same effect but will still help to increase the effective batch size.
 With the number of epochs, the fluctuation is much smaller, but a suitable value is still important.
+In green, the HRNet results reported in the corresponding paper are shown for comparison.
 Resulting from the experiments, a batch size of 12 and 400 epochs are used for further experiments.
 
 ![](imgs/Epochs_Batch_Size.png)
@@ -325,7 +336,14 @@ python main.py pl_trainer.precision=32 epochs=500
 
 ### Different Models
 
-![](imgs/Models_Basic.png)
+After defining the baseline on HRNet, other models are also trained and validated under same conditions.
+As can be seen, OCR gives quite similar results to HRNet in these experiments. 
+In addition, it can be seen that, in contrast to HRNet, the results documented in the paper cannot be achieved with OCR
+(it must be said that the baseline used in the OCR paper is slightly different from the one used here).
+The use of an additional ASPP module leads to a slight improvement in the OCR results, but significantly increases the time complexity of the model.
+Using MS OCR with two scales gives similar results to the other network, but adding a third scale gives highly increased results.
+
+![Models_Basic](imgs/Models_Basic.png)
 
 <details><summary>Scrips</summary>
 <p>
@@ -342,9 +360,16 @@ python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False
 </details>
 
 
-### Differnt Loss Funcitons 
+### Different Loss Funcitons 
 
-![](imgs/Lossfunctions.png)
+Looking at different lossfunctions it can be seen that Cross Entropy(CE) and Region Mutual Information(RMI) loss give the best results.
+Dice Loss based functions are way behind. 
+With changes to the lr and number of epochs, these can be tuned somewhat, but are still significantly worse
+What is also seen is that the use of weights (wCE and wRMI) to compensate for class imbalances significantly improve the results.
+
+![Lossfunctions](imgs/Lossfunctions.png)
+
+
 
 <details><summary>Scrips</summary>
 <p>
@@ -365,6 +390,10 @@ python main.py lossfunction=DC_TOPK
 </details>
 
 ### Close look at RMI loss 
+
+As seen in the previous experiment, the use of RMI loss gives the best results, so this is also tested with the other models.
+RMI loss results in significantly increased mIoU (compared to CE) for all models.
+However, the disadvantage is also an increased training time of the models.
 
 ![RMI_Loss](imgs/RMI_Loss.png)
 
@@ -391,6 +420,15 @@ python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False lossfunction=[wRMI
 
 ### Available Data
 
+Since the previous experiments focused on model and training parameters, a closer look at the used data is given here.
+For the baseline so far ImageNet pretrained weights are used.
+The comparison of the results with models without additional data (trained from scratch) shows that the use of pre-trained weights has a big influence in these experiments.
+With using the coarse cityscapes data the results can be further increased.
+Three different strategies how to integrate the additional data are used.
+the bes result are from Strategy 2 when the model is first trained on fine data, afterwards the model is finetuned (with reduced lr) with only the coarse data and finally model is finetuned (again with reduced lr) again on the fine data.
+To achieve highscores the use of coarse data is combined with RMI loss.
+However, RMI loss is only used for fine data, as it has been shown to not work as well for coarsely annotated data.
+In the end, the best results were achieved in this way and with MS OCR.
 
 ![Data](imgs/Data.png)
 

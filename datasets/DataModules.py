@@ -1,17 +1,16 @@
-import numpy as np
-import albumentations as A
-import albumentations.pytorch
-
-from pytorch_lightning import LightningDataModule
-import torch
-from torch.utils.data import DataLoader
-
+import logging
 import hydra
 from omegaconf import OmegaConf
-import logging
-log = logging.getLogger(__name__)
 
-from config.utils import hasNotEmptyAttr
+from torch.utils.data import DataLoader
+from pytorch_lightning import LightningDataModule
+import albumentations as A
+import albumentations.pytorch
+import numpy as np
+
+from _utils import hasNotEmptyAttr
+
+log = logging.getLogger(__name__)
 
 class BaseDataModule(LightningDataModule):
     def __init__(self, dataset, batch_size,val_batch_size, num_workers ,augmentations, train_size):

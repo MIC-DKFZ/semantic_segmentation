@@ -37,7 +37,6 @@ hydra:
 
 #BASIC HYPERPARAMETERS
 experiment: "baseline"
-num_gpus:
 num_workers: 12
 batch_size: 6
 val_batch_size: ${batch_size}
@@ -50,6 +49,8 @@ momentum: 0.9
 lossfunction: [ "wCE", "wCE", "wCE", "wCE"]
 lossweight:   [1.0, 0.4, 0.05, 0.05]
 pl_trainer:
+  max_epochs: ${epochs}
+  gpus: -1
   precision: 16
   sync_batchnorm: True
   benchmark: True
@@ -62,7 +63,7 @@ pl_trainer:
 #WORK_DIR: ${hydra:runtime.cwd}/
 MODEL:
   PRETRAINED: true
-  INIT_WEIGHTS: true
+  INIT_WEIGHTS: false
   ADAPTED_PRETRAINED_WEIGHTS: ${hydra:runtime.cwd}/${MODEL.PRETRAINED_WEIGHTS}
 
 #DEFINING THE DATAMODULE

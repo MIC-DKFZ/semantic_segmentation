@@ -2,12 +2,12 @@
 
 # Semantic Segmentation Framework using Pytorch Lightning
 
+ 
   <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/-Python 3.9-3776AB?&logo=python&logoColor=white"></a>
   <a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/-PyTorch 1.10-EE4C2C?logo=pytorch&logoColor=white"></a>
   <a href="https://pytorchlightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Pytorch Lightning 1.5.4-792EE5?logo=pytorchlightning&logoColor=white"></a>
-  <a href="https://hydra.cc/"><img alt="hydra" src="https://img.shields.io/badge/hydra 1.1-89b8cd"></a>
-  <a href="https://albumentations.ai/"><img alt="hydra" src="https://img.shields.io/badge/Albumentations 1.10 -ff0000"></a>
-
+  <a href="https://albumentations.ai/"><img alt="Albumentations" src="https://img.shields.io/badge/Albumentations 1.10 -cc0000"></a>
+  <a href="https://hydra.cc/"><img alt="Hydra" src="https://img.shields.io/badge/Hydra 1.1-89b8cd"></a>
 </div>
 
 This repository contains an easy-to-use and flexibly customizable framework for training semantic segmentation models.
@@ -21,6 +21,7 @@ The following contains information about how to [set up the data](#setting-up-th
 A comparison between different SOTA approaches(HRNet, OCR, MS OCR) on the Cityscapes and PASCAL VOC Context datasets is shown in the [experiments](#experiments) section.
 For an advanced use of this framework, the [***config/* folder**](/config#walkthrough-the-config-jungle) contains a full explanation of all available configurations and how to customize the code to your needs.
 
+
 TODO
 - img additional Data
   - coarse + RMI is missing
@@ -30,6 +31,7 @@ TODO
   - maybe use other results for DC loss
 - moving max_step() function
 - Testing Doc
+- doc about pl_trainer -gpus
 
 
 ### References

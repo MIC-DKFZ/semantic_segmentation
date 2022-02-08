@@ -1,10 +1,13 @@
 # Semantic Segmentation Framework using Pytorch Lightning
 
-<a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/-Python 3.9-3776AB?&logo=python&logoColor=white"></a>
-<a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/-PyTorch 1.10-EE4C2C?logo=pytorch&logoColor=white"></a>
-<a href="https://pytorchlightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Pytorch Lightning 1.5.4-792EE5?logo=pytorchlightning&logoColor=white"></a>
-<a href="https://hydra.cc/"><img alt="hydra" src="https://img.shields.io/badge/hydra 1.1-89b8cd"></a>
-<a href="https://albumentations.ai/"><img alt="hydra" src="https://img.shields.io/badge/Albumentations 1.10 -ff0000"></a>
+<p align="center">
+  <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/-Python 3.9-3776AB?&logo=python&logoColor=white"></a>
+  <a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/-PyTorch 1.10-EE4C2C?logo=pytorch&logoColor=white"></a>
+  <a href="https://pytorchlightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Pytorch Lightning 1.5.4-792EE5?logo=pytorchlightning&logoColor=white"></a>
+  <a href="https://hydra.cc/"><img alt="hydra" src="https://img.shields.io/badge/hydra 1.1-89b8cd"></a>
+  <a href="https://albumentations.ai/"><img alt="hydra" src="https://img.shields.io/badge/Albumentations 1.10 -ff0000"></a>
+</p>
+
 
 This repository contains an easy-to-use and flexibly customizable framework for training semantic segmentation models.
 This provides the ability to compare different state-of-the-art (SOTA) segmentation models under same conditions on different datasets.

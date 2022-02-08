@@ -34,7 +34,28 @@ class LR_Stepper():
 
 
 
+
+
+def polynomial_LR_scheduler_stepwise(optimizer,max_steps,exponent=0.9,**kwargs):
+    lr_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda step: (1 - step / max_steps) ** exponent)
+
+    return lr_scheduler#,"step"
+
+def polynomial_LR_scheduler_epochwise(optimizer,max_epochs,exponent=0.9,**kwargs):
+    lr_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda epoch: (1 - epoch / (max_epochs)) ** exponent)
+
+    return lr_scheduler, "epoch"
+
+def polynomial_LR_scheduler_epochwise(optimizer,max_epochs,exponent=0.9,**kwargs):
+    lambda_class = LR_Stepper(cfg)
+    lr_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda step: lambda_class[step])
+    lr_scheduler_config = {"scheduler": lr_scheduler, 'interval': 'step', 'frequency': 1,
+                           "monitor": "metric_to_track"}
+
+
+
 def get_lr_scheduler_from_cfg(optimizer,max_steps,cfg):
+    #print("MX",max_steps)
     if cfg.lr_scheduler in ["poly","POLY","polynomial"]:
         lr_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda step: (1 - step / max_steps) ** 0.9)
         lr_scheduler_config = {"scheduler": lr_scheduler, 'interval': 'step', 'frequency': 1,

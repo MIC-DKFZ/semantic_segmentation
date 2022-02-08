@@ -8,7 +8,7 @@ import albumentations as A
 import albumentations.pytorch
 import numpy as np
 
-from _utils import hasNotEmptyAttr
+from utils.utils import hasNotEmptyAttr
 
 log = logging.getLogger(__name__)
 
@@ -36,13 +36,9 @@ class BaseDataModule(LightningDataModule):
             self.DS_test = hydra.utils.instantiate(self.dataset, split="test", transforms=transforms_test)
 
     def max_steps(self):
-        # dataset size
-        # batch size
-        # num gpus
-        # epochs
-        # accumulate_grad_batches
+
         steps_per_epoch = self.base_size // self.batch_size
-        steps_per_gpu = int(np.ceil(steps_per_epoch / self.trainer.gpus))
+        steps_per_gpu = int(np.ceil(steps_per_epoch / self.trainer.num_gpus))
         acc_steps_per_gpu = int(np.ceil(steps_per_gpu / self.trainer.accumulate_grad_batches))
         max_steps = (self.trainer.max_epochs * acc_steps_per_gpu)
 

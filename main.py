@@ -8,7 +8,7 @@ import torch
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning import Trainer, seed_everything
 
-from _utils import hasTrueAttr, hasNotEmptyAttr,get_logger, num_gpus
+from utils.utils import hasTrueAttr, hasNotEmptyAttr,get_logger, num_gpus
 from omegaconf import DictConfig, OmegaConf
 from Segmentation_Model import SegModel
 from validation import validation

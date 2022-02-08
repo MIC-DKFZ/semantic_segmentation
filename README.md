@@ -32,6 +32,8 @@ TODO
 - moving max_step() function
 - Testing Doc
 - doc about pl_trainer -gpus
+- show Project Structure?
+- learning rate scheduler?
 
 
 ### References

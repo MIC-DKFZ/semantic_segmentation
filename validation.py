@@ -1,28 +1,20 @@
 import logging
-log = logging.getLogger(__name__)
-import time
 import hydra
-from pytorch_lightning import Trainer
-import torch
-import os
-import glob
-from Segmentation_Model import SegModel#, validation
-from omegaconf import OmegaConf,open_dict, DictConfig
-from os.path import relpath
-from pytorch_lightning import loggers as pl_loggers
-import sys
-import numpy as np
+from omegaconf import OmegaConf, DictConfig
 from tqdm import tqdm
 import argparse
-from _utils import hasTrueAttr, hasNotEmptyAttr
+import os
+import glob
 
+import torch
+from pytorch_lightning import Trainer
+from pytorch_lightning import loggers as pl_loggers
+import numpy as np
 
-#TESTING
-#    TEST_AFTERWARDS
-#    SCALES
-#    FLIP
+from Segmentation_Model import SegModel
+from utils.utils import hasTrueAttr, hasNotEmptyAttr
 
-
+log = logging.getLogger(__name__)
 
 def get_test_config(cfg):
 
@@ -31,7 +23,7 @@ def get_test_config(cfg):
     if (cfg.DATASET.NAME == "VOC2010_Context" or cfg.DATASET.NAME == "VOC2010_Context_60") and cfg.MODEL.NAME == "hrnet_ocr_ms":
         cfg.MODEL.MSCALE_TRAINING = True
         cfg.MODEL.N_SCALES= [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
-        cfg.val_batch_size = 1#
+        cfg.val_batch_size = 1 # only a batch of size 1 will fit into gpu
 
         cfg.AUGMENTATIONS.TEST = [{'Compose': {
             'transforms': [{'Normalize': {'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225]}},
@@ -39,10 +31,10 @@ def get_test_config(cfg):
 
     if cfg.MODEL.NAME == "hrnet_ocr_ms":
         cfg.MODEL.MSCALE_TRAINING = True
-        cfg.val_batch_size = 1
+        cfg.val_batch_size = 1 # only a batch of size 1 will fit into gpu
 
     if cfg.DATASET.NAME == "VOC2010_Context" or cfg.DATASET.NAME == "VOC2010_Context_60":
-        cfg.val_batch_size = 1
+        cfg.val_batch_size = 1 # Needed since data has different sizes
         #cfg.AUGMENTATIONS.TEST = [{'Compose': {
         #    'transforms': [{'Normalize': {'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225]}},
         #                   {'ToTensorV2': None}]}}]
@@ -138,16 +130,19 @@ def validation(ckpt_dir,hydra_args):
 
     os.chdir(ckpt_dir)
 
+    ###  load parameters from the checkpoint directory which are overritten ###
     overrides = OmegaConf.load(os.path.join("hydra","overrides.yaml"))
-
     train_overrides=["MODEL.PRETRAINED=False"]
 
+    ### load local config and first override by the the parameters frm the checkpoint dir
+    ### afterward override the parameters from the commandline ###
     cfg = hydra.compose(config_name="baseline", overrides=overrides+hydra_args+train_overrides)
 
+    ### change some testing specific parameters ###
     cfg=get_test_config(cfg)
 
+    ### load checkpoint and load model ###
     ckpt_file = glob.glob(os.path.join("checkpoints", "best_*"))[0]
-
     model = SegModel.load_from_checkpoint(ckpt_file, config=cfg)
 
     dataModule = hydra.utils.instantiate(cfg.datamodule, _recursive_=False)

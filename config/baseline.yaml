@@ -41,11 +41,22 @@ num_workers: 12
 batch_size: 6
 val_batch_size: ${batch_size}
 epochs: 400
-optimizer: sgd
-lr_scheduler: poly
+optimizer:
+    _target_: torch.optim.SGD
+    lr: ${lr}
+    momentum: 0.9
+    weight_decay: 0.0005
+#lr_scheduler: poly
+lr_scheduler_config:
+    interval: step
+    frequency: 1
+    monitor: metric_to_track
+    scheduler:
+        _target_: utils.lr_scheduler.polynomial_LR_scheduler_stepwise
+        exponent: 0.9
+
+
 lr: 0.01 #LR: 0.01445439770745928
-wd: 0.0005
-momentum: 0.9
 lossfunction: [ "wCE", "wCE", "wCE", "wCE"]
 lossweight:   [1.0, 0.4, 0.05, 0.05]
 pl_trainer:

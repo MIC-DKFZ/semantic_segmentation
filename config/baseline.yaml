@@ -41,6 +41,9 @@ num_workers: 12
 batch_size: 6
 val_batch_size: ${batch_size}
 epochs: 400
+metric:
+  _target_: utils.metric.ConfusionMatrix
+  num_classes: ${DATASET.NUM_CLASSES}
 optimizer:
     _target_: torch.optim.SGD
     lr: ${lr}

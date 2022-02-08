@@ -11,6 +11,11 @@ dataset:
     ignore_index: ${DATASET.IGNORE_INDEX}
     num_classes: ${DATASET.NUM_CLASSES}
 
+TESTING:
+  TEST_AFTERWARDS: True
+  SCALES: [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
+  FLIP: True
+
 DATASET:
   #PATH PARAMETERS FOR THIS DATASET
   #ROOT: "/home/l727r/Desktop/Datasets/VOC2010_Context"

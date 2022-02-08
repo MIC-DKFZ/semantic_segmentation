@@ -1,5 +1,11 @@
 # Semantic Segmentation Framework using Pytorch Lightning
 
+<a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/-Python 3.9-3776AB?&logo=python&logoColor=white"></a>
+<a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/-PyTorch 1.10-EE4C2C?logo=pytorch&logoColor=white"></a>
+<a href="https://pytorchlightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Pytorch Lightning 1.5.4-792EE5?logo=pytorchlightning&logoColor=white"></a>
+<a href="https://hydra.cc/"><img alt="hydra" src="https://img.shields.io/badge/hydra 1.1-89b8cd"></a>
+<a href="https://albumentations.ai/"><img alt="hydra" src="https://img.shields.io/badge/Albumentations 1.10 -ff0000"></a>
+
 This repository contains an easy-to-use and flexibly customizable framework for training semantic segmentation models.
 This provides the ability to compare different state-of-the-art (SOTA) segmentation models under same conditions on different datasets.
 Several architectures like [High-Resolution Network (HRNet)](https://arxiv.org/pdf/1904.04514.pdf), [Object Contextual Representation (OCR)]((https://arxiv.org/pdf/1909.11065.pdf)) and [Hierarchical Multi-Scale Attention (MS OCR)]((https://arxiv.org/pdf/2005.10821.pdf)) are already supported, 
@@ -18,6 +24,8 @@ TODO
 - img lossfunction
   - remove black line around circles (not in the other plots)
   - maybe use other results for DC loss
+- moving max_step() function
+- Testing Doc
 
 ### References
 This repository adopts code from the following sources:
@@ -182,6 +190,12 @@ paths:
 
 </p>
 </details>
+
+## Pretrained Weights
+
+Download the pretrained weights from [here](https://github.com/HRNet/HRNet-Image-Classification#imagenet-pretrained-models) and put them into the pretrained folder.
+- ImageNet pretrained: [here](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk)
+- PaddleClas: [here](https://github.com/HRNet/HRNet-Image-Classification/releases/download/PretrainedWeights/HRNet_W18_C_ssld_pretrained.pth)
 
 ## Running Code
 

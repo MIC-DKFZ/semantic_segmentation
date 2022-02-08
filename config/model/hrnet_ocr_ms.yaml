@@ -6,7 +6,8 @@ CALLBACKS:
     m_scale_training: ${MODEL.MSCALE_TRAINING}
     epochs: ${epochs}
 
-extra_testing: True
+TESTING:
+  TEST_AFTERWARDS: True
 
 MODEL:
   NAME: hrnet_ocr_ms

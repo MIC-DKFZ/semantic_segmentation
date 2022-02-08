@@ -299,7 +299,7 @@ def training_loop(cfg: DictConfig):
     trainer.fit(model, dataModule)
 
     ###OPTIONAL TESTING, USED WHEN MODEL IS TESTED UNDER DIFFERENT CONDITIONS THAN TRAINING
-    if hasTrueAttr(cfg, "test_afterwards"):
+    if hasTrueAttr(cfg.TESTING, "TEST_AFTERWARDS"):
         from validation import validation
         validation(os.getcwd(),[])
 

@@ -51,11 +51,11 @@ def get_test_config(cfg):
 
         #cfg.TESTING= {"MS_TESTING": True, "SCALES": [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0], "FLIP": True}
         #x=OmegaConf.create({"a": {"b": 10}})
-        OmegaConf.set_struct(cfg, True)
-        with open_dict(cfg):
-            cfg.TESTING = {"MS_TESTING": True, "SCALES": [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0], "FLIP": True}
+        #OmegaConf.set_struct(cfg, True)
+        #with open_dict(cfg):
+        #    cfg.TESTING = {"MS_TESTING": True, "SCALES": [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0], "FLIP": True}
 
-    print(cfg)
+    #print(cfg)
     #print(x)
     return cfg
 

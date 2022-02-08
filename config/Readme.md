@@ -50,8 +50,9 @@ python main.py  model=hrnet_ocr +parameters=basic ~environment
 This was only a short introduction how to use hydra to work with this repository.
 For more information on Hydra, check out the official docs or one of the following sources, which provide some nice insights into Hydra
 ([source1](https://github.com/lkhphuc/lightning-hydra-template),
-[source2](https://www.sscardapane.it/tutorials/hydra-tutorial/) and
-[source3](https://towardsdatascience.com/complete-tutorial-on-how-to-use-hydra-in-machine-learning-projects-1c00efcc5b9b)).
+[source2](https://www.sscardapane.it/tutorials/hydra-tutorial/),
+[source3](https://towardsdatascience.com/complete-tutorial-on-how-to-use-hydra-in-machine-learning-projects-1c00efcc5b9b) and 
+[source4](https://github.com/ashleve/lightning-hydra-template)).
 
 ## OmegaConf in a Nutshell
 

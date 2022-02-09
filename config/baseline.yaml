@@ -1,18 +1,55 @@
 #@package _global_
 
-#DEFAULT LIST
+# DEFAULT LIST
+# defines which modules from which parameter group are used by default
 defaults:
   - _self_
-  - optional hyperparameters:
   - callbacks: default
   - data_augmentation: default
+  - optimizer: SGD
+  - lr_scheduler: polynomial
+  - optional hyperparameters:
+  - metric: confmat_IoU
   - model: hrnet
   - dataset: Cityscapes
   - environment: local
 
-  #USING COLORLOG PLUGIN OF HYDRA
+  # USING COLORLOG PLUGIN OF HYDRA
   - override hydra/hydra_logging: colorlog
   - override hydra/job_logging: colorlog
+
+
+# DEFAULT HYPERPARAMETERS
+experiment: "baseline"          #possibility for naming the experiment
+num_workers: 10                 #number of workers for dataloader
+batch_size: 6                   #batch size per gpu for training
+val_batch_size: ${batch_size}   #batch size per gpu for validation
+epochs: 400                     #number of eposchs
+lr: 0.01                        #learning rate for training (0.01445439770745928)
+momentum: 0.9                   #momentum for optimizer
+weight_decay: 0.0005            #wd for optimizer
+lossfunction: [ "wCE", "wCE", "wCE", "wCE"]     #list of lossfunctions
+lossweight:   [1.0, 0.4, 0.05, 0.05]            #corresponding weights for each loss function
+pl_trainer:                     #parameters for the pytorch lightning trainer
+  max_epochs: ${epochs}         #parsing the number of epochs
+  gpus: -1                      #using all available GPUs
+  precision: 16                 #using Mixed Precision
+  sync_batchnorm: True          #using synchronized batch normalization for multi gpu training
+  benchmark: True               #using benchmark for faster training
+
+  # Some usefull pl parameters for debugging
+  #limit_train_batches: 0.01
+  #limit_val_batches: 0.01
+  #track_grad_norm: 2
+  #reload_dataloaders_every_epoch: true
+  #accumulate_grad_batches: 2
+
+#WORK_DIR: ${hydra:runtime.cwd}/
+MODEL:
+  PRETRAINED: true
+  INIT_WEIGHTS: false
+  ADAPTED_PRETRAINED_WEIGHTS: ${hydra:runtime.cwd}/${MODEL.PRETRAINED_WEIGHTS}
+
 
 #SOME CUSTOMIZATIONS OF HYDRA
 hydra:
@@ -34,51 +71,6 @@ hydra:
           - finetune_from
           - experiment
           - LOGDIR
-
-#BASIC HYPERPARAMETERS
-experiment: "baseline"
-num_workers: 12
-batch_size: 6
-val_batch_size: ${batch_size}
-epochs: 400
-metric:
-  _target_: utils.metric.ConfusionMatrix
-  num_classes: ${DATASET.NUM_CLASSES}
-optimizer:
-    _target_: torch.optim.SGD
-    lr: ${lr}
-    momentum: 0.9
-    weight_decay: 0.0005
-#lr_scheduler: poly
-lr_scheduler_config:
-    interval: step
-    frequency: 1
-    monitor: metric_to_track
-    scheduler:
-        _target_: utils.lr_scheduler.polynomial_LR_scheduler_stepwise
-        exponent: 0.9
-
-
-lr: 0.01 #LR: 0.01445439770745928
-lossfunction: [ "wCE", "wCE", "wCE", "wCE"]
-lossweight:   [1.0, 0.4, 0.05, 0.05]
-pl_trainer:
-  max_epochs: ${epochs}
-  gpus: -1
-  precision: 16
-  sync_batchnorm: True
-  benchmark: True
-  #limit_train_batches: 0.01
-  #limit_val_batches: 0.01
-  #track_grad_norm: 2
-  #reload_dataloaders_every_epoch: true
-  #accumulate_grad_batches: 2
-
-#WORK_DIR: ${hydra:runtime.cwd}/
-MODEL:
-  PRETRAINED: true
-  INIT_WEIGHTS: false
-  ADAPTED_PRETRAINED_WEIGHTS: ${hydra:runtime.cwd}/${MODEL.PRETRAINED_WEIGHTS}
 
 #DEFINING THE DATAMODULE
 datamodule:

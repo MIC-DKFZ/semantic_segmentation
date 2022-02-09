@@ -1,0 +1,7 @@
+interval: epoch             # when the scheduler should be called, at each step of each epoch
+frequency: 1                # how often should it be called
+monitor: metric_to_track    # parameter for pytorch lightning to log the lr
+scheduler:                  #defining the scheduler class
+    _target_: utils.lr_scheduler.polynomial_LR_scheduler_epochwise   # path to the scheduler
+    max_epochs: ${epochs}
+    exponent: 0.9           # arguments for the scheduler

@@ -14,11 +14,11 @@ This repository contains an easy-to-use and flexibly customizable framework for 
 This provides the ability to compare different state-of-the-art (SOTA) segmentation models under same conditions on different datasets.
 Several architectures like [High-Resolution Network (HRNet)](https://arxiv.org/pdf/1904.04514.pdf), [Object Contextual Representation (OCR)]((https://arxiv.org/pdf/1909.11065.pdf)) and [Hierarchical Multi-Scale Attention (MS OCR)]((https://arxiv.org/pdf/2005.10821.pdf)) are already supported, 
 as well as relevant datasets like [Cityscapes](https://www.cityscapes-dataset.com/) (coarse and fine) and [PASCAL VOC2010 Context](https://cs.stanford.edu/~roozbeh/pascal-context/) (59 and 60 classes).
-Additionally, feautures like RMI loss, mixed precision or multi-GPU training are provided among others.
-This repository used new and upcoming packages such as Pytorch Lightning and Hydra and is designed to be extended with additional models and datasets as well as other optimizers and lossfunctions.
+Additionally, features like [Region Mutual Information (RMI)]((https://arxiv.org/pdf/1910.12037.pdf)) loss, mixed precision or multi-GPU training are provided among others.
+This repository uses new and upcoming packages such as Pytorch Lightning and Hydra, and is designed to be extended with additional models and datasets, as well as other optimizers, schedulers, metrics, loss functions, and data augmentations.
 
 The following contains information about how to [set up the data](#setting-up-the-data) and [run the code](#running-code).
-A comparison between different SOTA approaches(HRNet, OCR, MS OCR) on the Cityscapes and PASCAL VOC Context datasets is shown in the [experiments](#experiments) section.
+A comparison between different SOTA approaches(HRNet, OCR,OCR+ASPP, MS OCR) on the Cityscapes and PASCAL VOC Context datasets is shown in the [experiments](#experiments) section.
 For an advanced use of this framework, the [***config/* folder**](/config#walkthrough-the-config-jungle) contains a full explanation of all available configurations and how to customize the code to your needs.
 
 
@@ -29,11 +29,13 @@ TODO
 - img lossfunction
   - remove black line around circles (not in the other plots)
   - maybe use other results for DC loss
-- moving max_step() function
 - Testing Doc
 - doc about pl_trainer -gpus
 - show Project Structure?
-- learning rate scheduler?
+- TOPK with DC or CE?
+- new doc for models, optimizer, lr scheduler
+- replace lossfunction by loss function
+
 
 
 ### References
@@ -68,8 +70,9 @@ Albumentations provides a lot of augmentations that can be used. Also random ope
   
 ## Setting up the Data
 
-How to setup the data. Currently the Cityscapes and Pascal Context Dataset is supported.
-For adding other datasets look at the Customizing part
+Currently, the following datasets are supported: Cityscapes, Cityscapes_coarse and Pascal Context Dataset(59 and 60 classes).
+Follow the instructions below to set up the respective datasets
+For adding other datasets look at the [customizing part](/config#dataset).
 
 ### Cityscapes
 <details><summary>Click to expand/collapse</summary>
@@ -78,7 +81,6 @@ For adding other datasets look at the Customizing part
 Download the Cityscapes dataset from [here](https://www.cityscapes-dataset.com/downloads/). 
 You have to create an account and afterward download: *leftImg8bit_trainvaltest.zip* (11GB)  and *gtFine_trainvaltest.zip* (241MB).
 Unzip them and put them into a folder, the structure of the folder should now look like this:
-
 ````
 Datasets/cityscapes
     ├── leftImg8bit_trainvaltest
@@ -100,18 +102,19 @@ Datasets/cityscapes
 
 ````
 The cityscapes dataset contain 34 classes by default but only 19 of them are used in practices.
-To avoid doing this convertion during training this is done in a preprocessing step.
-To do this preprocessing run the following code with adjusting the datapath to the location which contains the *gtFine_trainvaltest* folder. 
-This will create a new img for each datasamble with the converted class labeling which will be merged into the folder/data structure of the cityscapes dataset.
+To avoid doing this conversion at each training step, it is done in a preprocessing step.
+To do this preprocessing run the following code with adjusting the data_path to the location which contains the *leftImg8bit_trainvaltest* and *gtFine_trainvaltest* folders. 
+This will create a new img for each data sample with the converted class labeling which will be merged into the folder/data structure of the cityscapes dataset.
 ````
 python datasets/utils/process_Cityscapes.py home/.../Datasets/cityscapes
 ````
-After downloading and setting up the data, the path in the config has to be adjusted.
-Open the file the environment your are using(defaul *config/environment/local.yaml*) and adopt the cityscapes path to the location of the folder where your *gtFine_trainvaltest* and *leftImg8bit_trainvaltest* are.
+After downloading and setting up the data, the last step is to adjust the path in the configuration.
+Open the file of the environment you are using (by default *config/environment/local.yaml*) and adopt the cityscapes path to the location of the folder where your *gtFine_trainvaltest* and *leftImg8bit_trainvaltest* are.
 For this example this would look like this:
 ````yaml
 config/environment/local.yaml
 ─────────────────────────────
+...
 paths:
   cityscapes: /home/.../Datasets/cityscapes
 ````
@@ -122,11 +125,12 @@ paths:
 <details><summary>Click to expand/collapse</summary>
 <p>
 
-The cityscapes dataset also provides 20k additional coarse labeled images. 
+The cityscapes dataset provides 20k additional coarse labeled images
 Since  cityscapes_coarse contains no validation data the fine annotated validation set is used for this purpose.
-Therefore first download and process the cityscapes dataset as shown above.
+This is an extension to cityscapes rather than a separate dataset, so [cityscapes](#cityscapes) should be set up first. 
 Afterwards download the cityscapes_coarse dataset from [here](https://www.cityscapes-dataset.com/downloads/). 
-Download *leftImg8bit_trainextra.zip (44GB)* and *gtCoarse.zip (1.3GB)* and unzip them in the same folder as your cityscapes dataset and you should end up with this:
+Download *leftImg8bit_trainextra.zip (44GB)* and *gtCoarse.zip (1.3GB)* and unzip them in the same folder as your cityscapes data.
+You then should end up with this:
 ````
 Datasets/cityscapes
     ├── leftImg8bit_trainvaltest
@@ -156,7 +160,7 @@ python datasets/utils/process_Cityscapes_coarse.py home/.../Datasets/cityscapes
 
 Click [here](https://cs.stanford.edu/~roozbeh/pascal-context/trainval.tar.gz) for directly downloading the labels or do it manually by downloading the file *trainval.tar.gz (30.7 MB file)* from [PASCAL-Context](https://cs.stanford.edu/~roozbeh/pascal-context/#download). 
 Click [here](http://host.robots.ox.ac.uk/pascal/VOC/voc2010/VOCtrainval_03-May-2010.tar) for directly downloading the images or do it manually by downloading the file *training/validation data (1.3GB tar file)* from [PASCAL VOC](http://host.robots.ox.ac.uk/pascal/VOC/voc2010/index.html#devkit).
-Unzip both filse and put them into a folder. 
+Unzip both files and put them into a folder. 
 The structure of you folders should look like this:
 
 ````
@@ -170,7 +174,7 @@ Datasets
             ├── *.mat
             └── ...
 ````
-Since the VOC2010 dataset contains a lot of unnecessary stuff (for this repo), only the needed data is extracted and merged with the transformed label data from *trainval/*.
+Since the VOC2010 dataset contains a lot of unnecessary stuff (unnecessary for this repo), only the needed data is extracted and merged with the transformed label data from *trainval/*.
 Run the following script which creates a new folder structure with only the relevant and transformed data.
 ````shell
 python datasets/utils/process_VOC2010_Context.py home/.../Datasets/
@@ -187,12 +191,13 @@ Datasets
             ├── train
             └── val
 ````
-After downloading and setting up the data, the path in the config has to be adjusted.
-Open the file the environment your are using(defaul *config/environment/local.yaml*) and adopt the cityscapes path to the location of the folder where your *gtFine_trainvaltest* and *leftImg8bit_trainvaltest* are.
+After downloading and setting up the data, the last step is to adjust the path in the configuration.
+Open the file of the environment you are using (by default *config/environment/local.yaml*) and adopt the VOC2010_Context path to the location of the folder where your *Images* and *Annotations* are.
 For this example this would look like this:
 ````yaml
 config/environment/local.yaml
 ─────────────────────────────
+...
 paths:
     VOC2010_Context: /home/.../Datasets/VOC2010_Context
 ````
@@ -200,17 +205,19 @@ paths:
 </p>
 </details>
 
-## Pretrained Weights
+## Download Pretrained Weights
 
-Download the pretrained weights from [here](https://github.com/HRNet/HRNet-Image-Classification#imagenet-pretrained-models) and put them into the pretrained folder.
-- ImageNet pretrained: [here](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk)
-- PaddleClas: [here](https://github.com/HRNet/HRNet-Image-Classification/releases/download/PretrainedWeights/HRNet_W18_C_ssld_pretrained.pth)
+Pretrained weights for HRNet can be found here [here](https://github.com/HRNet/HRNet-Image-Classification#imagenet-pretrained-models).
+Since all models (HRNet, OCR, OCR+ASPP, MS OCR) are using an HRNet backbone, these weights are used for all of them.
+Download the preferred weights and put them in the *pretrained/* folder.
+- ImageNet pretrained: [download](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk)
+- PaddleClass weights: [download](https://github.com/HRNet/HRNet-Image-Classification/releases/download/PretrainedWeights/HRNet_W18_C_ssld_pretrained.pth)
 
 ## Running Code
 
 The following is a **Quickstart** guide on how to run the code.
-A detailed explanation of all configurations and how they can be used can be found in the [*config/* folder](/config). 
-After setting up the data, you can directly run the baseline just by:
+A detailed explanation of all configurations and how they can be used can be found in the [*config/* folder](/config#walkthrough-the-config-jungle). 
+After setting up the data and downloading the pretrained weights, you can directly run the baseline by:
 ````shell
 python main.py
 ````
@@ -229,14 +236,31 @@ python main.py dataset=Cityscapes
 python main.py dataset=Cityscapes_coase
 python main.py dataset=VOC2010_Context
 ````
-Also basic hyperparameters needed for training can be set:
+Also basic hyperparameters needed for training can be set by:
 ````shell
 python main.py epochs=400 batch_size=6 val_batch_size=6 num_workers=10 lr=0.001 wd=0.0005 momentum=0.9
 ````
 As you can see the basic syntax how to run the code is simple. 
 The crucial thing is to know which parameters you can configure and how.
 Therefore, the [*config/* folder](/config) explains in detail how the configuration is composed and which parameters it contains.
-Some more examples on how to run the code are given below in the experiment section.
+Some more examples on how to run the code are given below in the [experiment](#experiments) section.
+
+The output/logging behaviour of the code will look like this:
+
+````
+LOGDIR                                      # logs/ by default
+    └── Dataset                             # Name of the used Dataset
+        └──Model                            # Name of the used Model
+           └──experiment_overrides          # Parameters that have been overwritten and differ from the baseline
+              └──Date                       # Date as unique identifier
+                  ├── checkpoints/          # if checkpointing is enabled this contains the best and the last epochs checkpoint
+                  ├── hydra/                # contains hydra files
+                  ├── validation/           # optional (only when model is validated) - contains testing results
+                  ├── ConfusionMatrix.pt    # Confusion Matrix of best epoch, for the case that other metrics are needed
+                  ├── event.out...          # Tensorboard log
+                  ├── main.log              # logging
+                  └── hparams.yaml          # resolved config
+````
 
 # Experiments
 
@@ -253,7 +277,8 @@ These setting have established themselves as a kind of standard for cityscapes a
 Additionally, the batch size is set to 12 and the number of epochs to 400. (see [Defining the Baseline](#defining_the_baseline))
 For data augmentation the images are randomly scaled to a range of [0.5, 2] and randomly cropped to a size of 1024x512 afterwards.
 Otherwise, only random flipping and normalization is performed.
-If not specified, training is done on 2 GPUs (with a batch size of 6 per GPU).
+By default the models are pretrained weights on ImageNet are used.
+If not specified, training is done on 2 GPUs (with a batch size of 6 per GPU) and each experiment is run 3 times.
 
 
 ### Time Complexity
@@ -263,15 +288,10 @@ It can be seen that the number of parameters is in a similar range for all model
 Thereby OCR-ASPP has by far the highest training time.
 Using an additional scale to MS OCR highly increases the inference time of the model. 
 That's why MS OCR [0.5, 1.] is used for training only for inference MS OCR [0.5, 1., 2] is used (that's why both have the same training time)
-The runtime measurements are done using a single NVIDIA GeForce RTX 3090. 
+The runtime measurements are done using a single GPU (NVIDIA GeForce RTX 3090). 
 To fit on a single GPU, the batch_size is reduced compared to the baseline.
 
-
-
 ![](imgs/Time_Complexity.png)
-
-
-
 
 ### Defining the Baseline
 
@@ -391,9 +411,9 @@ python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False
 
 ### Different Loss Funcitons 
 
-Looking at different lossfunctions it can be seen that Cross Entropy(CE) and Region Mutual Information(RMI) loss give the best results.
+Looking at different loss functions it can be seen that Cross Entropy (CE) and Region Mutual Information (RMI) loss give the best results.
 Dice Loss based functions are way behind. 
-With changes to the lr and number of epochs, these can be tuned somewhat, but are still significantly worse
+With changes to the lr and number of epochs, these can be tuned somewhat, but are still significantly worse.
 What is also seen is that the use of weights (wCE and wRMI) to compensate for class imbalances significantly improve the results.
 
 ![Lossfunctions](imgs/Lossfunctions.png)
@@ -403,7 +423,7 @@ What is also seen is that the use of weights (wCE and wRMI) to compensate for cl
 <details><summary>Scrips</summary>
 <p>
 
-Training HRNet with different Lossfunctions
+Training HRNet with different loss functions
 ````shell
 python main.py lossfunction=CE
 python main.py lossfunction=wCE
@@ -422,7 +442,8 @@ python main.py lossfunction=DC_TOPK
 
 As seen in the previous experiment, the use of RMI loss gives the best results, so this is also tested with the other models.
 RMI loss results in significantly increased mIoU (compared to CE) for all models.
-However, the disadvantage is also an increased training time of the models.
+However, it also leads to an increased runtime.
+To keep this increase as low as possible, RMI loss is only used during training and CE loss is still used during validation
 
 ![RMI_Loss](imgs/RMI_Loss.png)
 

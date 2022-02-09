@@ -1,4 +1,11 @@
 #@package _global_
+model:
+  _target_: models.hrnet.get_seg_model
+  cfg:
+    MODEL: ${MODEL}
+    DATASET:
+      NUM_CLASSES: ${DATASET.NUM_CLASSES}
+
 
 MODEL:
   NAME: hrnet

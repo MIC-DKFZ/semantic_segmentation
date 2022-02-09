@@ -9,23 +9,17 @@ from pytorch_lightning import LightningModule
 
 from utils.loss_function import get_loss_function_from_cfg
 from utils.utils import hasNotEmptyAttr,hasTrueAttr
-#from utils.optimizer import get_optimizer_from_cfg
-#from utils.lr_scheduler import get_lr_scheduler_from_cfg
-
-from models import hrnet, hrnet_ocr, hrnet_ocr_aspp, hrnet_ocr_ms
 
 log = logging.getLogger(__name__)
-
 
 class SegModel(LightningModule):
     def __init__(self, config):
         super().__init__()
 
         self.config = config
-        #self.num_classes=config.DATASET.NUM_CLASSES
-        self.model = eval(config.MODEL.NAME + '.get_seg_model')(config)
+        self.model = hydra.utils.instantiate(self.config.model)
 
-        self.metric = hydra.utils.instantiate(config.metric)#ConfusionMatrix(config.DATASET.NUM_CLASSES)
+        self.metric = hydra.utils.instantiate(config.metric)
         self.register_buffer("best_mIoU", torch.as_tensor(0))
 
     def forward(self, x):
@@ -50,28 +44,15 @@ class SegModel(LightningModule):
         log.info("Weighting: %s", self.loss_weights)
 
         #### OPTIMIZER ####
-        #self.optimizer = get_optimizer_from_cfg(self.parameters(), self.config)
         self.optimizer=hydra.utils.instantiate(self.config.optimizer,self.parameters())
 
         #### LR SCHEDULER ####
         max_steps = self.trainer.datamodule.max_steps()
 
-
-        #self.lr_scheduler, interval =hydra.utils.instantiate(self.config.lr_scheduler,optimizer=self.optimizer,max_steps=max_steps)
-        #lr_scheduler_config= {"scheduler": self.lr_scheduler, 'interval': interval, 'frequency': 1,
-        #                   "monitor": "metric_to_track"}
-
-        lr_scheduler_config=dict(self.config.lr_scheduler_config)
-        lr_scheduler_config["scheduler"]=hydra.utils.instantiate(self.config.lr_scheduler_config.scheduler,
+        lr_scheduler_config=dict(self.config.lr_scheduler)
+        lr_scheduler_config["scheduler"]=hydra.utils.instantiate(self.config.lr_scheduler.scheduler,
                                                                  optimizer=self.optimizer,
                                                                  max_steps=max_steps)
-
-        #lr_scheduler_config = hydra.utils.instantiate(self.config.lr_scheduler_config,optimizer=self.optimizer, max_steps=self.trainer.datamodule.max_steps())
-        #lr_scheduler_config = self.config.lr_scheduler_config
-        #lr_scheduler_config.scheduler=hydra.utils.call(lr_scheduler_config.scheduler,optimizer=self.optimizer,max_steps=max_steps)
-        #### LR SCHEDULER ####
-        #max_steps = self.trainer.datamodule.max_steps()
-        #self.lr_scheduler, lr_scheduler_config = get_lr_scheduler_from_cfg(self.optimizer, max_steps, self.config)
 
         return {"optimizer": self.optimizer, "lr_scheduler": lr_scheduler_config}
 

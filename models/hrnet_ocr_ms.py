@@ -327,7 +327,7 @@ class MscaleOCR(nn.Module):
         global ALIGN_CORNERS
         super(MscaleOCR, self).__init__()
         ALIGN_CORNERS = cfg.MODEL.ALIGN_CORNERS
-        self.m_scale_training = cfg.MODEL.MSCALE_TRAINING
+        self.m_scale_inference = cfg.MODEL.MSCALE_INFERENCE
 
         self.n_scales=cfg.MODEL.N_SCALES
         self.mscale_lo_scale = cfg.MODEL.MSCALE_LO_SCALE
@@ -465,7 +465,7 @@ class MscaleOCR(nn.Module):
 
     def forward(self, inputs):
 
-        if self.n_scales and not self.training and self.m_scale_training:
+        if self.n_scales and not self.training and self.m_scale_inference:
             return self.nscale_forward(inputs, self.n_scales)
         return self.two_scale_forward(inputs)
 

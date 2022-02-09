@@ -10,7 +10,8 @@ from pytorch_lightning import LightningModule
 from utils.loss_function import get_loss_function_from_cfg
 from utils.utils import hasNotEmptyAttr,hasTrueAttr
 
-log = logging.getLogger(__name__)
+from utils.utils import get_logger
+log = get_logger(__name__)
 
 class SegModel(LightningModule):
     def __init__(self, config):
@@ -94,7 +95,7 @@ class SegModel(LightningModule):
         val_loss = self.get_loss(y_pred, y_gt)
         self.log("Loss/validation_loss", val_loss, on_step=True, on_epoch=True, logger=True)
 
-        self.metric.update(y_gt.flatten(), list(y_pred.values())[0].argmax(1).flatten())
+        self.metric.update(y_gt, list(y_pred.values())[0])
 
         return val_loss
 
@@ -176,6 +177,6 @@ class SegModel(LightningModule):
         log.info(dic_IoU)
         log.info("Best mIoU %.4f", mIoU.item())
 
-        self.metric.save_named(path=self.logger.log_dir,name="%.4f" % mIoU.item())
+        self.metric.save(path=self.logger.log_dir,name="%.4f" % mIoU.item())
 
 

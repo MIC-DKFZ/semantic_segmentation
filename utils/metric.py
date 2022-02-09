@@ -10,10 +10,12 @@ class ConfusionMatrix(Metric):
         self.add_state("mat", default=torch.zeros((num_classes, num_classes), dtype=torch.int64), dist_reduce_fx="sum")
 
     def update(self, gt, pred):
+        gt=gt.flatten().detach().cpu()
+        pred=pred.argmax(1).flatten().detach().cpu()
 
         n = self.num_classes
-        gt=gt.detach().cpu()
-        pred=pred.detach().cpu()
+        #gt=gt.detach().cpu()
+        #pred=pred.detach().cpu()
 
         with torch.no_grad():
             k = (gt >= 0) & (gt < n)
@@ -26,12 +28,12 @@ class ConfusionMatrix(Metric):
         mIoU = IoU.mean()
         return IoU, mIoU
 
-    def save(self, path):
-        path = os.path.join(path, "ConfusionMatrix.pt")
-        torch.save(self.mat.cpu(), path)
-
-    def save_named(self, path, name):
-        path = os.path.join(path, "ConfusionMatrix_"+name+".pt")
+    def save(self, path, name=None):
+        if name != None:
+            name="ConfusionMatrix_"+name+".pt"
+        else:
+            name="ConfusionMatrix.pt"
+        path = os.path.join(path, name)
         torch.save(self.mat.cpu(), path)
 
     def reset(self):

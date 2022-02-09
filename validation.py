@@ -14,14 +14,15 @@ import numpy as np
 from Segmentation_Model import SegModel
 from utils.utils import hasTrueAttr, hasNotEmptyAttr
 
-log = logging.getLogger(__name__)
+from utils.utils import get_logger
+log = get_logger(__name__)
 
 def get_test_config(cfg):
 
     cfg.MODEL.ADAPTED_PRETRAINED_WEIGHTS=""
 
     if (cfg.DATASET.NAME == "VOC2010_Context" or cfg.DATASET.NAME == "VOC2010_Context_60") and cfg.MODEL.NAME == "hrnet_ocr_ms":
-        cfg.MODEL.MSCALE_TRAINING = True
+        cfg.MODEL.MSCALE_INFERENCE = True
         cfg.MODEL.N_SCALES= [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
         cfg.val_batch_size = 1 # only a batch of size 1 will fit into gpu
 
@@ -30,7 +31,7 @@ def get_test_config(cfg):
                            {'ToTensorV2': None}]}}]
 
     if cfg.MODEL.NAME == "hrnet_ocr_ms":
-        cfg.MODEL.MSCALE_TRAINING = True
+        cfg.MODEL.MSCALE_INFERENCE = True
         cfg.val_batch_size = 1 # only a batch of size 1 will fit into gpu
 
     if cfg.DATASET.NAME == "VOC2010_Context" or cfg.DATASET.NAME == "VOC2010_Context_60":

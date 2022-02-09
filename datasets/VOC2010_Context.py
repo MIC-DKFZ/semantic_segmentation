@@ -1,8 +1,5 @@
 import os
 import glob
-from collections import namedtuple
-import logging
-log = logging.getLogger(__name__)
 
 import torch
 import torchvision.utils
@@ -12,6 +9,9 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 from PIL import Image
 import numpy as np
+
+from utils.utils import get_logger
+log = get_logger(__name__)
 
 CLASSES = ('background', 'aeroplane', 'bag', 'bed', 'bedclothes', 'bench',
            'bicycle', 'bird', 'boat', 'book', 'bottle', 'building', 'bus',

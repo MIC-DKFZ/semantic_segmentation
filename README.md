@@ -232,9 +232,11 @@ python main.py model=hrnet_ocr_ms
 ````
 In the same way dataset can be changed by:
 ````shell
-python main.py dataset=Cityscapes
-python main.py dataset=Cityscapes_coase
-python main.py dataset=VOC2010_Context
+python main.py dataset=Cityscapes               # Using Cityscapes with fine annotated data
+python main.py dataset=Cityscapes_coase         # for using the coarse annotated data
+python main.py dataset=Cityscapes_fine_coase    # for using both, fine and coarse annotated data
+python main.py dataset=VOC2010_Context          # by default VOC2010_Context dataset is used with 59 classes
+python main.py dataset=VOC2010_Context_60       # for using the 60 class setting
 ````
 Also basic hyperparameters needed for training can be set by:
 ````shell
@@ -263,10 +265,6 @@ LOGDIR                                      # logs/ by default
 ````
 
 # Experiments
-
-If not further specified the experiments are run on two GPUS.
-If you want to run some of them on a different number of GPUs, you should adjust the batch_size as it is defined per GPU
-For each experiment and reported results, 3 runs were made.
 
 ## Cityscapes
 

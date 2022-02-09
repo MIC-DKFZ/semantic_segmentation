@@ -1,19 +1,17 @@
 import os
 import glob
-from collections import namedtuple
-import logging
-log = logging.getLogger(__name__)
+
 
 import torch
-import torchvision.utils
 
-import cv2
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-from PIL import Image
-import numpy as np
+
 import random
 from datasets.Cityscapes import Cityscapes_dataset,show_cityscape
+
+from utils.utils import get_logger
+log = get_logger(__name__)
 
 class Cityscape_fine_coarse_dataset(Cityscapes_dataset):
     def __init__(self,root,split="train",transforms=None,coarse_portion=1.0):

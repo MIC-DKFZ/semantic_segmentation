@@ -10,7 +10,8 @@ import numpy as np
 
 from utils.utils import hasNotEmptyAttr
 
-log = logging.getLogger(__name__)
+from utils.utils import get_logger
+log = get_logger(__name__)
 
 class BaseDataModule(LightningDataModule):
     def __init__(self, dataset, batch_size,val_batch_size, num_workers ,augmentations, train_size):

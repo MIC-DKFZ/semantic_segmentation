@@ -1,13 +1,13 @@
 import os
 import glob
-from collections import namedtuple
-import logging
-log = logging.getLogger(__name__)
 
 import torch
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 from datasets.Cityscapes import Cityscapes_dataset,show_cityscape
+
+from utils.utils import get_logger
+log = get_logger(__name__)
 
 class Cityscapes_coarse_dataset(Cityscapes_dataset):
     def __init__(self,root,split="train",transforms=None):

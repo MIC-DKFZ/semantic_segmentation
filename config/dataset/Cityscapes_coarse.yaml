@@ -7,10 +7,6 @@ dataset:
     _target_: datasets.Cityscapes_coarse.Cityscapes_coarse_dataset
     root: ${paths.cityscapes}
 
-
-#epochs: 400
-#lr: 0.001 #LR: 0.01445439770745928
-
 DATASET:
   NAME: "Cityscapes_coarse"
   NUM_CLASSES: 19

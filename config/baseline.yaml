@@ -39,7 +39,7 @@ pl_trainer:                     # parameters for the pytorch lightning trainer
 
   # Some usefull pl parameters for debugging
   #limit_train_batches: 0.01
-  #limit_val_batches: 0.01
+  #limit_val_batches: 0.1
   #track_grad_norm: 2
   #reload_dataloaders_every_epoch: true
   #accumulate_grad_batches: 2

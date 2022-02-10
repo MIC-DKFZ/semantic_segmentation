@@ -1,5 +1,6 @@
 import time
 import numpy as np
+import torch
 
 from pytorch_lightning.callbacks import Callback, ModelCheckpoint
 
@@ -11,34 +12,58 @@ class customModelCheckpoint(ModelCheckpoint):
 
 class TimeCallback(Callback):
     def __init__(self):
-        self.t_train_start = None
-        self.t_val_start = None
+        self.t_train_start = torch.cuda.Event(enable_timing=True)
+        self.t_val_start = torch.cuda.Event(enable_timing=True)
+        self.t_test_start = torch.cuda.Event(enable_timing=True)
+        self.end=torch.cuda.Event(enable_timing=True)
         self.t_train = []
         self.t_val = []
 
     def on_train_epoch_start(self, *args, **kwargs):
-        self.t_train_start=time.time()
+        self.t_train_start.record()
 
     def on_validation_epoch_start(self,trainer, *args, **kwargs):
 
-        if self.t_train_start is not None:
-            train_time = time.time() - self.t_train_start
+        if not trainer.sanity_checking:
+
+            self.end.record()
+            torch.cuda.synchronize()
+
+            train_time = self.t_train_start.elapsed_time(self.end) / 1000
             self.t_train.append(train_time)
 
             self.log("Time/train_time", train_time, logger=True)
             self.log("Time/mTrainTime", np.mean(self.t_train), logger=True)
 
         if not trainer.sanity_checking:
-            self.t_val_start=time.time()
+            self.t_val_start.record()
 
-    def on_validation_epoch_end(self, *args, **kwargs):
-        if self.t_val_start is not None:
+    def on_validation_epoch_end(self,trainer, *args, **kwargs):
+        if not trainer.sanity_checking:
 
-            val_time = time.time() - self.t_val_start
+            self.end.record()
+            torch.cuda.synchronize()
+
+            val_time = self.t_val_start.elapsed_time(self.end) / 1000
             self.t_val.append(val_time)
 
             self.log("Time/validation_time", val_time, logger=True)
             self.log("Time/mValTime", np.mean(self.t_val), logger=True)
+
+    def on_test_epoch_start(self,trainer, *args, **kwargs):
+
+        self.t_test_start.record()
+
+    def on_test_epoch_end(self, *args, **kwargs):
+
+
+        self.end.record()
+        torch.cuda.synchronize()
+
+        test_time = self.t_test_start.elapsed_time(self.end) / 1000
+
+        self.log("Time/test_time", test_time, logger=True)
+
 
 
 class MS_RestictionCallback(Callback):

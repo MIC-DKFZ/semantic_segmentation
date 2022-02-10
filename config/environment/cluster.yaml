@@ -4,10 +4,10 @@ CALLBACKS:
 pl_trainer:
     enable_progress_bar: false
 
-LOGDIR: /gpu/checkpoints/OE0441/l727r
+LOGDIR: /dkfz/cluster/gpu/checkpoints/OE0441/l727r
 
 paths:
   cityscapes:
-      LABELS: /gpu/data/OE0441/l727r/cityscapes
-      IMAGES: /gpu/data/common/cityscapes
-  VOC2010_Context: /gpu/data/OE0441/l727r/VOC2010_Context
+      LABELS: /dkfz/cluster/gpu/data/OE0441/l727r/cityscapes
+      IMAGES: /dkfz/cluster/gpu/data/common/cityscapes
+  VOC2010_Context: /dkfz/cluster/gpu/data/OE0441/l727r/VOC2010_Context

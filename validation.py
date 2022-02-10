@@ -18,39 +18,15 @@ from utils.utils import get_logger
 log = get_logger(__name__)
 
 def get_test_config(cfg):
-
-    cfg.MODEL.ADAPTED_PRETRAINED_WEIGHTS=""
-
-    if (cfg.DATASET.NAME == "VOC2010_Context" or cfg.DATASET.NAME == "VOC2010_Context_60") and cfg.MODEL.NAME == "hrnet_ocr_ms":
-        cfg.MODEL.MSCALE_INFERENCE = True
-        cfg.MODEL.N_SCALES= [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
-        cfg.val_batch_size = 1 # only a batch of size 1 will fit into gpu
-
-        cfg.AUGMENTATIONS.TEST = [{'Compose': {
-            'transforms': [{'Normalize': {'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225]}},
-                           {'ToTensorV2': None}]}}]
-
-    if cfg.MODEL.NAME == "hrnet_ocr_ms":
-        cfg.MODEL.MSCALE_INFERENCE = True
-        cfg.val_batch_size = 1 # only a batch of size 1 will fit into gpu
-
-    if cfg.DATASET.NAME == "VOC2010_Context" or cfg.DATASET.NAME == "VOC2010_Context_60":
-        cfg.val_batch_size = 1 # Needed since data has different sizes
-        #cfg.AUGMENTATIONS.TEST = [{'Compose': {
-        #    'transforms': [{'Normalize': {'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225]}},
-        #                   {'ToTensorV2': None}]}}]
-
-
-
-        #cfg.TESTING= {"MS_TESTING": True, "SCALES": [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0], "FLIP": True}
-        #x=OmegaConf.create({"a": {"b": 10}})
-        #OmegaConf.set_struct(cfg, True)
-        #with open_dict(cfg):
-        #    cfg.TESTING = {"MS_TESTING": True, "SCALES": [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0], "FLIP": True}
-
-    #print(cfg)
-    #print(x)
+    cfg.MODEL.ADAPTED_PRETRAINED_WEIGHTS = ""
+    if hasNotEmptyAttr(cfg,"TESTING"):
+        if hasNotEmptyAttr(cfg.TESTING,"OVERRIDES"):
+            keys=cfg.TESTING.OVERRIDES.keys()
+            for key in keys:
+                try: cfg[key]=cfg.TESTING.OVERRIDES[key]
+                except: print("Validation Override: key ", key," not found")
     return cfg
+
 
 @hydra.main(config_path="config", config_name="baseline")
 def inference_time(cfg: DictConfig):
@@ -133,7 +109,7 @@ def validation(ckpt_dir,hydra_args):
 
     ###  load parameters from the checkpoint directory which are overritten ###
     overrides = OmegaConf.load(os.path.join("hydra","overrides.yaml"))
-    train_overrides=["MODEL.PRETRAINED=False"]
+    train_overrides=["MODEL.PRETRAINED=False"]#,"pl_trainer.gpus=-1"]
 
     ### load local config and first override by the the parameters frm the checkpoint dir
     ### afterward override the parameters from the commandline ###
@@ -148,15 +124,19 @@ def validation(ckpt_dir,hydra_args):
 
     dataModule = hydra.utils.instantiate(cfg.datamodule, _recursive_=False)
 
+    callbacks = []
+    for _, cb_conf in cfg.CALLBACKS.items():
+        if cb_conf is not None:
+            cb = hydra.utils.instantiate(cb_conf)
+            callbacks.append(cb)
+
     tb_logger = pl_loggers.TensorBoardLogger(save_dir=".", name="", version="",
                                              sub_dir="validation")  # ,default_hp_metric=False)
 
     trainer_args = getattr(cfg, "pl_trainer") if hasNotEmptyAttr(cfg, "pl_trainer") else {}
     trainer = Trainer(
-        gpus=torch.cuda.device_count(),
-
         logger=tb_logger,
-
+        callbacks=callbacks,
         **trainer_args
     )
 

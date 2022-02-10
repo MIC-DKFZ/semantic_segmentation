@@ -63,7 +63,7 @@ class SegModel(LightningModule):
         num_train = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 
         self.logger.log_hyperparams(
-            {"Pretrained": self.config.MODEL.PRETRAINED, "Parameter": num_total, "trainable Parameter": num_train},
+            {"Parameter": num_total, "trainable Parameter": num_train},
             {"mIoU/best_mIoU": self.best_mIoU, "Time/mTrainTime": 0, "Time/mValTime": 0})
         #saving resolved parameters
         OmegaConf.save(config=self.config, resolve=True, f=os.path.join(self.logger.log_dir, "hparams.yaml"))
@@ -106,13 +106,13 @@ class SegModel(LightningModule):
         if not self.trainer.sanity_checking:
 
             IoU, mIoU = self.metric.compute()
-            self.log_dict({"mIoU": mIoU,"step":self.current_epoch}, on_epoch=True, logger=True, sync_dist=True)
+            #self.log_dict({"mIoU": mIoU,"step":self.current_epoch}, on_epoch=True, logger=True, sync_dist=True)
             #self.log("mIoU", mIoU, logger=True, sync_dist=True)
 
             if mIoU > self.best_mIoU.item():
                 self.best_mIoU = mIoU
                 self.metric.save(path=self.logger.log_dir)
-            self.log_dict({"mIoU/best_mIoU": self.best_mIoU, "step": self.current_epoch}, on_epoch=True, logger=True,sync_dist=True)
+            self.log_dict({"mIoU/best_mIoU": self.best_mIoU, "step": torch.tensor(self.current_epoch,dtype=torch.float32)}, on_epoch=True, logger=True,sync_dist=True)
             #self.log("mIoU/best_mIoU", self.best_mIoU, logger=True, sync_dist=True)
 
             dic_IoU = {}
@@ -133,7 +133,7 @@ class SegModel(LightningModule):
         x_size = x.size(2), x.size(3)
         total_pred = None
 
-        if hasNotEmptyAttr(self.config.TESTING,"SCALES") and hasTrueAttr(self.config.TESTING,"MS_TESTING") :
+        if hasNotEmptyAttr(self.config.TESTING,"SCALES"):# and hasTrueAttr(self.config.TESTING,"MS_TESTING") :
             scales=self.config.TESTING.SCALES
         else:
             scales=[1]
@@ -159,7 +159,7 @@ class SegModel(LightningModule):
                 total_pred=y_pred
             else:
                 total_pred+=y_pred
-        self.metric.update(y_gt.flatten(), total_pred.argmax(1).flatten())
+        self.metric.update(y_gt, total_pred)
 
     def on_test_epoch_end(self) -> None:
 

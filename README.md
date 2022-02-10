@@ -12,7 +12,7 @@
 
 This repository contains an easy-to-use and flexibly customizable framework for training semantic segmentation models.
 This provides the ability to compare different state-of-the-art (SOTA) segmentation models under same conditions on different datasets.
-Several architectures like [High-Resolution Network (HRNet)](https://arxiv.org/pdf/1904.04514.pdf), [Object Contextual Representation (OCR)]((https://arxiv.org/pdf/1909.11065.pdf)) and [Hierarchical Multi-Scale Attention (MS OCR)]((https://arxiv.org/pdf/2005.10821.pdf)) are already supported, 
+Several architectures like [High-Resolution Network (HRNet)](https://arxiv.org/pdf/1904.04514.pdf), [Object Contextual Representation (OCR)](https://arxiv.org/pdf/1909.11065.pdf) and [Hierarchical Multi-Scale Attention (MS OCR)](https://arxiv.org/pdf/2005.10821.pdf) are already supported, 
 as well as relevant datasets like [Cityscapes](https://www.cityscapes-dataset.com/) (coarse and fine) and [PASCAL VOC2010 Context](https://cs.stanford.edu/~roozbeh/pascal-context/) (59 and 60 classes).
 Additionally, features like [Region Mutual Information (RMI)]((https://arxiv.org/pdf/1910.12037.pdf)) loss, mixed precision or multi-GPU training are provided among others.
 This repository uses new and upcoming packages such as Pytorch Lightning and Hydra, and is designed to be extended with additional models and datasets, as well as other optimizers, schedulers, metrics, loss functions, and data augmentations.
@@ -30,11 +30,8 @@ TODO
   - remove black line around circles (not in the other plots)
   - maybe use other results for DC loss
 - Testing Doc
-- doc about pl_trainer -gpus
 - show Project Structure?
 - TOPK with DC or CE?
-- new doc for models, optimizer, lr scheduler
-- replace lossfunction by loss function
 
 
 

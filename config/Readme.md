@@ -797,18 +797,15 @@ python main.py environment=custom_env
 </p>
 </details>
 
-
-
 ## Testing
-
 
 <details><summary>Testing directly after Training</summary>
 <p>
 
-If your model has different behaviour during inference or testing than during training you may directly want to evaluate your model with this changed behavious.
+If your model has different behaviour during inference or testing than during training you may directly want to evaluate your model with this changed behaviour.
 For example if you want multiscale testing or want to add a scale to MS OCR.
-Put the following in somewhere in your config.
-Consider that a test dataset is needed, if you don't have one use the validation set instead.
+Put the following in somewhere in your config (for example into the model or dataset config).
+Consider that a test dataset is needed, if you don't have one use can use the validation set instead.
 
 ````yaml
 config/somewhere/xxx.yaml
@@ -817,24 +814,24 @@ TESTING:
   TEST_AFTERWARDS: True       # This flag indicates if the model should be tested afterwards
   SCALES: [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]    #scales for multiscale testing, if not wanted delete the line
   FLIP: True                  # if flipping should be used during testing, delete the line if not wanted
+  OVERRIDES:                  # Put arguments here which should be overriten in the config for testing
+    val_batch_size: 1         # In this example the batch size should be 1 for testing
 ````
-Multiscale testing and flipping is already supported, if your needed behaviour goes further, then there is currently no very elegant solution
-You have to go to *validation.py* to the *get_test_config* function. 
+Multiscale testing and flipping is already supported, if your needed behaviour goes further, you can change the config for testing using the *OVERRIDES* argument.
 Change the config there to meet your desires. 
 
 </p>
  </details>
-
 
 <details><summary>Seperate Testing</summary>
 <p>
 
 If you have trained a model and want to test it with other settings or other data you can use the validation.py file.
 The function expects a *--valdir* arguments which is the path to the experiment you want to test (dir to the folder which contains *checkpoints/*, *hydra/* etc.).
-The config from this experiment is loaded automatically and used for testing.
-You can use Hydras commandline syntax to change the config to your needs.
-Besides that multiscale testing and flipping is already supported.
-You can use it in the following way:
+The config from this experiment is loaded and merged with *config/baseline.yaml* to define the testing configuration.
+You can also use Hydras commandline syntax to change the config to your needs.
+consider that if your config contains a TESTING (see *-Testing directly after Training-* above) entry the content of this is also merged into the config.
+Multiscale testing and flipping are supported and you can use it in the following way from the commandline, or include it into your config file (see *-Testing directly after Training-* above).
 
 `````shell
 # pass a path and some arguments you want to change

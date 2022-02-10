@@ -14,8 +14,6 @@ class ConfusionMatrix(Metric):
         pred=pred.argmax(1).flatten().detach().cpu()
 
         n = self.num_classes
-        #gt=gt.detach().cpu()
-        #pred=pred.detach().cpu()
 
         with torch.no_grad():
             k = (gt >= 0) & (gt < n)

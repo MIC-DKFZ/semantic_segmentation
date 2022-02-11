@@ -185,34 +185,40 @@ if __name__ == "__main__":
         #A.RandomScale(scale_limit=(-0.5,1),always_apply=True,p=1.0),
         A.PadIfNeeded(min_height=520,min_width=520,border_mode=0, value=0,mask_value=255),
         #A.Resize(p=1.0,width=480, height=480),
-        A.RandomCrop(width=520, height=520,always_apply=True,p=1.0),
+        #A.RandomCrop(width=520, height=520,always_apply=True,p=1.0),
         #A.ColorJitter(brightness=9,contrast=0,saturation=0,hue=0),
-        #A.RGBShift(p=1,r_shift_limit=10,g_shift_limit=10,b_shift_limit=10),
+        A.RGBShift(p=1,r_shift_limit=10,g_shift_limit=10,b_shift_limit=10),
         #A.HorizontalFlip(p=0.5),
-        A.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225],always_apply=True
-        ),
+        #A.Normalize(
+        #    mean=[0.485, 0.456, 0.406],
+        #    std=[0.229, 0.224, 0.225],always_apply=True
+        #),
         ToTensorV2()])
     print(transforms)
     Path = "/home/l727r/Desktop/Datasets/VOC2010_Context"
-    Cityscape_train = VOC2010_Context_dataset(Path, "train", transforms=transforms)
+    VOC2010_train = VOC2010_Context_dataset(Path, "train", transforms=transforms)
 
 
 
 
 
     #for i in range(0,50):
-    img, mask = Cityscape_train[465]
-    print(mask[0,0])
+    img, mask = VOC2010_train[465]
+    print(np.unique(img))
+    print(img[:,100,100])
+    print(img[:,200,200])
+    print(img[:,300,300])
+    #tensor([0, 0, 0], dtype=torch.uint8)
+    #tensor([166, 163, 146], dtype=torch.uint8)
+    #tensor([51, 33, 29], dtype=torch.uint8)
     #print(img.shape)
     #print(torch.unique(mask))
-    out = show_voc(img=img, alpha=1., mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    out1 = show_voc(mask=mask, alpha=1., mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    #out = show_voc(img=img, alpha=1., mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    #out1 = show_voc(mask=mask, alpha=1., mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     #out.show()
 
-    out.save("out.png")
-    out1.save("out1.png")
+    #out.save("out.png")
+    #out1.save("out1.png")
 
     # def collate_fn(batch):
     #    return tuple(zip(*batch))

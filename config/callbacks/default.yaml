@@ -11,9 +11,3 @@ CALLBACKS:
   model_summary:
     _target_: pytorch_lightning.callbacks.ModelSummary
     max_depth: 2
-  model_checkpoint:
-    _target_: utils.callbacks.customModelCheckpoint
-    monitor: "mIoU"
-    mode: "max"
-    filename: 'best_{epoch}_{mIoU:.4f}'
-    save_last: True

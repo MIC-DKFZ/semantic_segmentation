@@ -674,7 +674,7 @@ class OCRNet(nn.Module):
             pretrained_dict = torch.load(pretrained, map_location={'cuda:0': 'cpu'})
             log.info('=> loading pretrained model {}'.format(pretrained))
             model_dict = self.state_dict()
-            pretrained_dict = {k.replace('last_layer', 'aux_head').replace('model.', ''): v for k, v in
+            pretrained_dict = {k.replace('last_layer', 'aux_head').replace('model.', '').replace('module.', ''): v for k, v in
                                pretrained_dict.items()}
             #print(set(model_dict) - set(pretrained_dict))
             #print(set(pretrained_dict) - set(model_dict))

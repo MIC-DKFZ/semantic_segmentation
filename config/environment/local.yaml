@@ -1,7 +1,4 @@
 #@package _global_
-CALLBACKS:
-  model_checkpoint: ~
-
 LOGDIR: logs/
 
 pl_trainer:

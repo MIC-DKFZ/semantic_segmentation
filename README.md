@@ -21,19 +21,6 @@ The following contains information about how to [set up the data](#setting-up-th
 A comparison between different SOTA approaches(HRNet, OCR,OCR+ASPP, MS OCR) on the Cityscapes and PASCAL VOC Context datasets is shown in the [experiments](#experiments) section.
 For an advanced use of this framework, the [***config/* folder**](/config#walkthrough-the-config-jungle) contains a full explanation of all available configurations and how to customize the code to your needs.
 
-
-TODO
-- img additional Data
-  - coarse + RMI is missing
-  - axis labels are wrong
-- img lossfunction
-  - remove black line around circles (not in the other plots)
-  - maybe use other results for DC loss
-- show Project Structure?
-- TOPK with DC or CE?
-
-
-
 ### References
 This repository adopts code from the following sources:
 - **HRNet** ( High-Resolution Representations for Semantic Segmentation, [paper](https://arxiv.org/pdf/1904.04514.pdf), [source code](https://github.com/HRNet/HRNet-Semantic-Segmentation))

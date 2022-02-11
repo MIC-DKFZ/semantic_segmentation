@@ -110,4 +110,10 @@ def validation2(ckpt_path):
 if __name__ == "__main__":
 
     training_loop()
+    #PATH="pretrained/mapillary_ocrnet.HRNet_Mscale_fast-rattlesnake.pth"
+    #PATH="pretrained/hrnetv2_w48_imagenet_pretrained.pth"
+    #PATH="pretrained/ocrnet.HRNet_industrious-chicken.pth"
+    #checkpoint = torch.load(PATH)
+    #print(checkpoint["state_dict"].keys())
+    #print(checkpoint.keys())
 

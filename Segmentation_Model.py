@@ -106,7 +106,7 @@ class SegModel(LightningModule):
         if not self.trainer.sanity_checking:
 
             IoU, mIoU = self.metric.compute()
-            #self.log_dict({"mIoU": mIoU,"step":self.current_epoch}, on_epoch=True, logger=True, sync_dist=True)
+            self.log_dict({"mIoU": mIoU,"step":self.current_epoch}, on_epoch=True, logger=True, sync_dist=True)
             #self.log("mIoU", mIoU, logger=True, sync_dist=True)
 
             if mIoU > self.best_mIoU.item():

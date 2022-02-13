@@ -36,6 +36,7 @@ pl_trainer:                     # parameters for the pytorch lightning trainer
   precision: 16                 # using Mixed Precision
   sync_batchnorm: True          # using synchronized batch normalization for multi gpu training
   benchmark: True               # using benchmark for faster training
+  enable_checkpointing: True    #Enable/Disable Checkpointing
 
   # Some usefull pl parameters for debugging
   #limit_train_batches: 0.01

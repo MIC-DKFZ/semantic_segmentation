@@ -101,21 +101,22 @@ def inference_time(cfg: DictConfig):
     log.info("Time Mean: %f",np.mean(t))
 
 
-def validation(ckpt_dir,hydra_args):
+def validation(ckpt_dir,hydra_args,init=True):
 
-    hydra.initialize(config_path="config")
+    if init:
+        hydra.initialize(config_path="config")
 
-    os.chdir(ckpt_dir)
+        os.chdir(ckpt_dir)
 
-    ###  load parameters from the checkpoint directory which are overritten ###
-    overrides = OmegaConf.load(os.path.join("hydra","overrides.yaml"))
-    train_overrides=["MODEL.PRETRAINED=False"]#,"pl_trainer.gpus=-1"]
+        ###  load parameters from the checkpoint directory which are overritten ###
+        overrides = OmegaConf.load(os.path.join("hydra","overrides.yaml"))
+        train_overrides=["MODEL.PRETRAINED=False"]#,"pl_trainer.gpus=-1"]
 
-    ### load local config and first override by the the parameters frm the checkpoint dir
-    ### afterward override the parameters from the commandline ###
-    cfg = hydra.compose(config_name="baseline", overrides=overrides+hydra_args+train_overrides)
+        ### load local config and first override by the the parameters frm the checkpoint dir
+        ### afterward override the parameters from the commandline ###
+        cfg = hydra.compose(config_name="baseline", overrides=overrides+hydra_args+train_overrides)
 
-    ### change some testing specific parameters ###
+        ### change some testing specific parameters ###
     cfg=get_test_config(cfg)
 
     ### load checkpoint and load model ###

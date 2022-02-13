@@ -77,11 +77,11 @@ def training_loop(cfg: DictConfig):
 
 
     ### OPTIONAL TESTING, USED WHEN MODEL IS TESTED UNDER DIFFERENT CONDITIONS THAN TRAINING ###
-    if hasattr(cfg, "TESTING"):
-        if hasTrueAttr(cfg.TESTING,"TEST_AFTERWARDS"):
-            # Hydra environment has to be cleared since a seperate one is creted during validation
-            hydra.core.global_hydra.GlobalHydra.instance().clear()
-            validation(os.getcwd(),[])
+    #if hasattr(cfg, "TESTING"):
+    #    if hasTrueAttr(cfg.TESTING,"TEST_AFTERWARDS"):
+    #        # Hydra environment has to be cleared since a seperate one is creted during validation
+    #        hydra.core.global_hydra.GlobalHydra.instance().clear()
+    #        validation(os.getcwd(),[],False)
 
 
 if __name__ == "__main__":

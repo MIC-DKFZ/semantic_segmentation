@@ -21,6 +21,21 @@ The following contains information about how to [set up the data](#setting-up-th
 A comparison between different SOTA approaches(HRNet, OCR,OCR+ASPP, MS OCR) on the Cityscapes and PASCAL VOC Context datasets is shown in the [experiments](#experiments) section.
 For an advanced use of this framework, the [***config/* folder**](/config#walkthrough-the-config-jungle) contains a full explanation of all available configurations and how to customize the code to your needs.
 
+### Overview
+
+Overview about the results on the **Cityscapes val** set. 
+The best result from three runs (mean intersection over union, mIoU) is reported.
+A more detailed analysis is given in the [experiments](#experiments) section.
+
+| Model              | Baseline | RMI loss| Paddle weights| Mapillary pretrained| Coarse Data | Coarse Data + RMI|
+| -------------------|:--------:|:-------:|:-------------:|:---------:|:------:|:---------:|
+|HRNET               | 81.44    |81.89    | 81.79         | | 82.03 |
+|OCR                 | 81.37    |82.08    | 81.89         | | 
+|OCR + ASPP          | 81.53    |82.20    |
+|MS OCR [0.5, 1.]    | 81.49    |82.59    |               | 84.45| 82.26 | 83.54
+|MS OCR [0.5, 1., 2.]| 82.30    |82.22    |               | O | 82.95 | 83.96
+
+
 ### References
 This repository adopts code from the following sources:
 - **HRNet** ( High-Resolution Representations for Semantic Segmentation, [paper](https://arxiv.org/pdf/1904.04514.pdf), [source code](https://github.com/HRNet/HRNet-Semantic-Segmentation))

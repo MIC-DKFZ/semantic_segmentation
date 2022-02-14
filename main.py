@@ -18,6 +18,7 @@ from validation import validation
 
 log = get_logger(__name__)
 
+OmegaConf.register_new_resolver('path_formatter', lambda s: s.replace("[","").replace("]","").replace(",","_").replace("=","_"))
 @hydra.main(config_path="config", config_name="baseline")
 def training_loop(cfg: DictConfig):
     log.info("Output Directory: %s",os.getcwd())
@@ -35,7 +36,8 @@ def training_loop(cfg: DictConfig):
         callbacks.append(customModelCheckpoint(
         monitor= "mIoU",
         mode= "max",
-        filename= 'best_{epoch}_{mIoU:.4f}',
+        filename= 'best_epoch_{epoch}__mIoU_{mIoU:.4f}',
+        auto_insert_metric_name=False,
         save_last= True))
     ### USING TENSORBOARD LOGGER ####
     tb_logger = pl_loggers.TensorBoardLogger(save_dir=".", name="", version="", default_hp_metric=False)
@@ -87,5 +89,3 @@ def training_loop(cfg: DictConfig):
 if __name__ == "__main__":
 
     training_loop()
-
-

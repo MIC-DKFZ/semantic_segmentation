@@ -36,11 +36,11 @@ pl_trainer:                     # parameters for the pytorch lightning trainer
   precision: 16                 # using Mixed Precision
   sync_batchnorm: True          # using synchronized batch normalization for multi gpu training
   benchmark: True               # using benchmark for faster training
-  enable_checkpointing: True    #Enable/Disable Checkpointing
+  enable_checkpointing: True    # Enable/Disable Checkpointing
 
   # Some usefull pl parameters for debugging
-  #limit_train_batches: 0.01
-  #limit_val_batches: 0.1
+  limit_train_batches: 0.01
+  limit_val_batches: 0.1
   #track_grad_norm: 2
   #reload_dataloaders_every_epoch: true
   #accumulate_grad_batches: 2
@@ -51,12 +51,12 @@ MODEL:
   INIT_WEIGHTS: false
   ADAPTED_PRETRAINED_WEIGHTS: ${hydra:runtime.cwd}/${MODEL.PRETRAINED_WEIGHTS}
 
-
 #SOME CUSTOMIZATIONS OF HYDRA
 hydra:
   output_subdir: hydra
   run:
-    dir: ${LOGDIR}/${DATASET.NAME}/${MODEL.NAME}/${experiment}__${hydra.job.override_dirname}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: ${LOGDIR}/${DATASET.NAME}/${MODEL.NAME}/${experiment}__${path_formatter:${hydra.job.override_dirname}}/${now:%Y-%m-%d_%H-%M-%S}
+    # using path_formatter with is defined in main.py to resolve problems which may occur with characters like [,],",or ',' in paths
   sweep:
     dir: ${hydra.run.dir}_mr
     subdir: ${hydra.job.num}

@@ -17,14 +17,26 @@ from utils.utils import hasTrueAttr, hasNotEmptyAttr
 from utils.utils import get_logger
 log = get_logger(__name__)
 
+
+def parse_key_into_cfg(cfg,key,value):
+    if "." in key:  #Need for recursion
+        key_a,key_b=key.split('.', 1)
+        parse_key_into_cfg(cfg[key_a],key_b,value)
+    else:
+        try:
+            cfg[key] = value
+        except:
+            print("Validation Override: key ", key, " not found")
+
 def get_test_config(cfg):
     cfg.MODEL.ADAPTED_PRETRAINED_WEIGHTS = ""
     if hasNotEmptyAttr(cfg,"TESTING"):
         if hasNotEmptyAttr(cfg.TESTING,"OVERRIDES"):
             keys=cfg.TESTING.OVERRIDES.keys()
             for key in keys:
-                try: cfg[key]=cfg.TESTING.OVERRIDES[key]
-                except: print("Validation Override: key ", key," not found")
+                #needed recursice Funciton to catch definiition like cfg.xx.xx ...
+                parse_key_into_cfg(cfg,key,cfg.TESTING.OVERRIDES[key])
+
     return cfg
 
 

@@ -18,26 +18,28 @@ class BaseDataModule(LightningDataModule):
         super().__init__()
         self.num_workers = num_workers
         self.augmentations = augmentations
-        self.base_size = train_size
+        self.base_size = 0#train_size
         self.batch_size = batch_size
         self.val_batch_size=val_batch_size
 
         self.dataset=dataset
 
     def setup(self, stage= None):
+
         transforms_train = self.get_augmentations_from_config(self.augmentations.TRAIN)[0]
         transforms_val = self.get_augmentations_from_config(self.augmentations.VALIDATION)[0]
         transforms_test = self.get_augmentations_from_config(self.augmentations.TEST)[0]
 
         if stage in (None, "fit"):
             self.DS_train = hydra.utils.instantiate(self.dataset, split="train", transforms=transforms_train)
+            self.base_size=len(self.DS_train)
         if stage in (None,"fit","validate"):
             self.DS_val = hydra.utils.instantiate(self.dataset, split="val", transforms=transforms_val)
         if stage in (None, "test"):
             self.DS_test = hydra.utils.instantiate(self.dataset, split="test", transforms=transforms_test)
 
     def max_steps(self):
-
+        print("STEPS",self.base_size)
         steps_per_epoch = self.base_size // self.batch_size
         steps_per_gpu = int(np.ceil(steps_per_epoch / self.trainer.num_gpus))
         acc_steps_per_gpu = int(np.ceil(steps_per_gpu / self.trainer.accumulate_grad_batches))

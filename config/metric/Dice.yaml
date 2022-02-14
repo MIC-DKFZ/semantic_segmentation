@@ -1,0 +1,2 @@
+_target_: utils.metric.per_image_Dice
+num_classes: ${DATASET.NUM_CLASSES}

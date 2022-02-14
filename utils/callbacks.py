@@ -7,7 +7,7 @@ from pytorch_lightning.callbacks import Callback, ModelCheckpoint
 class customModelCheckpoint(ModelCheckpoint):
     def __init__(self,**kwargs):
         super(customModelCheckpoint,self,).__init__(**kwargs)
-        self.CHECKPOINT_NAME_LAST="last_{epoch}"
+        self.CHECKPOINT_NAME_LAST="last_epoch_{epoch}"
 
 
 class TimeCallback(Callback):

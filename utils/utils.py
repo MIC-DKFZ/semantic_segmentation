@@ -1,6 +1,6 @@
 import logging
 from pytorch_lightning.utilities import rank_zero_only
-
+logging.basicConfig(level=logging.INFO)
 def get_logger(name=__name__) -> logging.Logger:
     """Initializes multi-GPU-friendly python command line logger."""
 

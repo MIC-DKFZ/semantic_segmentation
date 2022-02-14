@@ -1,0 +1,91 @@
+#@package _global_
+
+#DEFINING THE DEFAULT DATA AUGMENTATION FOR THIS DATASET
+defaults:
+  - override /data_augmentation: EndoCV2022
+  - override /hyperparameters: EndoCV2022
+#SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
+dataset:
+    _target_: datasets.EndoCV2022.EndoCV2022_dataset
+    root: ${paths.EndoCV2022}
+    fold: ${DATASET.FOLD}
+
+TESTING:
+  TEST_AFTERWARDS: True
+  #SCALES: [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
+  #FLIP: True
+  OVERRIDES:
+    val_batch_size: 1
+
+DATASET:
+  NAME: "EndoCV2022"
+  FOLD: 0
+  NUM_CLASSES: 2
+  IGNORE_INDEX: 255
+  #N EEDED TO COMPUTE THE MAX NUMBER OF STEPS
+  SIZE:
+    TRAIN: 2469
+    VAL: 826
+    TEST: 0
+  # OPTIONAK FOR LOGGING
+  CLASS_LABELS:
+    - aeroplane
+    - bag
+    - bed
+    - bedclothes
+    - bench
+    - bicycle
+    - bird
+    - boat
+    - book
+    - bottle
+    - building
+    - bus
+    - cabinet
+    - car
+    - cat
+    - ceiling
+    - chair
+    - cloth
+    - computer
+    - cow
+    - cup
+    - curtain
+    - dog
+    - door
+    - fence
+    - floor
+    - flower
+    - food
+    - grass
+    - ground
+    - horse
+    - keyboard
+    - light
+    - motorbike
+    - mountain
+    - mouse
+    - person
+    - plate
+    - platform
+    - pottedplant
+    - road
+    - rock
+    - sheep
+    - shelves
+    - sidewalk
+    - sign
+    - sky
+    - snow
+    - sofa
+    - table
+    - track
+    - train
+    - tree
+    - truck
+    - tvmonitor
+    - wall
+    - water
+    - window
+    - wood
+

@@ -40,7 +40,7 @@ class SegModel(LightningModule):
             self.loss_weights = self.config.lossweight
         else:
             self.loss_weights = [1] * len(self.loss_functions)
-
+        #print(self.trainer.datamodule.)
         log.info("Loss Functions: %s", self.loss_functions)
         log.info("Weighting: %s", self.loss_weights)
 
@@ -95,7 +95,7 @@ class SegModel(LightningModule):
         val_loss = self.get_loss(y_pred, y_gt)
         self.log("Loss/validation_loss", val_loss, on_step=True, on_epoch=True, logger=True)
 
-        self.metric.update(y_gt, list(y_pred.values())[0])
+        self.metric(y_gt, list(y_pred.values())[0])
 
         return val_loss
 
@@ -106,6 +106,7 @@ class SegModel(LightningModule):
         if not self.trainer.sanity_checking:
 
             IoU, mIoU = self.metric.compute()
+            print(mIoU)
             self.log_dict({"mIoU": mIoU,"step":self.current_epoch}, on_epoch=True, logger=True, sync_dist=True)
             #self.log("mIoU", mIoU, logger=True, sync_dist=True)
 

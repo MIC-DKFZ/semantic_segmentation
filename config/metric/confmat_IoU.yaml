@@ -1,2 +1,2 @@
-_target_: utils.metric.ConfusionMatrix
+_target_: utils.metric.IoU
 num_classes: ${DATASET.NUM_CLASSES}

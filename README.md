@@ -31,13 +31,13 @@ Overview about the results on the **Cityscapes val** set.
 The best result from three runs (mean intersection over union, mIoU) is reported.
 A more detailed analysis is given in the [experiments](#experiments) section.
 
-| Model              | Baseline | RMI loss | Paddle weights| Mapillary pretrained | Coarse Data | Coarse Data + RMI|
-| -------------------|:--------:|:--------:|:-------------:|:--------------------:|:------:|:---------:|
-|HRNET               | 81.44    |  81.89   | 81.79         |                      | 82.03 |
-|OCR                 | 81.37    |  82.08   | 81.89         |                      | 
+| Model              | Baseline | RMI loss | Paddle weights| Mapillary pretrained + RMI | Coarse Data | Coarse Data + RMI|
+| -------------------|:--------:|:--------:|:-------------:|:--------------------------:|:------:|:---------:|
+|HRNET               | 81.44    |  81.89   | 81.79         |                            | 82.03 |
+|OCR                 | 81.37    |  82.08   | 81.89         |                            | 
 |OCR + ASPP          | 81.53    |  82.20   |
-|MS OCR [0.5, 1.]    | 81.49    |  82.59   |               |        84.45         | 82.26 | 83.54
-|MS OCR [0.5, 1., 2.]| 82.30    |  82.88   |               |        84.92         | 82.95 | 83.96
+|MS OCR [0.5, 1.]    | 81.49    |  82.59   |               |           84.45            | 82.26 | 83.54
+|MS OCR [0.5, 1., 2.]| 82.30    |  82.88   |               |           84.92            | 82.95 | 83.96
 
 
 ### References

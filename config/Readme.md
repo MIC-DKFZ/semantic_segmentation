@@ -4,6 +4,7 @@ In this repository [Hydra](https://hydra.cc/) is used for configuring and managi
 Therefore, configuration files and their handling are of major importance, which is why they are explained in more detail below.
 First, the basic functionality of Hydra will be briefly explained. 
 At first glance, the use of hydra may make the configuration more complicated and confusing, but this will quickly disappear if you familiarize yourself with it a bit.
+The advantage that Hydra provides is the ease of managing experiments and allows to easily add new models or datasets (and more) without changing the base code.
 Since Hydra uses the [OmegaConf](https://omegaconf.readthedocs.io/en/2.1_branch/) package to handle .yaml files, also Omegaconf and YAML are also briefly introduced.
 Following this is a walkthrough of all the available configurations in this repository and how to use them.
 
@@ -17,7 +18,7 @@ For example the config group *model* is located in the *config/model* subfolder 
 The individual config files contain model/dataset/etc. specific parameters, such as the number of channels in a layer of the model or the number of classes in a dataset.
 Having a separate config files for each model/dataset/etc. makes it easy to switch between them and arbitrary combine different config files from different config groups.
 Additionally, this ensures that only the relevant parameters are loaded into the job configuration.
-Hydra creates the job configuration by composing the configuration files from the different configuration groups.
+Hydra creates the [job configuration](https://hydra.cc/docs/1.0/configure_hydra/job/) by composing the configuration files from the different configuration groups.
 Basically, exactly one config file from each config group is used in this process 
 (as an exception, a config group can be declared as optional, this will then only be used if it is explicitly defined).
 To tell hydra how to compose the job configuration, a [default list](https://hydra.cc/docs/tutorials/basic/your_first_app/defaults/) is used, which specifies which configuration file from which configuration group should be used and in which order they are composed.
@@ -161,6 +162,7 @@ num_output_classes: ${dataset.number_classes}      #num_output_classes will have
 <p>
 
 This is only a short introduction to YAML and only shows its basic syntax. This should be enough for defining you own yaml files but if you need more information they can be found [here](https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html) for example.
+The following examples are for Yaml in combination with OmegaConf and may not work for yaml alone.
 
 Some  **Basic Assignments** are shown here:
 ````yaml
@@ -226,12 +228,22 @@ python main.py model=hrnet_ocr_ms
 python main.py model=hrnet_ocr_ms MODEL.MSCALE_INFERENCE=True MODEL.N_SCALES=[0.75, 1., 1.25]
 ```
 Besides the selection of the models other parameters are provided and can be enabled/disabled as shown below.
-- **MODEL.PRETRAINED**: Indicate if pretrained weights (on ImageNet) should be used (True by default).
+- **MODEL.PRETRAINED**: Indicate if pretrained weights  should be used (True by default).
 - **MODEL.INIT_WEIGHTS**: Indicate if weights should be Initialized from a normal distribution. (False by default).
 
 ````shell 
 python main.py MODEL.PRETRAINED=False MODEL.INIT_WEIGHTS=True
 ````
+There is also the possibility to select between different **pretrained weights**.
+ImageNet, PaddleClass and Mapillary pretrained weights are provided.
+Consider that *MODEL.PRETRAINED* need to be True.
+By default, PaddleClass weights are used and they can be changed by:
+````shell 
+python main.py MODEL.pretrained_on=ImageNet
+python main.py MODEL.pretrained_on=Paddle
+python main.py MODEL.pretrained_on=Mapillary
+````
+
 
 </p>
  </details>

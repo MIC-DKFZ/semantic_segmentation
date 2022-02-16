@@ -491,7 +491,7 @@ def get_backbone_model(cfg):
     model = HighResolutionNet(cfg)
     if cfg.MODEL.INIT_WEIGHTS:
         model.init_weights()
-    #if cfg.MODEL.PRETRAINED:
-    #    model.load_weights(cfg.MODEL.PRETRAINED_WEIGHTS)
+    if cfg.MODEL.PRETRAINED:
+        model.load_weights(cfg.MODEL.PRETRAINED_WEIGHTS)
 
     return model

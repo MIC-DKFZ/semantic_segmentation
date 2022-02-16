@@ -49,11 +49,14 @@ class EndoCV2022_dataset(torch.utils.data.Dataset):
         #print(len(data))
         self.imgs = []
         self.masks = []
+        folder=os.path.join( "EndoCV2022_ChallengeDataset","PolypGen2.0")
+        #folder="clean_PolypGen2.0"
+        #
         for i, d in data.iterrows():
-            self.imgs.append(os.path.join(root, "EndoCV2022_ChallengeDataset", "PolypGen2.0", d.vid_folder, "images",
+            self.imgs.append(os.path.join(root,folder, d.vid_folder, "images",
                                        d.image_id))
             self.masks.append(
-                os.path.join(root, "EndoCV2022_ChallengeDataset", "PolypGen2.0", d.vid_folder, "masks", d.Mask_id))
+                os.path.join(root, folder, d.vid_folder, "masks", d.Mask_id))
         self.transforms = transforms
         log.info("Dataset: EncoCV2022 %s - Fold %s - %s images - %s masks",split, fold,  len(self.imgs),len(self.masks))
 

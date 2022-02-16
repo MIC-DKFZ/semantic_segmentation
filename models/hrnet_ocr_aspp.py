@@ -388,7 +388,7 @@ class OCRNetASPP(nn.Module):
                                for k, v in pretrained_dict.items()}
             print(model_dict.keys())
             print(pretrained_dict.keys())
-            pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict.keys() and "ocr.cls_head" not in k and "ocr.aux_head" not in k}
+            pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict.keys() and "ocr.ocr_distri_head" not in k and "ocr.conv3x3_ocr" not in k and "ocr.cls_head" not in k and "ocr.aux_head" not in k}
             model_dict.update(pretrained_dict)
             self.load_state_dict(model_dict)
             del model_dict

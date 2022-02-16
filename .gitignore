@@ -12,3 +12,4 @@ pretrained/*
 .idea/
 docs
 models/edit
+config/data_augmentation/old

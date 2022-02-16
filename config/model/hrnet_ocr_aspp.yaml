@@ -9,6 +9,7 @@ model:
 MODEL:
   NAME: hrnet_ocr_aspp
   PRETRAINED: true
+  INIT_WEIGHTS: false
   pretrained_on: Paddle
   PRETRAINED_WEIGHTS: ${ORG_CWD}/pretrained/${MODEL.available_weights.${MODEL.pretrained_on}}
   available_weights:

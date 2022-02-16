@@ -22,6 +22,7 @@ defaults:
 # DEFAULT HYPERPARAMETERS
 ORG_CWD: ${hydra:runtime.cwd}   # Saving the original working dir
 experiment: "baseline"          # possibility for naming the experiment
+LOGDIR: logs/                   # Default logging directory
 
 num_workers: 10                 # number of workers for dataloader
 batch_size: 6                   # batch size per gpu for training

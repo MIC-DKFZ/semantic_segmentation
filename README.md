@@ -211,10 +211,14 @@ paths:
 ## Download Pretrained Weights
 
 Pretrained weights for HRNet can be found here [here](https://github.com/HRNet/HRNet-Image-Classification#imagenet-pretrained-models).
-Since all models (HRNet, OCR, OCR+ASPP, MS OCR) are using an HRNet backbone, these weights are used for all of them.
-Download the preferred weights and put them in the *pretrained/* folder.
-- ImageNet pretrained: [download](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk)
+Pretrained weights on ImageNet and PadddleClass weights are available.
+Since all models (HRNet, OCR, OCR+ASPP, MS OCR) are using an HRNet backbone, these weights can be used for all of them.
+For MS OCR pretrained weights on [Mapillary](https://github.com/NVIDIA/semantic-segmentation#download-weights) are available.
+These Mapillary weights can be partially be used for the other models.
+Download the preferred weights (direct download links below) and put them in the *pretrained/* folder.
+- ImageNet weights: [download](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk)
 - PaddleClass weights: [download](https://github.com/HRNet/HRNet-Image-Classification/releases/download/PretrainedWeights/HRNet_W18_C_ssld_pretrained.pth)
+- Mapillary weights: [download](https://drive.google.com/file/d/1Whz--rurtBoIsfF-t3YB9NEt3GT6hBQI/view?usp=sharing)
 
 ## Running Code
 
@@ -231,7 +235,7 @@ You can change the model from the commandline by:
 python main.py model=hrnet
 python main.py model=hrnet_ocr
 python main.py model=hrnet_ocr_aspp
-python main.py model=hrnet_ocr_ms
+python main.py model=hrnet_ocr_ms         #How to validate with multiple scales is shown below
 ````
 In the same way dataset can be changed by:
 ````shell
@@ -244,6 +248,13 @@ python main.py dataset=VOC2010_Context_60       # for using the 60 class setting
 Also basic hyperparameters needed for training can be set by:
 ````shell
 python main.py epochs=400 batch_size=6 val_batch_size=6 num_workers=10 lr=0.001 wd=0.0005 momentum=0.9
+````
+For validation/testing under different conditions (e.g. additional scale for MS OCR, or multiscale testing for VOC2010_Context) run the following command.
+Consider that checkpointing hast to be enabled when training an experiment (``python main.py .... pl_trainer.enable_checkpointing=True`` or set to True in 'baseline.yaml') to validate/test it afterwards
+For MS OCR and VOC2010_Context a predefined validation setting is used, to change these or create a custom on look [here](/config#testing).
+````shell
+python validation.py --valdir=<path.to.the.outputdir.of.training>
+# eg python validation.py --valdir="/../Semantic_Segmentation/logs/VOC2010_Context/hrnet/baseline__/2022-02-15_13-51-42"
 ````
 As you can see the basic syntax how to run the code is simple. 
 The crucial thing is to know which parameters you can configure and how.
@@ -275,12 +286,13 @@ The following experiments were performed under the following training settings a
 Stochastic Gradient Descent(SGD) with *momentum = 0.9* and *weight decay = 0.0005* is used for optimization. 
 The models are trained with an initial learning rate of 0.01 and a polynomial learning rate scheduler.
 These setting have established themselves as a kind of standard for cityscapes and are therefore also used here.
-Additionally, the batch size is set to 12 and the number of epochs to 400. (see [Defining the Baseline](#defining_the_baseline))
+Additionally, the batch size is set to 12 and the number of epochs to 400 (see [Defining the Baseline](#defining_the_baseline)).
 For data augmentation the images are randomly scaled to a range of [0.5, 2] and randomly cropped to a size of 1024x512 afterwards.
-Otherwise, only random flipping and normalization is performed.
+Besides that, only random flipping and normalization is performed.
 By default the models are pretrained weights on ImageNet are used.
 If not specified, training is done on 2 GPUs (with a batch size of 6 per GPU) and each experiment is run 3 times.
-
+The *MS OCR* model is trained with two scales (*[0.5, 1.]*) during training and for inference a third (*[0.5, 1., 2]*) is added.
+Typically, both settings are evaluated in the following experiments.
 
 ### Time Complexity
 
@@ -288,7 +300,7 @@ The following figure shows the training and inference time of each model, as wel
 It can be seen that the number of parameters is in a similar range for all models, but still as the number of parameters increases, the time complexity of the models also increases.
 Thereby OCR-ASPP has by far the highest training time.
 Using an additional scale to MS OCR highly increases the inference time of the model. 
-That's why MS OCR [0.5, 1.] is used for training only for inference MS OCR [0.5, 1., 2] is used (that's why both have the same training time)
+That's why MS OCR [0.5, 1.] is used for training and only for inference MS OCR [0.5, 1., 2] is used (that's why both have the same training time)
 The runtime measurements are done using a single GPU (NVIDIA GeForce RTX 3090). 
 To fit on a single GPU, the batch_size is reduced compared to the baseline.
 
@@ -348,7 +360,7 @@ python main.py batch_size=14 epochs=468
 
 #### Mixed Precision 
 
-The use of Mixed Precision reduces the training time of the models by 20 to 30%.
+The use of [Mixed Precision](https://pytorch-lightning.readthedocs.io/en/latest/advanced/mixed_precision.html#mixed-precision) reduces the training time of the models by 20 to 30%.
 In addition, Mixed Precision was able to improve the results in these experiments.
 Since Mixed Precision has a positive effect and the training time is drastically reduced, Mixed Precision is used as default for further experiments.
 
@@ -388,10 +400,10 @@ python main.py pl_trainer.precision=32 epochs=500
 
 After defining the baseline on HRNet, other models are also trained and validated under same conditions.
 As can be seen, OCR gives quite similar results to HRNet in these experiments. 
-In addition, it can be seen that, in contrast to HRNet, the results documented in the paper cannot be achieved with OCR
+What is also noticeable, in contrast to HRNet, the results documented in the paper cannot be achieved with OCR
 (it must be said that the baseline used in the OCR paper is slightly different from the one used here).
 The use of an additional ASPP module leads to a slight improvement in the OCR results, but significantly increases the time complexity of the model.
-Using MS OCR with two scales gives similar results to the other network, but adding a third scale gives highly increased results.
+Using MS OCR with two scales gives similar results to the other networks, but adding a third scale gives by far the best results.
 
 ![Models_Basic](imgs/Models_Basic.png)
 
@@ -403,7 +415,7 @@ Training the different Models
 python main.py model=hrnet
 python main.py model=hrnet_ocr
 python main.py model=hrnet_ocr_aspp
-python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False
+python main.py model=hrnet_ocr_ms
 ````
 
 </p>
@@ -412,10 +424,11 @@ python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False
 
 ### Different Loss Funcitons 
 
-Looking at different loss functions it can be seen that Cross Entropy (CE) and Region Mutual Information (RMI) loss give the best results.
+Looking at the different loss functions, it can be seen that the best results can be achieved with Cross-Entropy (CE) and Region Mutual Information (RMI).
 Dice Loss based functions are way behind. 
 With changes to the lr and number of epochs, these can be tuned somewhat, but are still significantly worse.
-What is also seen is that the use of weights (wCE and wRMI) to compensate for class imbalances significantly improve the results.
+What is also seen is that the use of weights (wCE and wRMI) to compensate for class imbalances in Cityscapes significantly improve the results.
+Only HRNet is used for this experiments.
 
 ![Lossfunctions](imgs/Lossfunctions.png)
 
@@ -441,10 +454,10 @@ python main.py lossfunction=DC_TOPK
 
 ### Close look at RMI loss 
 
-As seen in the previous experiment, the use of RMI loss gives the best results, so this is also tested with the other models.
+As seen in the previous experiments, using the RMI loss gives the best results, so this is tested with the other models as well.
 RMI loss results in significantly increased mIoU (compared to CE) for all models.
 However, it also leads to an increased runtime.
-To keep this increase as low as possible, RMI loss is only used during training and CE loss is still used during validation
+To keep this increase as low as possible, RMI loss is only used during training and CE loss is still used during validation (validation loss).
 
 ![RMI_Loss](imgs/RMI_Loss.png)
 
@@ -462,8 +475,8 @@ python main.py model=hrnet_ocr lossfunction=[wRMI,wCE]
 python main.py model=hrnet_ocr_aspp lossfunction=[wCE,wCE]
 python main.py model=hrnet_ocr_aspp lossfunction=[wRMI,wCE]
 #Running MS OCR with CE and RMI loss
-python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False lossfunction=[wCE,wCE,wCE,wCE]
-python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False lossfunction=[wRMI,wCE,wCE,wCE]
+python main.py model=hrnet_ocr_ms lossfunction=[wCE,wCE,wCE,wCE]
+python main.py model=hrnet_ocr_ms lossfunction=[wRMI,wCE,wCE,wCE]
 ````
 
 </p>
@@ -473,26 +486,29 @@ python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False lossfunction=[wRMI
 
 Since the previous experiments focused on model and training parameters, a closer look at the used data is given here.
 For the baseline so far ImageNet pretrained weights are used.
-The comparison of the results with models without additional data (trained from scratch) shows that the use of pre-trained weights has a big influence in these experiments.
-With using the coarse cityscapes data the results can be further increased.
-Three different strategies how to integrate the additional data are used.
-the bes result are from Strategy 2 when the model is first trained on fine data, afterwards the model is finetuned (with reduced lr) with only the coarse data and finally model is finetuned (again with reduced lr) again on the fine data.
+Comparison of the results with models without additional data (trained from scratch) shows that the use of pre-trained weights has a large impact in these experiments.
+The use of PaddlClass weights can further enhance results, and the best results can be achieved by pretraining on Mapillary.
+The reason for this is the similarity of Mapillary to Cityscapes (both urban setting).
+Besides this, the use of the coarsen cityscapes data can also improve the results.
+Three different strategies how to integrate the additional data are tested.
+The bes result are from Strategy 2 when the model is first trained on fine data, afterwards the model is finetuned (with reduced lr) with only the coarse data and finally the model is finetuned again (with reduced lr) on the fine data.
 To achieve highscores the use of coarse data is combined with RMI loss.
 However, RMI loss is only used for fine data, as it has been shown to not work as well for coarsely annotated data.
 In the end, the best results were achieved in this way and with MS OCR.
 
 ![Data](imgs/Data.png)
 
+MAPILLARY RESULTS ARE IN PROGRESS, FIGURE WILL BE UPDATED SOON
 
 <details><summary>Scrips</summary>
 <p>
 
 Training Models without pretraining on ImageNet
 ````shell
-python main.py model=hrnet MODEL.PRETRAINED=False MODEL.INIT_WEIGHTS=False
-python main.py model=hrnet_ocr MODEL.PRETRAINED=False MODEL.INIT_WEIGHTS=False
-python main.py model=hrnet_ocr_aspp MODEL.PRETRAINED=False MODEL.INIT_WEIGHTS=False
-python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False MODEL.PRETRAINED=False MODEL.INIT_WEIGHTS=False
+python main.py model=hrnet MODEL.PRETRAINED=False
+python main.py model=hrnet_ocr MODEL.PRETRAINED=False
+python main.py model=hrnet_ocr_aspp MODEL.PRETRAINED=False
+python main.py model=hrnet_ocr_ms MODEL.PRETRAINED=False
 ````
 Training Models with pretrained weights on ImageNet
 ````shell
@@ -506,12 +522,12 @@ Training Models with coarse data
 ````shell
 #HRNET
 python main.py model=hrnet
-python main.py model=hrnet dataset=Cityscapes_coarse epochs=25 +finetune_from=<path.to.ckpt.of.previous.line>
-python main.py model=hrnet epochs=65 +finetune_from=<path.to.ckpt.of.previous.line>
+python main.py model=hrnet epochs=25 lr=0.001 dataset=Cityscapes_coarse +finetune_from=<path.to.ckpt.of.previous.line>
+python main.py model=hrnet epochs=65 lr=0.001 +finetune_from=<path.to.ckpt.of.previous.line>
 #MS OCR
-python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False
-python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False dataset=Cityscapes_coarse epochs=25 +finetune_from=<path.to.ckpt.of.previous.line>
-python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False epochs=65 +finetune_from=<path.to.ckpt.of.previous.line>
+python main.py model=hrnet_ocr_ms 
+python main.py model=hrnet_ocr_ms  epochs=25 lr=0.001 dataset=Cityscapes_coarse +finetune_from=<path.to.ckpt.of.previous.line>
+python main.py model=hrnet_ocr_ms  epochs=65 lr=0.001 +finetune_from=<path.to.ckpt.of.previous.line>
 ````
 
 

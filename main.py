@@ -18,7 +18,7 @@ from validation import validation
 
 log = get_logger(__name__)
 
-OmegaConf.register_new_resolver('path_formatter', lambda s: s.replace("[","").replace("]","").replace(",","_").replace("=","_"))
+OmegaConf.register_new_resolver('path_formatter', lambda s: s.replace("[","").replace("]","").replace(",","_").replace("=","_").replace("/","."))
 @hydra.main(config_path="config", config_name="baseline")
 def training_loop(cfg: DictConfig):
     log.info("Output Directory: %s",os.getcwd())
@@ -33,12 +33,13 @@ def training_loop(cfg: DictConfig):
             cb = hydra.utils.instantiate(cb_conf)
             callbacks.append(cb)
     if hasTrueAttr(cfg.pl_trainer,"enable_checkpointing"):
-        callbacks.append(customModelCheckpoint(
-        monitor= "mIoU",
-        mode= "max",
-        filename= 'best_epoch_{epoch}__mIoU_{mIoU:.4f}',
-        auto_insert_metric_name=False,
-        save_last= True))
+        callbacks.append(hydra.utils.instantiate(cfg.ModelCheckpoint))
+        #customModelCheckpoint(
+        #monitor= "mIoU",
+        #mode= "max",
+        #filename= 'best_epoch_{epoch}__mIoU_{mIoU:.4f}',
+        #auto_insert_metric_name=False,
+        #save_last= True))
     ### USING TENSORBOARD LOGGER ####
     tb_logger = pl_loggers.TensorBoardLogger(save_dir=".", name="", version="", default_hp_metric=False)
 
@@ -79,6 +80,7 @@ def training_loop(cfg: DictConfig):
 
 
     ### OPTIONAL TESTING, USED WHEN MODEL IS TESTED UNDER DIFFERENT CONDITIONS THAN TRAINING ###
+    ### Currently this doesnt work for multi gpu training - some kind of cuda error
     #if hasattr(cfg, "TESTING"):
     #    if hasTrueAttr(cfg.TESTING,"TEST_AFTERWARDS"):
     #        # Hydra environment has to be cleared since a seperate one is creted during validation

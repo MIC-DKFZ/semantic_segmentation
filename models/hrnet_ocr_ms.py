@@ -481,8 +481,8 @@ class MscaleOCR(nn.Module):
             #                   for k, v in pretrained_dict.items()}
             pretrained_dict = {k.replace('last_layer', 'aux_head').replace('model.', '').replace('module.', ''): v
                                for k, v in pretrained_dict.items()}
-            print(set(model_dict) - set(pretrained_dict))
-            print(set(pretrained_dict) - set(model_dict))
+            print(model_dict.keys())
+            print(pretrained_dict.keys())
             pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict.keys() and "ocr.cls_head" not in k and "ocr.aux_head" not in k}
             model_dict.update(pretrained_dict)
             self.load_state_dict(model_dict)
@@ -498,6 +498,6 @@ def get_seg_model(cfg):
     #    if param.requires_grad:
     #        print(name)#, param.data)
     if cfg.MODEL.PRETRAINED:
-        model.load_weights(cfg.MODEL.ADAPTED_PRETRAINED_WEIGHTS)
+        model.load_weights(cfg.MODEL.PRETRAINED_WEIGHTS)
 
     return model

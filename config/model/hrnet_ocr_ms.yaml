@@ -20,11 +20,13 @@ TESTING:
 
 MODEL:
   NAME: hrnet_ocr_ms
-  #PRETRAINED_WEIGHTS: 'pretrained/hrnetv2_w48_imagenet_pretrained.pth'
-  #PRETRAINED_WEIGHTS: pretrained/HRNet_W48_C_ssld_pretrained.pth
-  PRETRAINED_WEIGHTS: pretrained/mapillary_ocrnet.HRNet_Mscale_fast-rattlesnake.pth
-  #PRETRAINED_WEIGHTS: pretrained/ocrnet.HRNet_industrious-chicken.pth
-  #MSCALE_OFFSET: 0.75 #Offset, N_Scale are only used during Validation in the last 25% of training to speed up training time
+  PRETRAINED: true
+  pretrained_on: Paddle
+  PRETRAINED_WEIGHTS: ${ORG_CWD}/pretrained/${MODEL.available_weights.${MODEL.pretrained_on}}
+  available_weights:
+    ImageNet: hrnetv2_w48_imagenet_pretrained.pth
+    Paddle: HRNet_W48_C_ssld_pretrained.pth
+    Mapillary: mapillary_ocrnet.HRNet_Mscale_fast-rattlesnake.pth
   MSCALE_INFERENCE: False
   ALIGN_CORNERS: True
   MSCALE_LO_SCALE: 0.5

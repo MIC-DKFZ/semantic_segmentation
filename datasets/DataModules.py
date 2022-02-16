@@ -39,7 +39,7 @@ class BaseDataModule(LightningDataModule):
             self.DS_test = hydra.utils.instantiate(self.dataset, split="test", transforms=transforms_test)
 
     def max_steps(self):
-        print("STEPS",self.base_size)
+
         steps_per_epoch = self.base_size // self.batch_size
         steps_per_gpu = int(np.ceil(steps_per_epoch / self.trainer.num_gpus))
         acc_steps_per_gpu = int(np.ceil(steps_per_gpu / self.trainer.accumulate_grad_batches))

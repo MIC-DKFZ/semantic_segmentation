@@ -40,7 +40,7 @@ https://github.com/NVIDIA/semantic-segmentation/tree/main/network
 import torch
 from torch import nn
 import torch.nn.functional as F
-
+import os
 from models.backbones.hrnet_backbone import get_backbone_model
 
 ALIGN_CORNERS = None
@@ -374,9 +374,33 @@ class OCRNetASPP(nn.Module):
 
         return {"out": cls_out, "aux": aux_out}
 
+    def load_weights(self, pretrained):
+        if os.path.isfile(pretrained):
+            #log.info('=> loading pretrained model {}'.format(pretrained))
+            pretrained_dict = torch.load(pretrained,
+                                         map_location={'cuda:0': 'cpu'})
+            if "state_dict" in pretrained_dict.keys():
+                pretrained_dict=pretrained_dict["state_dict"]
+            model_dict = self.state_dict()
+            #pretrained_dict = {k.replace('last_layer','aux_head').replace('model.', ''): v
+            #                   for k, v in pretrained_dict.items()}
+            pretrained_dict = {k.replace('last_layer', 'aux_head').replace('model.', '').replace('module.', ''): v
+                               for k, v in pretrained_dict.items()}
+            print(model_dict.keys())
+            print(pretrained_dict.keys())
+            pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict.keys() and "ocr.cls_head" not in k and "ocr.aux_head" not in k}
+            model_dict.update(pretrained_dict)
+            self.load_state_dict(model_dict)
+            del model_dict
+        elif pretrained:
+            raise RuntimeError('No such file {}'.format(pretrained))
+
 
 def get_seg_model(cfg):
-    return OCRNetASPP(cfg)
+    model = OCRNetASPP(cfg)
+    if cfg.MODEL.PRETRAINED:
+        model.load_weights(cfg.MODEL.PRETRAINED_WEIGHTS)
+    return model
 
 #def HRNet(num_classes, criterion):
 #    return OCRNet(num_classes, trunk='hrnetv2', criterion=criterion)

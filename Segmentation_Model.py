@@ -21,7 +21,9 @@ class SegModel(LightningModule):
         self.model = hydra.utils.instantiate(self.config.model)
 
         self.metric = hydra.utils.instantiate(config.metric)
-        self.register_buffer("best_mIoU", torch.as_tensor(0))
+        if hasNotEmptyAttr(config.METRIC,"NAME"): self.metric_name=config.METRIC.NAME
+        else: self.metric_name="metric"
+        self.register_buffer("best_metric_score", torch.as_tensor(0))
 
     def forward(self, x):
 
@@ -64,7 +66,7 @@ class SegModel(LightningModule):
 
         self.logger.log_hyperparams(
             {"Parameter": num_total, "trainable Parameter": num_train},
-            {"mIoU/best_mIoU": self.best_mIoU, "Time/mTrainTime": 0, "Time/mValTime": 0})
+            {"metric/best_"+self.metric_name: self.best_metric_score, "Time/mTrainTime": 0, "Time/mValTime": 0})
         #saving resolved parameters
         OmegaConf.save(config=self.config, resolve=True, f=os.path.join(self.logger.log_dir, "hparams.yaml"))
 
@@ -105,28 +107,34 @@ class SegModel(LightningModule):
     def on_validation_epoch_end(self) -> None:
         if not self.trainer.sanity_checking:
 
-            IoU, mIoU = self.metric.compute()
-            print(mIoU)
-            self.log_dict({"mIoU": mIoU,"step":self.current_epoch}, on_epoch=True, logger=True, sync_dist=True)
+            score, score_class = self.metric.compute()
+
+            self.log_dict({"metric/"+self.metric_name: score,"step":torch.tensor(self.current_epoch,dtype=torch.float32)}, on_epoch=True, logger=True, sync_dist=True)
             #self.log("mIoU", mIoU, logger=True, sync_dist=True)
 
-            if mIoU > self.best_mIoU.item():
-                self.best_mIoU = mIoU
+            if score > self.best_metric_score.item():
+                self.best_metric_score = score
                 self.metric.save(path=self.logger.log_dir)
-            self.log_dict({"mIoU/best_mIoU": self.best_mIoU, "step": torch.tensor(self.current_epoch,dtype=torch.float32)}, on_epoch=True, logger=True,sync_dist=True)
+            self.log_dict({"metric/best_"+self.metric_name: self.best_metric_score, "step": torch.tensor(self.current_epoch,dtype=torch.float32)}, on_epoch=True, logger=True,sync_dist=True)
             #self.log("mIoU/best_mIoU", self.best_mIoU, logger=True, sync_dist=True)
 
-            dic_IoU = {}
-            for id, iou in enumerate(IoU):
-                if hasNotEmptyAttr(self.config.DATASET,"CLASS_LABELS"):
-                    dic_IoU[str(id) + "-" + self.config.DATASET.CLASS_LABELS[id]] = "%.4f" % iou.item()
-                else:
-                    dic_IoU[id] = "%.4f" % iou.item()
+            log.info("EPOCH: %s", self.current_epoch)
+            log.info("Best %s %.4f       %s: %.4f", self.metric_name, self.best_metric_score, self.metric_name,
+                     score.item())
+
+            if score_class != None:
+                dic_score = {}
+                for id, sc in enumerate(score_class):
+                    if hasNotEmptyAttr(self.config.DATASET,"CLASS_LABELS"):
+                        dic_score[str(id) + "-" + self.config.DATASET.CLASS_LABELS[id]] = "%.4f" % sc.item()
+                    else:
+                        dic_score[id] = "%.4f" % sc.item()
+                log.info(dic_score)
 
             #if self.trainer.is_global_zero:
-            log.info("EPOCH: %s", self.current_epoch)
-            log.info("Best mIoU %.4f      Mean IoU: %.4f", self.best_mIoU, mIoU.item())
-            log.info(dic_IoU)
+            #log.info("EPOCH: %s", self.current_epoch)
+            #log.info("Best %s %.4f       %s: %.4f",self.metric_name, self.best_metric_score,self.metric_name, score.item())
+            #log.info(dic_score)
 
     def test_step(self, batch, batch_idx):
 
@@ -164,20 +172,20 @@ class SegModel(LightningModule):
 
     def on_test_epoch_end(self) -> None:
 
-        IoU, mIoU = self.metric.compute()
+        score, score_class = self.metric.compute()
 
-        dic_IoU = {}
-        for id, iou in enumerate(IoU):
-            if hasNotEmptyAttr(self.config.DATASET,"CLASS_LABELS"):
-                dic_IoU[str(id) + "-" + self.config.DATASET.CLASS_LABELS[id]] = "%.4f" % iou.item()
+        dic_score = {}
+        for id, sc in enumerate(score_class):
+            if hasNotEmptyAttr(self.config.DATASET, "CLASS_LABELS"):
+                dic_score[str(id) + "-" + self.config.DATASET.CLASS_LABELS[id]] = "%.4f" % sc.item()
             else:
-                dic_IoU[id] = "%.4f" % iou.item()
+                dic_score[id] = "%.4f" % sc.item()
 
         #if self.trainer.is_global_zero:
         log.info("EPOCH: %s", self.current_epoch)
-        log.info(dic_IoU)
-        log.info("Best mIoU %.4f", mIoU.item())
+        log.info(dic_score)
+        log.info("Best %s %.4f", self.metric_name, score.item())
 
-        self.metric.save(path=self.logger.log_dir,name="%.4f" % mIoU.item())
+        self.metric.save(path=self.logger.log_dir,name="%.4f" % score.item())
 
 

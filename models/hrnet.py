@@ -489,11 +489,19 @@ class HighResolutionNet(nn.Module):
 
     def load_weights(self, pretrained):
         if os.path.isfile(pretrained):
-            pretrained_dict = torch.load(pretrained)
+            #pretrained_dict = torch.load(pretrained)
+            pretrained_dict = torch.load(pretrained,
+                                         map_location={'cuda:0': 'cpu'})
+
+            if "state_dict" in pretrained_dict.keys():
+                pretrained_dict=pretrained_dict["state_dict"]
+            pretrained_dict = {k.replace('model.', '').replace('module.', '').replace('backbone.', ''): v for k, v in pretrained_dict.items()}
             log.info('=> loading pretrained model {}'.format(pretrained))
             model_dict = self.state_dict()
             pretrained_dict = {k: v for k, v in pretrained_dict.items()
                                if k in model_dict.keys()}
+            print(set(model_dict) - set(pretrained_dict))
+            print(set(pretrained_dict) - set(model_dict))
             model_dict.update(pretrained_dict)
             self.load_state_dict(model_dict)
             del model_dict,pretrained_dict
@@ -504,6 +512,6 @@ def get_seg_model(cfg):
     if cfg.MODEL.INIT_WEIGHTS:
         model.init_weights()
     if cfg.MODEL.PRETRAINED:
-        model.load_weights(cfg.MODEL.ADAPTED_PRETRAINED_WEIGHTS)
+        model.load_weights(cfg.MODEL.PRETRAINED_WEIGHTS)
 
     return model

@@ -2,7 +2,8 @@ Todo:
 - validation: catch invalid/old arguments
 - get dataset size from dataloader not from config
 - metric doc
-- pretrained weightss doc
+- metric dict logging
+
 <div align="center">
 
 # Semantic Segmentation Framework using Pytorch Lightning

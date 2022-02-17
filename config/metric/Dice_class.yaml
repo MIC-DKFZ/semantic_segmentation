@@ -1,6 +1,6 @@
 #@package _global_
 metric:
-  _target_: utils.metric.IoU
+  _target_: utils.metric.per_image_Dice_class
   num_classes: ${DATASET.NUM_CLASSES}
 METRIC:
-  NAME: meanIoU
+  NAME: imageDice

@@ -20,7 +20,7 @@ ignore_label=255
 #Data shape [3, 1064, 1440],[3, 1072, 1728],[3, 1024, 1280],[3, 1080, 1920],[3, 720, 1280],[3, 1072, 1704]
 #
 
-PALETTE = [[0, 0, 0], [255,0,0], [6, 230, 230], [80, 50, 50],
+PALETTE = [[0, 0, 0], [255,0,0], [0, 255, 0], [0, 0, 255],
            [4, 200, 3], [120, 120, 80], [140, 140, 140], [204, 5, 255],
            [230, 230, 230], [4, 250, 7], [224, 5, 255], [235, 255, 7],
            [150, 5, 61], [120, 120, 70], [8, 255, 51], [255, 6, 82],
@@ -41,7 +41,8 @@ class EndoCV2022_dataset(torch.utils.data.Dataset):
         if split=="test":
             split="val"
 
-        data = pd.read_csv(os.path.join(root, "PoleGen2_4CV_2.csv"))
+        #data = pd.read_csv(os.path.join(root, "PoleGen2_4CV_2.csv"))
+        data = pd.read_csv(os.path.join(root, "polypgen_cleaned_4CV.csv"))
         if split=="val":
             data = data[data.fold == fold]
         elif split=="train":
@@ -49,8 +50,8 @@ class EndoCV2022_dataset(torch.utils.data.Dataset):
         #print(len(data))
         self.imgs = []
         self.masks = []
-        folder=os.path.join( "EndoCV2022_ChallengeDataset","PolypGen2.0")
-        #folder="clean_PolypGen2.0"
+        #folder=os.path.join( "EndoCV2022_ChallengeDataset","PolypGen2.0")
+        folder="clean_PolypGen2.0"
         #
         for i, d in data.iterrows():
             self.imgs.append(os.path.join(root,folder, d.vid_folder, "images",
@@ -135,13 +136,15 @@ if __name__ == "__main__":
 
     root_path="/home/l727r/Desktop/endocv2022/official EndoCV2022 dataset"
     EndoCV=EndoCV2022_dataset(root=root_path,fold=1,split="train",transforms=transforms)
-
+    print(len(EndoCV))
+    EndoCV=EndoCV2022_dataset(root=root_path,fold=1,split="val",transforms=transforms)
+    print(len(EndoCV))
 
     #img,mask=\
     img,mask=EndoCV[150]
     #print(img.shape,mask.shape)
-    out = show(img,mask,alpha=0.2, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    out.show()
+    #out = show(img,mask,alpha=0.2, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    #out.show()
     #shapes=[]
     #for i in tqdm(range(0,len(EndoCV))):
     #    img,mask=EndoCV[i]

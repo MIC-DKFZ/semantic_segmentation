@@ -1,6 +1,5 @@
 import logging
 logging.basicConfig(level=logging.INFO)
-import glob
 import os
 import hydra
 
@@ -9,7 +8,6 @@ from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning import Trainer, seed_everything
 
 from utils.utils import hasTrueAttr, hasNotEmptyAttr,get_logger, num_gpus
-from utils.callbacks import customModelCheckpoint
 from omegaconf import DictConfig, OmegaConf
 from Segmentation_Model import SegModel
 from validation import validation
@@ -17,7 +15,7 @@ from validation import validation
 
 
 log = get_logger(__name__)
-
+#OmegaConf resolver for preventing problems in the output path
 OmegaConf.register_new_resolver('path_formatter', lambda s: s.replace("[","").replace("]","").replace(",","_").replace("=","_").replace("/","."))
 @hydra.main(config_path="config", config_name="baseline")
 def training_loop(cfg: DictConfig):
@@ -34,12 +32,7 @@ def training_loop(cfg: DictConfig):
             callbacks.append(cb)
     if hasTrueAttr(cfg.pl_trainer,"enable_checkpointing"):
         callbacks.append(hydra.utils.instantiate(cfg.ModelCheckpoint))
-        #customModelCheckpoint(
-        #monitor= "mIoU",
-        #mode= "max",
-        #filename= 'best_epoch_{epoch}__mIoU_{mIoU:.4f}',
-        #auto_insert_metric_name=False,
-        #save_last= True))
+
     ### USING TENSORBOARD LOGGER ####
     tb_logger = pl_loggers.TensorBoardLogger(save_dir=".", name="", version="", default_hp_metric=False)
 

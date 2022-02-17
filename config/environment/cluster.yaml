@@ -12,3 +12,4 @@ paths:
       LABELS: /dkfz/cluster/gpu/data/OE0441/l727r/cityscapes
       IMAGES: /dkfz/cluster/gpu/data/common/cityscapes
   VOC2010_Context: /dkfz/cluster/gpu/data/OE0441/l727r/VOC2010_Context
+  EndoCV2022: /dkfz/cluster/gpu/data/OE0441/l727r/EndoCV2022

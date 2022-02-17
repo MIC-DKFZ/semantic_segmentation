@@ -44,7 +44,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from models.backbones.hrnet_backbone import get_backbone_model
-
+import logging
+log = logging.getLogger(__name__)
 INIT_DECODER=False
 ALIGN_CORNERS=None
 
@@ -471,7 +472,8 @@ class MscaleOCR(nn.Module):
 
     def load_weights(self, pretrained):
         if os.path.isfile(pretrained):
-            #log.info('=> loading pretrained model {}'.format(pretrained))
+
+            log.info('=> loading pretrained model {}'.format(pretrained))
             pretrained_dict = torch.load(pretrained,
                                          map_location={'cuda:0': 'cpu'})
             if "state_dict" in pretrained_dict.keys():
@@ -481,8 +483,8 @@ class MscaleOCR(nn.Module):
             #                   for k, v in pretrained_dict.items()}
             pretrained_dict = {k.replace('last_layer', 'aux_head').replace('model.', '').replace('module.', ''): v
                                for k, v in pretrained_dict.items()}
-            print(model_dict.keys())
-            print(pretrained_dict.keys())
+            #print(model_dict.keys())
+            #print(pretrained_dict.keys())
             pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict.keys() and "ocr.cls_head" not in k and "ocr.aux_head" not in k}
             model_dict.update(pretrained_dict)
             self.load_state_dict(model_dict)

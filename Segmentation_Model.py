@@ -1,4 +1,3 @@
-import logging
 from omegaconf import OmegaConf
 import os
 import hydra
@@ -104,32 +103,58 @@ class SegModel(LightningModule):
     def on_validation_epoch_start(self) -> None:
         self.metric.reset()
 
+    def log_results(self,metric_score,metrics_dict):
+
+        log.info("EPOCH: %s", self.current_epoch)
+
+        self.log_dict(
+            {"metric/" + self.metric_name: metric_score, "step": torch.tensor(self.current_epoch, dtype=torch.float32)},
+            on_epoch=True, logger=True, sync_dist=True)
+        log.info("Best %s %.4f       %s: %.4f", self.metric_name, self.best_metric_score, self.metric_name,
+                 metric_score.detach())
+
+        if metrics_dict!=None:
+            for key in metrics_dict.keys():
+                self.log_dict(
+                    {"metric/" + key: metrics_dict[key].item(),
+                     "step": torch.tensor(self.current_epoch, dtype=torch.float32)},
+                    on_epoch=True, logger=True, sync_dist=True)
+                log.info("%s: %.4f", key, metrics_dict[key].detach())
+
     def on_validation_epoch_end(self) -> None:
         if not self.trainer.sanity_checking:
+            #self.log_results(*self.metric.compute())
+            results = self.metric.compute()
+            if isinstance(results, tuple):
+                metric_score = results[0]
+                metrics_dict = results[1]
+            else:
+                metric_score = results
+                metrics_dict = None
 
-            score, score_class = self.metric.compute()
-
-            self.log_dict({"metric/"+self.metric_name: score,"step":torch.tensor(self.current_epoch,dtype=torch.float32)}, on_epoch=True, logger=True, sync_dist=True)
+            #self.log_dict({"metric/"+self.metric_name: score,"step":torch.tensor(self.current_epoch,dtype=torch.float32)}, on_epoch=True, logger=True, sync_dist=True)
             #self.log("mIoU", mIoU, logger=True, sync_dist=True)
 
-            if score > self.best_metric_score.item():
-                self.best_metric_score = score
+            if metric_score > self.best_metric_score.detach():
+                self.best_metric_score = metric_score
                 self.metric.save(path=self.logger.log_dir)
-            self.log_dict({"metric/best_"+self.metric_name: self.best_metric_score, "step": torch.tensor(self.current_epoch,dtype=torch.float32)}, on_epoch=True, logger=True,sync_dist=True)
+
+            self.log_results(metric_score,metrics_dict)
+            #self.log_dict({"metric/best_"+self.metric_name: self.best_metric_score, "step": torch.tensor(self.current_epoch,dtype=torch.float32)}, on_epoch=True, logger=True,sync_dist=True)
             #self.log("mIoU/best_mIoU", self.best_mIoU, logger=True, sync_dist=True)
 
-            log.info("EPOCH: %s", self.current_epoch)
-            log.info("Best %s %.4f       %s: %.4f", self.metric_name, self.best_metric_score, self.metric_name,
-                     score.item())
+            #log.info("EPOCH: %s", self.current_epoch)
+            #log.info("Best %s %.4f       %s: %.4f", self.metric_name, self.best_metric_score, self.metric_name,
+                     #score.item())
 
-            if score_class != None:
-                dic_score = {}
-                for id, sc in enumerate(score_class):
-                    if hasNotEmptyAttr(self.config.DATASET,"CLASS_LABELS"):
-                        dic_score[str(id) + "-" + self.config.DATASET.CLASS_LABELS[id]] = "%.4f" % sc.item()
-                    else:
-                        dic_score[id] = "%.4f" % sc.item()
-                log.info(dic_score)
+            #if score_class != None:
+            #    dic_score = {}
+            #    for id, sc in enumerate(score_class):
+            #        if hasNotEmptyAttr(self.config.DATASET,"CLASS_LABELS"):
+            #            dic_score[str(id) + "-" + self.config.DATASET.CLASS_LABELS[id]] = "%.4f" % sc.item()
+            #        else:
+            #            dic_score[id] = "%.4f" % sc.item()
+            #    log.info(dic_score)
 
             #if self.trainer.is_global_zero:
             #log.info("EPOCH: %s", self.current_epoch)
@@ -172,20 +197,16 @@ class SegModel(LightningModule):
 
     def on_test_epoch_end(self) -> None:
 
-        score, score_class = self.metric.compute()
+        results = self.metric.compute()
+        if isinstance(results, tuple):
+            metric_score = results[0]
+            metrics_dict = results[1]
+        else:
+            metric_score = results
+            metrics_dict = None
 
-        dic_score = {}
-        for id, sc in enumerate(score_class):
-            if hasNotEmptyAttr(self.config.DATASET, "CLASS_LABELS"):
-                dic_score[str(id) + "-" + self.config.DATASET.CLASS_LABELS[id]] = "%.4f" % sc.item()
-            else:
-                dic_score[id] = "%.4f" % sc.item()
+        self.log_results(metric_score, metrics_dict)
 
-        #if self.trainer.is_global_zero:
-        log.info("EPOCH: %s", self.current_epoch)
-        log.info(dic_score)
-        log.info("Best %s %.4f", self.metric_name, score.item())
-
-        self.metric.save(path=self.logger.log_dir,name="%.4f" % score.item())
+        self.metric.save(path=self.logger.log_dir,name="%.4f" % metric_score.detach())
 
 

@@ -4,6 +4,7 @@
 defaults:
   - override /data_augmentation: EndoCV2022
   - override /hyperparameters: EndoCV2022
+  - override /metric: Dice
 #SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
 dataset:
     _target_: datasets.EndoCV2022.EndoCV2022_dataset
@@ -29,63 +30,6 @@ DATASET:
     TEST: 0
   # OPTIONAK FOR LOGGING
   CLASS_LABELS:
-    - aeroplane
-    - bag
-    - bed
-    - bedclothes
-    - bench
-    - bicycle
-    - bird
-    - boat
-    - book
-    - bottle
-    - building
-    - bus
-    - cabinet
-    - car
-    - cat
-    - ceiling
-    - chair
-    - cloth
-    - computer
-    - cow
-    - cup
-    - curtain
-    - dog
-    - door
-    - fence
-    - floor
-    - flower
-    - food
-    - grass
-    - ground
-    - horse
-    - keyboard
-    - light
-    - motorbike
-    - mountain
-    - mouse
-    - person
-    - plate
-    - platform
-    - pottedplant
-    - road
-    - rock
-    - sheep
-    - shelves
-    - sidewalk
-    - sign
-    - sky
-    - snow
-    - sofa
-    - table
-    - track
-    - train
-    - tree
-    - truck
-    - tvmonitor
-    - wall
-    - water
-    - window
-    - wood
+    - background
+    - polyp
 

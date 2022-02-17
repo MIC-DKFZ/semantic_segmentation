@@ -674,7 +674,7 @@ class OCRNet(nn.Module):
             #pretrained_dict = torch.load(pretrained)
             pretrained_dict = torch.load(pretrained,
                                          map_location={'cuda:0': 'cpu'})
-
+            log.info('=> loading pretrained model {}'.format(pretrained))
             if "state_dict" in pretrained_dict.keys():
                 pretrained_dict=pretrained_dict["state_dict"]
             pretrained_dict = {k.replace('model.', '').replace('module.', '').replace('backbone.', '').replace('ocr.', ''): v for k, v in pretrained_dict.items()}

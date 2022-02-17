@@ -376,9 +376,10 @@ class OCRNetASPP(nn.Module):
 
     def load_weights(self, pretrained):
         if os.path.isfile(pretrained):
-            #log.info('=> loading pretrained model {}'.format(pretrained))
+
             pretrained_dict = torch.load(pretrained,
                                          map_location={'cuda:0': 'cpu'})
+            log.info('=> loading pretrained model {}'.format(pretrained))
             if "state_dict" in pretrained_dict.keys():
                 pretrained_dict=pretrained_dict["state_dict"]
             model_dict = self.state_dict()
@@ -386,8 +387,8 @@ class OCRNetASPP(nn.Module):
             #                   for k, v in pretrained_dict.items()}
             pretrained_dict = {k.replace('last_layer', 'aux_head').replace('model.', '').replace('module.', ''): v
                                for k, v in pretrained_dict.items()}
-            print(model_dict.keys())
-            print(pretrained_dict.keys())
+            #print(model_dict.keys())
+            #print(pretrained_dict.keys())
             pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict.keys() and "ocr.ocr_distri_head" not in k and "ocr.conv3x3_ocr" not in k and "ocr.cls_head" not in k and "ocr.aux_head" not in k}
             model_dict.update(pretrained_dict)
             self.load_state_dict(model_dict)

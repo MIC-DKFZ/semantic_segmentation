@@ -8,8 +8,9 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
 import random
-from datasets.Cityscapes import Cityscapes_dataset,show_cityscape
+from datasets.Cityscapes import Cityscapes_dataset, classes_19, classes_34
 
+from utils.visualization import show_data
 from utils.utils import get_logger
 log = get_logger(__name__)
 
@@ -92,13 +93,14 @@ if __name__ == "__main__":
         ToTensorV2()])
 
     cityscapesPath = "/home/l727r/Desktop/Cityscape"
-    Cityscape_train = Cityscape_coarse_dataset(cityscapesPath, "train", transforms=transforms,coarse_portion=-0.2)
+    Cityscape_train = Cityscape_fine_coarse_dataset(cityscapesPath, "train", transforms=transforms,coarse_portion=-0.2)
     #for i in range(0,50):
     img, mask = Cityscape_train[2000]
     print(len(Cityscape_train))
     print(img.shape)
     print(torch.unique(mask))
-    out = show_cityscape(img=img, mask=mask, alpha=0.9, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    out = show_data(img=img, mask=mask, alpha=0.7, black=[255], color_mapping=[x.color for x in classes_19],
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     out.show()
     #out.save("out.png")
 

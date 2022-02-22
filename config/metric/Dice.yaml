@@ -1,6 +1,0 @@
-#@package _global_
-metric:
-  _target_: utils.metric.per_image_Dice
-  num_classes: ${DATASET.NUM_CLASSES}
-METRIC:
-  NAME: imageDice

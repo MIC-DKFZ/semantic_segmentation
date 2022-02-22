@@ -1,8 +1,6 @@
 Todo:
 - validation: catch invalid/old arguments
-- get dataset size from dataloader not from config
 - metric doc
-- metric dict logging
 
 <div align="center">
 
@@ -33,15 +31,25 @@ Overview about the results on the **Cityscapes val** set.
 The best result from three runs (mean intersection over union, mIoU) is reported.
 A more detailed analysis is given in the [experiments](#experiments) section.
 
-| Model              | Baseline | RMI loss | Paddle weights| Mapillary pretrained + RMI | Coarse Data | Coarse Data + RMI|
-| -------------------|:--------:|:--------:|:-------------:|:--------------------------:|:------:|:---------:|
-|HRNET               | 81.44    |  81.89   | 81.79         |           ?                | 82.03 | ? |
-|OCR                 | 81.37    |  82.08   | 81.89         |           -                | - | - |
-|OCR + ASPP          | 81.53    |  82.20   | - | - | - | - |
-|MS OCR [0.5, 1.]    | 81.49    |  82.59   |      X         |           84.45            | 82.26 | 83.54
-|MS OCR [0.5, 1., 2.]| 82.30    |  82.88   |      X         |           84.92            | 82.95 | 83.96
+| Model              | Baseline | RMI loss | Paddle weights | Mapillaty pretrained | Mapillary pretrained + RMI | Coarse Data | Coarse Data + RMI |
+| -------------------|:--------:|:--------:|:--------------:|:--------------------:|:--------------------------:|:-----------:|:-----------------:|
+|HRNET               | 81.44    |  81.89   |     81.74      |        83.02         |             ?              |    82.03    |         ?         |
+|OCR                 | 81.37    |  82.08   |     81.89      |        83.37         |             -              |      -      |         -         |
+|OCR + ASPP          | 81.53    |  82.20   |       -        |          -           |             -              |      -      |         -         |
+|MS OCR [0.5, 1.]    | 81.49    |  82.59   |     82.18      |        83.63         |           84.45            |    82.26    |       83.54       |
+|MS OCR [0.5, 1., 2.]| 82.30    |  82.88   |     82.79      |        84.31         |           84.92            |    82.95    |       83.96       |
 
-WORKING On COMPLETING TABLE (each X)
+Paddle:
+hrnet: [81.45, 81.69, 81.74]
+ocr: [81.89, 81.85, 81.80]
+ms [0.5,1]: [82.18,82.09,81.55]
+ms[0.5,1,2]: [82.79, 82.71, 82.23]
+Mapilarry:
+hrnet: [82.80, 82.41, 83.02]
+ocr: [82.87, 83.37, 83.36]
+ms [0.5,1]: [83.52, 83.63, 83.18]
+ms[0.5,1,2]: [84.31, 84.15, 83.73]
+
 
 ### References
 This repository adopts code from the following sources:
@@ -532,10 +540,8 @@ python main.py model=hrnet_ocr_ms  epochs=25 lr=0.001 dataset=Cityscapes_coarse 
 python main.py model=hrnet_ocr_ms  epochs=65 lr=0.001 +finetune_from=<path.to.ckpt.of.previous.line>
 ````
 
-
 </p>
 </details>
-
 
 
 ## PASCAL VOC2010 Context

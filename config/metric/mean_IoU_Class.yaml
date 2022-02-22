@@ -1,6 +1,7 @@
 #@package _global_
 metric:
-  _target_: utils.metric.IoU
+  _target_: utils.metric.IoU_Class
   num_classes: ${DATASET.NUM_CLASSES}
+  labels: ${DATASET.CLASS_LABELS}
 METRIC:
   NAME: meanIoU

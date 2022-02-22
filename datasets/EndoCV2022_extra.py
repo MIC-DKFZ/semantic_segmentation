@@ -21,21 +21,7 @@ ignore_label=255
 #Data shape [3, 1064, 1440],[3, 1072, 1728],[3, 1024, 1280],[3, 1080, 1920],[3, 720, 1280],[3, 1072, 1704]
 #
 
-PALETTE = [[0, 0, 0], [255,0,0], [0, 255, 0], [0, 0, 255],
-           [4, 200, 3], [120, 120, 80], [140, 140, 140], [204, 5, 255],
-           [230, 230, 230], [4, 250, 7], [224, 5, 255], [235, 255, 7],
-           [150, 5, 61], [120, 120, 70], [8, 255, 51], [255, 6, 82],
-           [143, 255, 140], [204, 255, 4], [255, 51, 7], [204, 70, 3],
-           [0, 102, 200], [61, 230, 250], [255, 6, 51], [11, 102, 255],
-           [255, 7, 71], [255, 9, 224], [9, 7, 230], [220, 220, 220],
-           [255, 9, 92], [112, 9, 255], [8, 255, 214], [7, 255, 224],
-           [255, 184, 6], [10, 255, 71], [255, 41, 10], [7, 255, 255],
-           [224, 255, 8], [102, 8, 255], [255, 61, 6], [255, 194, 7],
-           [255, 122, 8], [0, 255, 20], [255, 8, 41], [255, 5, 153],
-           [6, 51, 255], [235, 12, 255], [160, 150, 20], [0, 163, 255],
-           [140, 140, 140], [250, 10, 15], [20, 255, 0], [31, 255, 0],
-           [255, 31, 0], [255, 224, 0], [153, 255, 0], [0, 0, 255],
-           [255, 71, 0], [0, 235, 255], [0, 173, 255], [31, 0, 255]]
+PALETTE = [[0, 0, 0], [255,0,0]]
 
 class EndoCV2022_dataset(torch.utils.data.Dataset):
     def __init__(self,root,fold,split="train",transforms=None):
@@ -44,9 +30,13 @@ class EndoCV2022_dataset(torch.utils.data.Dataset):
 
         #data = pd.read_csv(os.path.join(root, "PoleGen2_4CV_2.csv"))
         data = pd.read_csv(os.path.join(root, "polypgen_cleaned_4CV.csv"))
-
-        if fold=="all":
+        if fold == "all":
             data=data
+        elif fold=="extra":
+            if split=="train":
+                data=pd.DataFrame()#None
+            if split=="val":
+                data=data
         elif split=="val":
             data = data[data.fold == fold]
         elif split=="train":
@@ -57,17 +47,36 @@ class EndoCV2022_dataset(torch.utils.data.Dataset):
         #folder=os.path.join( "EndoCV2022_ChallengeDataset","PolypGen2.0")
         folder="clean_PolypGen2.0"
         #
+        #if data != None
         for i, d in data.iterrows():
             self.imgs.append(os.path.join(root,folder, d.vid_folder, "images",
                                        d.image_id))
             self.masks.append(
                 os.path.join(root, folder, d.vid_folder, "masks", d.Mask_id))
+
+        if split=="train":
+            data_extra = pd.read_csv(os.path.join(root, "external_endocv2.csv"))
+
+            for i, d in data_extra.iterrows():
+                self.imgs.append(os.path.join(root,d.im_path))
+                self.masks.append(os.path.join(root, d.mask_path))
+
+        #imgs_extra=os.path.join(root,"renamed_pretrain_all_sequence_public_polyp","renamed_pretrain_all_sequence_segmentation","*","image","*")
+        #masks_extra=os.path.join(root,"renamed_pretrain_all_sequence_public_polyp","renamed_pretrain_all_sequence_segmentation","*","label","*")
+        #print(data_extra)
+        #imgs_extra = list(sorted(glob.glob(imgs_extra)))
+        #masks_extra = list(sorted(glob.glob(masks_extra)))
+        #print(imgs_extra)
+        #print("EX",len(imgs_extra),len(masks_extra))
+        #self.masks = list(sorted(glob.glob(masks_path)))
+
         self.transforms = transforms
         log.info("Dataset: EncoCV2022 %s - Fold %s - %s images - %s masks",split, fold,  len(self.imgs),len(self.masks))
 
 
     def __getitem__(self, idx):
-
+        #print(self.imgs[idx])
+        #print(self.masks[idx])
         img =cv2.imread(self.imgs[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
@@ -88,7 +97,7 @@ class EndoCV2022_dataset(torch.utils.data.Dataset):
 if __name__ == "__main__":
 
     transforms = A.Compose([
-        A.RandomScale(scale_limit=(-0.5, 0), always_apply=True, p=1.0),
+        #A.RandomScale(scale_limit=(-0.5, 0), always_apply=True, p=1.0),
         A.RGBShift( p=1,r_shift_limit= 10,g_shift_limit= 10,b_shift_limit= 10),
         A.PadIfNeeded(min_height=512, min_width=1024),
         A.RandomCrop(height=512,width=1024),
@@ -100,13 +109,13 @@ if __name__ == "__main__":
         ToTensorV2()])
 
     root_path="/home/l727r/Desktop/endocv2022/official EndoCV2022 dataset"
-    EndoCV=EndoCV2022_dataset(root=root_path,fold=1,split="train",transforms=transforms)
+    EndoCV=EndoCV2022_dataset(root=root_path,fold="all",split="train",transforms=transforms)
     print(len(EndoCV))
-    EndoCV=EndoCV2022_dataset(root=root_path,fold=1,split="val",transforms=transforms)
-    print(len(EndoCV))
+    EndoCV_val=EndoCV2022_dataset(root=root_path,fold="all",split="val",transforms=transforms)
+    print(len(EndoCV_val))
 
     #img,mask=\
-    img,mask=EndoCV[150]
+    img,mask=EndoCV[3100]
     #print(img.shape,mask.shape)
     out = show_data(img,mask,alpha=0.5,color_mapping=[[0,0,0],[255,0,0]], mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     out.show()

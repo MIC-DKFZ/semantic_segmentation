@@ -15,7 +15,7 @@ from utils.utils import hasTrueAttr, hasNotEmptyAttr
 from utils.utils import get_logger
 log = get_logger(__name__)
 
-from datasets.EndoCV2022 import show
+from utils.visualization import show_data
 
 # Inference Time
 # https://towardsdatascience.com/the-correct-way-to-measure-inference-time-of-deep-neural-networks-304a54e5187f
@@ -138,11 +138,11 @@ def visualisation(ckpt_dir,hydra_args,init=True):
             gt = gt[k]
             pred = pred[k]
             # print(pred.shape,gt.shape)
-            gt = torch.nn.functional.one_hot(gt, num_classes)
-            pred = torch.nn.functional.one_hot(pred, num_classes)
+            #gt = torch.nn.functional.one_hot(gt, num_classes)
+            #pred = torch.nn.functional.one_hot(pred, num_classes)
             # print(pred.shape, gt.shape)
-            gt = gt[:, 1:]
-            pred = pred[:, 1:]
+            #gt = gt[:, 1:]
+            #pred = pred[:, 1:]
             # print(pred.shape, gt.shape)
             # dice2 = tmF.dice_score(gt, pred)
             dice = (2 * (gt * pred).sum() + 1e-15) / (gt.sum() + pred.sum() + 1e-15)
@@ -177,14 +177,14 @@ def visualisation(ckpt_dir,hydra_args,init=True):
 
 
     #print(img.shape)
-    i=show(img=img,mask=s,mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    b=show(img=img,mask=mask,mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    #i=show(img=img,mask=s,mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    #b=show(img=img,mask=mask,mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     #m=show(mask=mask)
-    p=show(mask=pred.detach().cpu())
-    i.show()
-    b.show()
+    #p=show(mask=pred.detach().cpu())
+    #i.show()
+    #b.show()
     #m.show()
-    p.show()
+    #p.show()
 
 
 

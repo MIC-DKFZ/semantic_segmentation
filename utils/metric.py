@@ -39,35 +39,12 @@ class ConfusionMatrix(Metric):
             self.mat.zero_()
 
 class IoU(ConfusionMatrix):
-    #def __init__(self, num_classes,dist_sync_on_step=False):
-        #super().__init__( num_classes,dist_sync_on_step)
-        #self.labels=None#labels
-        #print(labels)
 
     def compute(self):
 
-        mIoU,IoU_class= self.compute_IoU(self.mat)
-        #print(IoU_class)
+        mIoU,_= self.compute_IoU(self.mat)
 
-        #dic_score = {}
-        #if self.labels!=None:
-        #    for i,l in zip(IoU_class,self.labels):
-        #        dic_score[l]= "%.4f" % i.item()
-        #else:
-        #    for i,l in zip(IoU_class,range(0,len(IoU_class))):
-        #        dic_score[str(l)]="%.4f" % i.item()
-        #log.info(dic_score)
-
-        #for id, sc in enumerate(IoU_class):
-        #    if hasNotEmptyAttr(self.config.DATASET, "CLASS_LABELS"):
-        #        dic_score[str(id) + "-" + self.config.DATASET.CLASS_LABELS[id]] = "%.4f" % sc.item()
-        #    else:
-        #        dic_score[id] = "%.4f" % sc.item()
-        # log.info(dic_score)
-        #print(mIoU)
-        #print(mIoU.item())
-        #dic={"IoU per Class":dic_score}
-        return mIoU#,dic#, dic_score#dic_score#{"P":mIoU,"R":mIoU} #IoU_class
+        return mIoU
 
     def compute_IoU(self, mat):
 
@@ -78,9 +55,67 @@ class IoU(ConfusionMatrix):
         return mIoU, IoU
 
 
+class IoU_Class(ConfusionMatrix):
+    def __init__(self, num_classes,labels=None,dist_sync_on_step=False):
+        super().__init__( num_classes,dist_sync_on_step)
+        self.labels=labels
 
+    def compute(self):
 
+        mIoU,IoU_class= self.compute_IoU(self.mat)
+
+        dic_score = {}
+        if self.labels!=None:
+            for i,l in zip(IoU_class,self.labels):
+                dic_score[l]= i
+        else:
+            for i,l in zip(IoU_class,range(0,len(IoU_class))):
+                dic_score[str(l)]=i
+
+        return mIoU,dic_score
+
+    def compute_IoU(self, mat):
+
+        IoU = mat.diag() / (mat.sum(1) + mat.sum(0) - mat.diag())
+        IoU[IoU.isnan()] = 0
+
+        mIoU = IoU.mean()
+        return mIoU, IoU
+
+class binary_per_image_Dice(Metric):
+    def __init__(self, num_classes, dist_sync_on_step=False):
+        super().__init__(dist_sync_on_step=dist_sync_on_step, compute_on_step=False)
+        self.num_classes = num_classes
+        self.add_state("per_image", default=[], dist_reduce_fx="cat")
+
+    def update(self, gt, pred):
+        gt = gt.flatten()  # .detach().cpu()
+        pred = pred.argmax(1).flatten()  # .detach().cpu()
+
+        with torch.no_grad():
+            gt_s = gt.sum()
+            pred_s = pred.sum()
+            if gt_s == 0 and pred_s == 0:
+                dice = None
+            elif gt_s == 0 and pred_s != 0:
+                dice = torch.tensor(0, device=pred.device)
+                self.per_image.append(dice)
+            else:
+                dice = (2 * (gt * pred).sum() + 1e-15) / (gt_s + pred_s + 1e-15)
+                self.per_image.append(dice)
+
+    def compute(self):
+
+        self.per_image = dim_zero_cat(self.per_image)
+
+        log.info("Not None samples %s", len(self.per_image))
+        mDice = self.per_image.clone().detach().mean()
+
+        return mDice, None
+
+#### Only Testing - no working code ####
 class per_image_Dice(Metric):
+    #only testing code
     def __init__(self, num_classes, dist_sync_on_step=False):
         super().__init__(dist_sync_on_step=dist_sync_on_step, compute_on_step=False)
         self.num_classes = num_classes
@@ -114,50 +149,4 @@ class per_image_Dice(Metric):
         mDice=self.per_image.clone().detach().mean()
 
         #print("control",self.control_dice/self.control_count)
-        return mDice, None
-
-    def save(self, path, name=None):
-        return
-
-class per_image_Dice_class(Metric):
-    def __init__(self, num_classes, dist_sync_on_step=False):
-        super().__init__(dist_sync_on_step=dist_sync_on_step, compute_on_step=False)
-        self.num_classes = num_classes
-        self.add_state("per_image", default=[], dist_reduce_fx="cat")
-
-    def update(self, gt, pred):
-        gt = gt.flatten()  # .detach().cpu()
-        pred = pred.argmax(1).flatten()  # .detach().cpu()
-
-        with torch.no_grad():
-            k = (gt >= 0) & (gt < self.num_classes)
-            gt = gt[k]
-            pred = pred[k]
-            #print(pred.shape,gt.shape)
-            gt = torch.nn.functional.one_hot(gt, self.num_classes)
-            pred = torch.nn.functional.one_hot(pred, self.num_classes)
-            #print(pred.shape, gt.shape)
-            gt = gt[:, 1:]
-            pred = pred[:,1:]
-            #print(pred.shape, gt.shape)
-            # dice2 = tmF.dice_score(gt, pred)
-            dice = (2 * (gt * pred).sum() + 1e-15) / (gt.sum() + pred.sum() + 1e-15)
-
-            self.per_image.append(dice)
-
-    def compute(self):
-        self.per_image = dim_zero_cat(self.per_image)
-        # print("CAT_TEST",len(self.per_image),self.control_count)
-
-        # mDice=self.per_image.mean()
-        # mDice=torch.tensor(self.per_image).mean()
-        mDice = self.per_image.clone().detach().mean()
-
-        # print("control",self.control_dice/self.control_count)
-        return mDice, None
-
-    def save(self, path, name=None):
-        return
-    #def reset(self):
-    #    print("Rest")
-    #    self.per_image=torch.tensor([])
+        return mDice#, None

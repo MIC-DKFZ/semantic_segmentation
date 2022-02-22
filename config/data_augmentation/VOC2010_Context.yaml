@@ -9,7 +9,6 @@ AUGMENTATIONS:
               scale_limit: [ -0.5,1.0 ]
               p: 1.0
           - RGBShift:
-              p: 1
               r_shift_limit: 10
               g_shift_limit: 10
               b_shift_limit: 10
@@ -22,6 +21,7 @@ AUGMENTATIONS:
           - RandomCrop:
               height: 520
               width: 520
+          - GaussianBlur:
           - HorizontalFlip:
               p: 0.5
           - Normalize:

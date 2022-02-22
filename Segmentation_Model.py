@@ -105,8 +105,6 @@ class SegModel(LightningModule):
 
     def log_results(self,metric_score,metrics_dict):
 
-        log.info("EPOCH: %s", self.current_epoch)
-
         self.log_dict(
             {"metric/" + self.metric_name: metric_score, "step": torch.tensor(self.current_epoch, dtype=torch.float32)},
             on_epoch=True, logger=True, sync_dist=True)
@@ -115,15 +113,18 @@ class SegModel(LightningModule):
 
         if metrics_dict!=None:
             for key in metrics_dict.keys():
+
                 self.log_dict(
-                    {"metric/" + key: metrics_dict[key].item(),
+                    {"metric/" + key: metrics_dict[key].detach(),
                      "step": torch.tensor(self.current_epoch, dtype=torch.float32)},
                     on_epoch=True, logger=True, sync_dist=True)
                 log.info("%s: %.4f", key, metrics_dict[key].detach())
 
     def on_validation_epoch_end(self) -> None:
         if not self.trainer.sanity_checking:
-            #self.log_results(*self.metric.compute())
+
+            log.info("EPOCH: %s", self.current_epoch)
+
             results = self.metric.compute()
             if isinstance(results, tuple):
                 metric_score = results[0]
@@ -132,42 +133,20 @@ class SegModel(LightningModule):
                 metric_score = results
                 metrics_dict = None
 
-            #self.log_dict({"metric/"+self.metric_name: score,"step":torch.tensor(self.current_epoch,dtype=torch.float32)}, on_epoch=True, logger=True, sync_dist=True)
-            #self.log("mIoU", mIoU, logger=True, sync_dist=True)
-
             if metric_score > self.best_metric_score.detach():
                 self.best_metric_score = metric_score
-                self.metric.save(path=self.logger.log_dir)
+                if hasattr(self.metric, "save"):
+                    self.metric.save(path=self.logger.log_dir)
 
             self.log_results(metric_score,metrics_dict)
-            #self.log_dict({"metric/best_"+self.metric_name: self.best_metric_score, "step": torch.tensor(self.current_epoch,dtype=torch.float32)}, on_epoch=True, logger=True,sync_dist=True)
-            #self.log("mIoU/best_mIoU", self.best_mIoU, logger=True, sync_dist=True)
-
-            #log.info("EPOCH: %s", self.current_epoch)
-            #log.info("Best %s %.4f       %s: %.4f", self.metric_name, self.best_metric_score, self.metric_name,
-                     #score.item())
-
-            #if score_class != None:
-            #    dic_score = {}
-            #    for id, sc in enumerate(score_class):
-            #        if hasNotEmptyAttr(self.config.DATASET,"CLASS_LABELS"):
-            #            dic_score[str(id) + "-" + self.config.DATASET.CLASS_LABELS[id]] = "%.4f" % sc.item()
-            #        else:
-            #            dic_score[id] = "%.4f" % sc.item()
-            #    log.info(dic_score)
-
-            #if self.trainer.is_global_zero:
-            #log.info("EPOCH: %s", self.current_epoch)
-            #log.info("Best %s %.4f       %s: %.4f",self.metric_name, self.best_metric_score,self.metric_name, score.item())
-            #log.info(dic_score)
 
     def test_step(self, batch, batch_idx):
-
+        #implementation of multiscale testing
         x, y_gt = batch
         x_size = x.size(2), x.size(3)
         total_pred = None
 
-        if hasNotEmptyAttr(self.config.TESTING,"SCALES"):# and hasTrueAttr(self.config.TESTING,"MS_TESTING") :
+        if hasNotEmptyAttr(self.config.TESTING,"SCALES"):
             scales=self.config.TESTING.SCALES
         else:
             scales=[1]
@@ -197,6 +176,7 @@ class SegModel(LightningModule):
 
     def on_test_epoch_end(self) -> None:
 
+        log.info("Test Results")
         results = self.metric.compute()
         if isinstance(results, tuple):
             metric_score = results[0]
@@ -207,6 +187,7 @@ class SegModel(LightningModule):
 
         self.log_results(metric_score, metrics_dict)
 
-        self.metric.save(path=self.logger.log_dir,name="%.4f" % metric_score.detach())
+        if hasattr(self.metric,"save"):
+            self.metric.save(path=self.logger.log_dir,name="%.4f" % metric_score.detach())
 
 

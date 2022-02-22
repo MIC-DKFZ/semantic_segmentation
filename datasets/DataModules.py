@@ -14,11 +14,10 @@ from utils.utils import get_logger
 log = get_logger(__name__)
 
 class BaseDataModule(LightningDataModule):
-    def __init__(self, dataset, batch_size,val_batch_size, num_workers ,augmentations, train_size):
+    def __init__(self, dataset, batch_size,val_batch_size, num_workers ,augmentations):
         super().__init__()
         self.num_workers = num_workers
         self.augmentations = augmentations
-        self.base_size = 0#train_size
         self.batch_size = batch_size
         self.val_batch_size=val_batch_size
 
@@ -32,15 +31,15 @@ class BaseDataModule(LightningDataModule):
 
         if stage in (None, "fit"):
             self.DS_train = hydra.utils.instantiate(self.dataset, split="train", transforms=transforms_train)
-            self.base_size=len(self.DS_train)
+            #self.base_size=len(self.DS_train)
         if stage in (None,"fit","validate"):
             self.DS_val = hydra.utils.instantiate(self.dataset, split="val", transforms=transforms_val)
         if stage in (None, "test"):
             self.DS_test = hydra.utils.instantiate(self.dataset, split="test", transforms=transforms_test)
 
     def max_steps(self):
-
-        steps_per_epoch = self.base_size // self.batch_size
+        base_size = len(self.DS_train)
+        steps_per_epoch = base_size // self.batch_size
         steps_per_gpu = int(np.ceil(steps_per_epoch / self.trainer.num_gpus))
         acc_steps_per_gpu = int(np.ceil(steps_per_gpu / self.trainer.accumulate_grad_batches))
         max_steps = (self.trainer.max_epochs * acc_steps_per_gpu)
@@ -51,7 +50,7 @@ class BaseDataModule(LightningDataModule):
     def get_augmentations_from_config(self,augmentations):
 
         if hasNotEmptyAttr(augmentations, "FROM_DICT"):
-            return A.from_dict(OmegaConf.to_container(augmentations.FROM_DICT))
+            return [A.from_dict(OmegaConf.to_container(augmentations.FROM_DICT))]
 
         trans = []
         for augmentation in augmentations:

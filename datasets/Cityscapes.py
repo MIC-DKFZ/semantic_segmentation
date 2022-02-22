@@ -12,6 +12,7 @@ from albumentations.pytorch import ToTensorV2
 from PIL import Image
 import numpy as np
 
+from utils.visualization import show_data
 from utils.utils import get_logger
 log = get_logger(__name__)
 
@@ -139,47 +140,6 @@ class Cityscapes_dataset(torch.utils.data.Dataset):
         return len(self.imgs)
 
 
-def show_cityscape(img=None, mask=None, alpha=.5, classes=19, mean=[0, 0, 0], std=[1, 1, 1]):
-    # (input[channel] - mean[channel]) / std[channel]
-    def show_img(img_tens):
-        img_tens = (img_tens.permute(1, 2, 0) * torch.Tensor(std)) + torch.Tensor(mean)
-        img_tens = img_tens.permute(2, 0, 1)
-        img_pil = torchvision.transforms.ToPILImage(mode='RGB')(img_tens)
-        return img_pil
-
-    def show_mask(mask_tens, mappig):
-        #mask is a prediction --> bring into GT format
-        if mask_tens.dim() != 2:
-            mask_tens = torch.argmax(mask_tens.squeeze(), dim=0).detach().cpu()
-        w, h = mask_tens.shape
-        mask_np = np.zeros((w, h, 3))
-        for class_id in torch.unique(mask_tens):
-            x, y = torch.where(mask_tens == class_id)
-            if class_id == 255:
-                mask_np[x, y] = [0, 0, 0]
-            else:
-                mask_np[x, y] = mappig[class_id].color
-            # color=classes[class_id].color
-        # print(img.shape)
-        mask_pil = Image.fromarray(np.uint8(mask_np))
-        return mask_pil
-
-    if classes == 19:
-        mappig = classes_19
-    elif classes == 34:
-        mappig = classes_34
-    i = img is not None
-    m = mask is not None
-    if i and not m:
-        return show_img(img)
-    elif not i and m:
-        return show_mask(mask, mappig)
-    elif i and m:
-        img_pil = show_img(img)
-        mask_pil = show_mask(mask, mappig)
-        return Image.blend(img_pil, mask_pil, alpha=alpha)
-    return
-
 def viz_color_encoding():
     width = 700
     height = 60
@@ -283,9 +243,11 @@ if __name__ == "__main__":
     img, mask = Cityscape_train[100]
     print(img.shape)
     print(torch.unique(mask))
-    out = show_cityscape(img=img, mask=mask, alpha=0., mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    #out.show()
-    out.save("out.png")
+    #print(classes_34[:].color)
+    color_mapping=[x.color for x in classes_19]
+    out = show_data(img=img, mask=mask, alpha=0.7, black=[255], color_mapping=[x.color for x in classes_19],mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    out.show()
+    #out.save("out.png")
 
     #transform = Compose([RandomCrop(769), RandomHorizontalFlip(), ToTensor(),
     #                     Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])

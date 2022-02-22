@@ -79,13 +79,12 @@ datamodule:
   batch_size: ${batch_size}
   val_batch_size: ${val_batch_size}
   augmentations: ${AUGMENTATIONS}
-  train_size: ${DATASET.SIZE.TRAIN}
   dataset: ${dataset}
 #DEFINING THE SAVING BEHAVIOR, ONLY USED WHEN CHECKPOINTING IS ENABLED
 ModelCheckpoint:
   _target_: utils.callbacks.customModelCheckpoint   #cusotom checkpointing
-  monitor: "metric/best_${METRIC.NAME}"   # name of the metric during logging
+  monitor: "metric/${METRIC.NAME}"   # name of the metric during logging
   mode: "max"                             # min or max: should be metric me maximised or minimized
-  filename: 'best_epoch_{epoch}__${METRIC.NAME}_{metric/best_${METRIC.NAME}:.4f}'
+  filename: 'best_epoch_{epoch}__${METRIC.NAME}_{metric/${METRIC.NAME}:.4f}'
   auto_insert_metric_name: False          # needs to be false for better naming of checkpoint
   save_last: True                         # if the last checkpoint should be saved too

@@ -379,11 +379,8 @@ Defining a custom dataset is done in two steps, first defining your custom pytor
      NAME:            #Used for the logging directory
      NUM_CLASSES:     #Needed for defining the model and the metrics
      IGNORE_INDEX:    #Needed for the loss function, if no ignore indes set to 255 or another number which do no occur in your dataset 
-     ## OPTIONAL, BUT NEEDED IF POLY LR SCHEDULER IS USED
-     Size:
-        TRAIN: 1234 # Size of your training dataset
      ## OPTIONAL, BUT NEEDED IF WEIGHTED LOSSFUNCTIONS ARE USED
-     CLASS_WEIGHTS: [ 0.9, 1.1, ...]
+     CLASS_WEIGHTS: [ 0.9, 1.1, ...]                #should be standardized for using wRMI (mean=1)
      ##OPTIONAL, ONLY NEEDED FOR NICER LOGGING
      CLASS_LABELS:
         - class1
@@ -722,6 +719,8 @@ This metric updates a confusion matrix and outputs a mean IoU (mIoU) at the end 
 
 For defining a new metric use the [torchmetric](https://torchmetrics.readthedocs.io/en/stable/pages/implement.html) package.
 This makes the metric usable for multi-GPU training, a python dummy for such a metric can be seen below.
+Thereby the *compute()* methode should return a tensor. 
+If you want to log additional metrics you can return them as a dict as shown in the dummy
 ````py
 from torchmetrics import Metric
 
@@ -735,9 +734,13 @@ class CustomMetric(Metric):
 
     def compute(self):
         ...                                     # do your computations
-        return metric_per_class, metric_mean    #return a list with the metric per class and the mean value
-
-    def save(self, path, name=None):            #catch this function call even if you have nothing to save
+        return metric_to_optimize               # return the metric which should be optimized
+        #return metric_to_optimize, {"metric1":value,"metric2":value,...}    #if you want additional metrics to be logged return them 
+                                                                             # in dict format as a second arguments
+    
+    #Optional if you want to save somethink (e.g. a confmat) 
+    #If you dont want to save something you dont need this function
+    def save(self, path, name=None):            #called if the current epoch gives the best results and during testing
         ...                             
 ````
 
@@ -747,9 +750,13 @@ Therefore create a *my_metric.yaml* in *config/metric/* and use the following du
 `````yaml
 config/metric/my_metric.yaml
 ─────────────────────────────
-_target_: utils.metric.my_metric          #lead to your metric
-num_classes: ${DATASET.NUM_CLASSES}       #give your arguments for initialization e.g. number of classes 
-args1: ...
+#@package _global_
+metric:
+  _target_: utils.metric.my_metric          #lead to your metric
+  num_classes: ${DATASET.NUM_CLASSES}       #give your arguments for initialization e.g. number of classes 
+  args1: ...
+METRIC:
+  NAME: someName                            # Name of your metric for logginf, if not given the name will be set to "metric"
 `````
 ````shell
 python main.py metric=my_metric
@@ -813,6 +820,8 @@ python main.py environment=custom_env
 
 <details><summary>Testing directly after Training</summary>
 <p>
+
+**Currently out ot use since problems occur together with multi gpu training**
 
 If your model has different behaviour during inference or testing than during training you may directly want to evaluate your model with this changed behaviour.
 For example if you want multiscale testing or want to add a scale to MS OCR.

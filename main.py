@@ -16,7 +16,7 @@ from validation import validation
 
 log = get_logger(__name__)
 #OmegaConf resolver for preventing problems in the output path
-OmegaConf.register_new_resolver('path_formatter', lambda s: s.replace("[","").replace("]","").replace(",","_").replace("=","_").replace("/","."))
+OmegaConf.register_new_resolver('path_formatter', lambda s: s.replace("[","").replace("]","").replace(",","_").replace("=","_").replace("/",".").replace("+",""))
 @hydra.main(config_path="config", config_name="baseline")
 def training_loop(cfg: DictConfig):
     log.info("Output Directory: %s",os.getcwd())

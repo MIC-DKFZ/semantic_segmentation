@@ -2,14 +2,13 @@ import os
 import glob
 
 import torch
-import torchvision.utils
 
 import cv2
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-from PIL import Image
 import numpy as np
 
+from utils.visualization import show_data
 from utils.utils import get_logger
 log = get_logger(__name__)
 
@@ -107,45 +106,6 @@ class VOC2010_Context_dataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.imgs)
 
-
-def show_voc(img=None, mask=None, alpha=.5, classes=19, mean=[0, 0, 0], std=[1, 1, 1]):
-    # (input[channel] - mean[channel]) / std[channel]
-    def show_img(img_tens):
-        img_tens = (img_tens.permute(1, 2, 0) * torch.Tensor(std)) + torch.Tensor(mean)
-        img_tens = img_tens.permute(2, 0, 1)
-        img_pil = torchvision.transforms.ToPILImage(mode='RGB')(img_tens)
-        return img_pil
-
-    def show_mask(mask_tens, mappig):
-        #mask is a prediction --> bring into GT format
-        if mask_tens.dim() != 2:
-            mask_tens = torch.argmax(mask_tens.squeeze(), dim=0).detach().cpu()
-        w, h = mask_tens.shape
-        mask_np = np.zeros((w, h, 3))
-        for class_id in torch.unique(mask_tens):
-            x, y = torch.where(mask_tens == class_id)
-            if class_id == 255:
-                mask_np[x, y] = [0, 0, 0]
-            else:
-                mask_np[x, y] = mappig[class_id]
-            # color=classes[class_id].color
-        # print(img.shape)
-        mask_pil = Image.fromarray(np.uint8(mask_np))
-        return mask_pil
-
-    mapping=PALETTE
-    i = img is not None
-    m = mask is not None
-    if i and not m:
-        return show_img(img)
-    elif not i and m:
-        return show_mask(mask, mapping)
-    elif i and m:
-        img_pil = show_img(img)
-        mask_pil = show_mask(mask, mapping)
-        return Image.blend(img_pil, mask_pil, alpha=alpha)
-    return
-
 def viz_color_encoding():
     width = 700
     height = 60
@@ -181,18 +141,23 @@ if __name__ == "__main__":
 
     transforms = A.Compose([
         #A.RandomCrop(width=768, height=768),
-        #A.SmallestMaxSize( max_size= 520),
-        #A.RandomScale(scale_limit=(-0.5,1),always_apply=True,p=1.0),
+        A.SmallestMaxSize( max_size= 520),
+        #A.RandomScale(scale_limit=(-0.5, 1), always_apply=True, p=1.0),
+        #A.RGBShift(p=1,r_shift_limit=10,g_shift_limit=10,b_shift_limit=10),
+        A.RandomScale(scale_limit=(-0.5,1),always_apply=True,p=1.0),
         A.PadIfNeeded(min_height=520,min_width=520,border_mode=0, value=0,mask_value=255),
         #A.Resize(p=1.0,width=480, height=480),
         #A.RandomCrop(width=520, height=520,always_apply=True,p=1.0),
+        #A.GaussianBlur(p=1),
         #A.ColorJitter(brightness=9,contrast=0,saturation=0,hue=0),
-        A.RGBShift(p=1,r_shift_limit=10,g_shift_limit=10,b_shift_limit=10),
-        #A.HorizontalFlip(p=0.5),
-        #A.Normalize(
-        #    mean=[0.485, 0.456, 0.406],
-        #    std=[0.229, 0.224, 0.225],always_apply=True
-        #),
+        #A.RGBShift(p=1,r_shift_limit=10,g_shift_limit=10,b_shift_limit=10),
+        A.GaussianBlur(p=1),
+        A.HorizontalFlip(p=0.5),
+        A.Normalize(
+            mean=[0.485, 0.456, 0.406],
+            std=[0.229, 0.224, 0.225],always_apply=True
+        ),
+
         ToTensorV2()])
     print(transforms)
     Path = "/home/l727r/Desktop/Datasets/VOC2010_Context"
@@ -213,9 +178,9 @@ if __name__ == "__main__":
     #tensor([51, 33, 29], dtype=torch.uint8)
     #print(img.shape)
     #print(torch.unique(mask))
-    #out = show_voc(img=img, alpha=1., mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    out = show_data(img=img,mask=mask, alpha=0.5,black=[255],mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     #out1 = show_voc(mask=mask, alpha=1., mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    #out.show()
+    out.show()
 
     #out.save("out.png")
     #out1.save("out1.png")

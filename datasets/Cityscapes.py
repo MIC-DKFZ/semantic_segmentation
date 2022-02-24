@@ -16,11 +16,13 @@ from utils.visualization import show_data
 from utils.utils import get_logger
 log = get_logger(__name__)
 
+### SOME PARTS ARE FROM HERE:
 #https://github.com/mcordts/cityscapesScripts/blob/master/cityscapesscripts/helpers/labels.py
+###
 
 CityscapesClass = namedtuple('CityscapesClass', ['name', 'id', 'train_id', 'category', 'category_id',
                                                  'has_instances', 'ignore_in_eval', 'color'])
-
+### 34 CLASSES ###
 classes_34 = [
     CityscapesClass('unlabeled', 0, 255, 'void', 0, False, True, (0, 0, 0)),
     CityscapesClass('ego vehicle', 1, 255, 'void', 0, False, True, (0, 0, 0)),
@@ -59,6 +61,7 @@ classes_34 = [
     CityscapesClass('license plate', -1, -1, 'vehicle', 7, False, True, (0, 0, 142)),
 ]
 
+### 19 CLASSES ###
 classes_19 = [
     CityscapesClass('road', 0, 0, 'flat', 1, False, False, (128, 64, 128)),
     CityscapesClass('sidewalk', 1, 1, 'flat', 1, False, False, (244, 35, 232)),
@@ -81,8 +84,8 @@ classes_19 = [
     CityscapesClass('bicycle', 18, 18, 'vehicle', 7, True, False, (119, 11, 32)),
 ]
 
+### MAPPING FROM 34 CLASS SETTING TO 19 CLASSES ###
 ignore_label=255
-
 label_mapping = {-1: ignore_label, 0: ignore_label,
                       1: ignore_label, 2: ignore_label,
                       3: ignore_label, 4: ignore_label,
@@ -97,9 +100,10 @@ label_mapping = {-1: ignore_label, 0: ignore_label,
                       31: 16, 32: 17, 33: 18}
 
 
-
+### CITYSCAPES DATASET CLASS
 class Cityscapes_dataset(torch.utils.data.Dataset):
     def __init__(self,root,split="train",transforms=None):
+        ### PROVIDING THE POSSIBILITY TO HAVE DATA AND LABELS AT DIFFERENT LOCATIONS ###
         if isinstance(root, str):
             root_imgs=root
             root_labels=root
@@ -107,29 +111,31 @@ class Cityscapes_dataset(torch.utils.data.Dataset):
             root_imgs = root.IMAGES
             root_labels = root.LABELS
 
+        ### NO TEST DATASET FOR CITYSCAPES SO RETURN THE VALIDATION SET INSTEAD
         if split=="test":
             split="val"
-        imgs_path=os.path.join( root_imgs ,"leftImg8bit_trainvaltest", "leftImg8bit" , split , "*" , "*_leftImg8bit.png" )
 
+        ### BUILDING THE PATHS ###
+        imgs_path=os.path.join( root_imgs ,"leftImg8bit_trainvaltest", "leftImg8bit" , split , "*" , "*_leftImg8bit.png" )
         masks_path = os.path.join(root_labels, "gtFine_trainvaltest", "gtFine", split, "*", "*_gt*_labelIds_19classes.png")
         #elif num_classes==34:
         #    masks_path=os.path.join( root_labels,"gtFine_trainvaltest" , "gtFine" , split , "*" , "*_gt*_labelIds.png" )
 
+        ### SAVE ALL PATH IN LISTS ###
         self.imgs = list(sorted(glob.glob( imgs_path)))
         self.masks = list(sorted(glob.glob( masks_path)))
 
         self.transforms=transforms
         log.info("Dataset: Cityscape %s - %s images - %s masks",split,  len(self.imgs),len(self.masks))
 
-
-
     def __getitem__(self, idx):
-
+        ### READ IMAGE (OPENCV READ IMAGES IN BGR) AND MASK
         img =cv2.imread(self.imgs[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         mask=cv2.imread(self.masks[idx],-1)
 
+        ### APPLY ALBUMENTATIONS TRANSFORMS ###
         transformed = self.transforms(image=img, mask=mask)
         img= transformed['image']
         mask = transformed['mask']
@@ -141,6 +147,7 @@ class Cityscapes_dataset(torch.utils.data.Dataset):
 
 
 def viz_color_encoding():
+    ### LITTE HELPER FUNCTION TO VISUALIZE THE COLOR-CLASS ENCODING
     width = 700
     height = 60
 
@@ -172,42 +179,8 @@ def viz_color_encoding():
 
 
 if __name__ == "__main__":
-    #transforms = A.Compose([
-    #    A.RandomCrop(width=768, height=768),
-    #    A.HorizontalFlip(p=0.5),
-    #    A.RandomBrightnessContrast(p=0.2),
-    #    A.ColorJitter(p=0.2),
-    #    A.OneOf([
-    #        A.GaussNoise(p=1),
-    #        A.ISONoise(p=1),
-    #        A.MultiplicativeNoise(p=1)],
-    #        p=0.2),
-    #    A.OneOf([
-    #        A.GaussianBlur(p=1),
-    #        A.MedianBlur(p=1),
-    #        A.MotionBlur(p=1),
-    #        A.GlassBlur(p=1)],
-    #        p=0.2),
-    #    A.Normalize(
-    #        mean=[0.485, 0.456, 0.406],
-    #        std=[0.229, 0.224, 0.225],
-    #    ),
-    #    ToTensorV2()])
-    #A.save(transforms,"config/transform_selected.json")
-    #print(transform )
-    #root="~/home/l727r/Desktop/Cityscape"
-    ##splits=["train","val","test"]
-    #masks_path = os.path.join(root, "gtFine_trainvaltest", "gtFine", split, "*", "*_gt*_labelIds.png")
-    #for c in classes_19:
-    #    print(c)
-    #for split in splits:
-    #    masks_path = os.path.join(root, "gtFine_trainvaltest", "gtFine", split, "*", "*_gt*_labelIds.png")
-    #    masks = list(sorted(glob.glob(masks_path)))
-    #    print(masks)
-    #    break
 
-    #transforms = A.load("config/transform_auto.json")
-    #print(transforms)
+    ### DEFINE SOME TRANSFORMS ###
     transforms = A.Compose([
         #A.RandomCrop(width=768, height=768),
         A.RandomScale(scale_limit=(-0.5,1),always_apply=True,p=1.0),
@@ -225,53 +198,21 @@ if __name__ == "__main__":
     print(transforms)
     #print(transforms)
     #A.save(transforms,"config/transform_test.yaml",data_format='yaml')
-    #trans={"__version__": "1.1.0", "transform": {"__class_fullname__": "Compose", "p": 1.0, "transforms": [
-    #    {"__class_fullname__": "RandomScale", "always_apply": true, "p": 1.0, "interpolation": 1,
-    #     "scale_limit": [-0.5, 1.0]},
-    #    {"__class_fullname__": "RandomCrop", "always_apply": true, "p": 1.0, "height": 512, "width": 1024},
-    #    {"__class_fullname__": "HorizontalFlip", "always_apply": false, "p": 0.5},
-    #    {"__class_fullname__": "Normalize", "always_apply": true, "p": 1.0, "mean": [0.485, 0.456, 0.406],
-    #     "std": [0.229, 0.224, 0.225], "max_pixel_value": 255.0},
-    #    {"__class_fullname__": "ToTensorV2", "always_apply": true, "p": 1.0, "transpose_mask": false}],
-    #                                       "bbox_params": null, "keypoint_params": null, "additional_targets": {}}}
 
-    #for i in range(0,100):
-    #    print(A.RandomScale(scale_limit=(1,1),always_apply=True).get_params())
+    ### LOAD A DATASET ###
     cityscapesPath = "/home/l727r/Desktop/Datasets/cityscapes"
     Cityscape_train = Cityscapes_dataset(cityscapesPath, "train", transforms=transforms)
-    #for i in range(0,50):
+
+    ### LOAD SOME DATA AND VISUALIE IT ###
     img, mask = Cityscape_train[100]
     print(img.shape)
     print(torch.unique(mask))
-    #print(classes_34[:].color)
+
     color_mapping=[x.color for x in classes_19]
     out = show_data(img=img, mask=mask, alpha=0.7, black=[255], color_mapping=[x.color for x in classes_19],mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     out.show()
     #out.save("out.png")
 
-    #transform = Compose([RandomCrop(769), RandomHorizontalFlip(), ToTensor(),
-    #                     Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-    # transform=Compose([RandomCrop(769),RandomHorizontalFlip(),ToTensor()])
-    #Cityscape_train = Cityscape_dataset(cityscapesPath, "train", transforms=transforms)
-    # print(Cityscape_train[0][1].shape)
-    # print(cityscape_info())
-
-    # for i in range(len(Cityscape_train)):
-    #img, mask = Cityscape_train[100]
-    #print(torch.unique(mask))
-    # print(mask)
-    #    print(torch.unique(mask))
-    # show_cityscape(mask=mask)
-    #out = show_cityscape(img=img, mask=mask,alpha=0.5, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    #out.show()
-    #out_i = show_cityscape(img=img, alpha=0.5, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    #out_m = show_cityscape( mask=mask, alpha=0.5, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    #out_m.show()
-    #out_i.show()
-    #show_cityscape_interactive(img=img, mask=mask, alpha=0.5, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    # out=show_cityscape( img=img).show()
-
-    # out.save("Test.png")
 
 
 

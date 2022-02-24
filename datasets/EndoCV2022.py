@@ -21,21 +21,7 @@ ignore_label=255
 #Data shape [3, 1064, 1440],[3, 1072, 1728],[3, 1024, 1280],[3, 1080, 1920],[3, 720, 1280],[3, 1072, 1704]
 #
 
-PALETTE = [[0, 0, 0], [255,0,0], [0, 255, 0], [0, 0, 255],
-           [4, 200, 3], [120, 120, 80], [140, 140, 140], [204, 5, 255],
-           [230, 230, 230], [4, 250, 7], [224, 5, 255], [235, 255, 7],
-           [150, 5, 61], [120, 120, 70], [8, 255, 51], [255, 6, 82],
-           [143, 255, 140], [204, 255, 4], [255, 51, 7], [204, 70, 3],
-           [0, 102, 200], [61, 230, 250], [255, 6, 51], [11, 102, 255],
-           [255, 7, 71], [255, 9, 224], [9, 7, 230], [220, 220, 220],
-           [255, 9, 92], [112, 9, 255], [8, 255, 214], [7, 255, 224],
-           [255, 184, 6], [10, 255, 71], [255, 41, 10], [7, 255, 255],
-           [224, 255, 8], [102, 8, 255], [255, 61, 6], [255, 194, 7],
-           [255, 122, 8], [0, 255, 20], [255, 8, 41], [255, 5, 153],
-           [6, 51, 255], [235, 12, 255], [160, 150, 20], [0, 163, 255],
-           [140, 140, 140], [250, 10, 15], [20, 255, 0], [31, 255, 0],
-           [255, 31, 0], [255, 224, 0], [153, 255, 0], [0, 0, 255],
-           [255, 71, 0], [0, 235, 255], [0, 173, 255], [31, 0, 255]]
+PALETTE = [[0, 0, 0], [255,0,0]]
 
 class EndoCV2022_dataset(torch.utils.data.Dataset):
     def __init__(self,root,fold,split="train",transforms=None):
@@ -105,118 +91,10 @@ if __name__ == "__main__":
     EndoCV=EndoCV2022_dataset(root=root_path,fold=1,split="val",transforms=transforms)
     print(len(EndoCV))
 
-    #img,mask=\
     img,mask=EndoCV[150]
-    #print(img.shape,mask.shape)
     out = show_data(img,mask,alpha=0.5,color_mapping=[[0,0,0],[255,0,0]], mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     out.show()
-    #shapes=[]
-    #for i in tqdm(range(0,len(EndoCV))):
-    #    img,mask=EndoCV[i]
-    #    if EndoCV.masks[i].split(".")[-1]=="jpg":
-    #        cv2.imshow("window",mask)
-    #        cv2.waitKey(100)
-    #    #if img.shape not in shapes: shapes.append(img.shape)
-    #    #print(img.shape,mask.shape)
-    #print(shapes)
-    #transforms = A.Compose([
-    #    A.RandomCrop(width=768, height=768),
-    #    A.HorizontalFlip(p=0.5),
-    #    A.RandomBrightnessContrast(p=0.2),
-    #    A.ColorJitter(p=0.2),
-    #    A.OneOf([
-    #        A.GaussNoise(p=1),
-    #        A.ISONoise(p=1),
-    #        A.MultiplicativeNoise(p=1)],
-    #        p=0.2),
-    #    A.OneOf([
-    #        A.GaussianBlur(p=1),
-    #        A.MedianBlur(p=1),
-    #        A.MotionBlur(p=1),
-    #        A.GlassBlur(p=1)],
-    #        p=0.2),
-    #    A.Normalize(
-    #        mean=[0.485, 0.456, 0.406],
-    #        std=[0.229, 0.224, 0.225],
-    #    ),
-    #    ToTensorV2()])
-    #A.save(transforms,"config/transform_selected.json")
-    #print(transform )
-    #root="~/home/l727r/Desktop/Cityscape"
-    ##splits=["train","val","test"]
-    #masks_path = os.path.join(root, "gtFine_trainvaltest", "gtFine", split, "*", "*_gt*_labelIds.png")
-    #for c in classes_19:
-    #    print(c)
-    #for split in splits:
-    #    masks_path = os.path.join(root, "gtFine_trainvaltest", "gtFine", split, "*", "*_gt*_labelIds.png")
-    #    masks = list(sorted(glob.glob(masks_path)))
-    #    print(masks)
-    #    break
 
-    #transforms = A.load("config/transform_auto.json")
-    #print(transforms)
-    #transforms = A.Compose([
-    #    #A.RandomCrop(width=768, height=768),
-    #    A.RandomScale(scale_limit=(-0.5,1),always_apply=True,p=1.0),
-    #    A.PadIfNeeded(min_height=768,min_width=768),
-    #    #A.Resize(p=1.0,width=1024, height=512),
-    #    A.RandomCrop(width=768, height=768,always_apply=True,p=1.0),
-    #    #A.ColorJitter(brightness=9,contrast=0,saturation=0,hue=0),
-    #    A.RGBShift(p=1,r_shift_limit=10,g_shift_limit=10,b_shift_limit=10),
-    #    A.HorizontalFlip(p=0.5),
-    #    A.Normalize(
-    #        mean=[0.485, 0.456, 0.406],
-    #        std=[0.229, 0.224, 0.225],always_apply=True
-    #    ),
-    #    ToTensorV2()])
-    #print(transforms)
-    #print(transforms)
-    #A.save(transforms,"config/transform_test.yaml",data_format='yaml')
-    #trans={"__version__": "1.1.0", "transform": {"__class_fullname__": "Compose", "p": 1.0, "transforms": [
-    #    {"__class_fullname__": "RandomScale", "always_apply": true, "p": 1.0, "interpolation": 1,
-    #     "scale_limit": [-0.5, 1.0]},
-    #    {"__class_fullname__": "RandomCrop", "always_apply": true, "p": 1.0, "height": 512, "width": 1024},
-    #    {"__class_fullname__": "HorizontalFlip", "always_apply": false, "p": 0.5},
-    #    {"__class_fullname__": "Normalize", "always_apply": true, "p": 1.0, "mean": [0.485, 0.456, 0.406],
-    #     "std": [0.229, 0.224, 0.225], "max_pixel_value": 255.0},
-    #    {"__class_fullname__": "ToTensorV2", "always_apply": true, "p": 1.0, "transpose_mask": false}],
-    #                                       "bbox_params": null, "keypoint_params": null, "additional_targets": {}}}
-
-    #for i in range(0,100):
-    #    print(A.RandomScale(scale_limit=(1,1),always_apply=True).get_params())
-    #cityscapesPath = "/home/l727r/Desktop/Datasets/cityscapes"
-    #Cityscape_train = Cityscapes_dataset(cityscapesPath, "train", transforms=transforms)
-    #for i in range(0,50):
-    #img, mask = Cityscape_train[100]
-    #print(img.shape)
-    #print(torch.unique(mask))
-    #out = show_cityscape(img=img, mask=mask, alpha=0., mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    #out.show()
-    #out.save("out.png")
-
-    #transform = Compose([RandomCrop(769), RandomHorizontalFlip(), ToTensor(),
-    #                     Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-    # transform=Compose([RandomCrop(769),RandomHorizontalFlip(),ToTensor()])
-    #Cityscape_train = Cityscape_dataset(cityscapesPath, "train", transforms=transforms)
-    # print(Cityscape_train[0][1].shape)
-    # print(cityscape_info())
-
-    # for i in range(len(Cityscape_train)):
-    #img, mask = Cityscape_train[100]
-    #print(torch.unique(mask))
-    # print(mask)
-    #    print(torch.unique(mask))
-    # show_cityscape(mask=mask)
-    #out = show_cityscape(img=img, mask=mask,alpha=0.5, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    #out.show()
-    #out_i = show_cityscape(img=img, alpha=0.5, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    #out_m = show_cityscape( mask=mask, alpha=0.5, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    #out_m.show()
-    #out_i.show()
-    #show_cityscape_interactive(img=img, mask=mask, alpha=0.5, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    # out=show_cityscape( img=img).show()
-
-    # out.save("Test.png")
 
 
 

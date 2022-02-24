@@ -12,6 +12,7 @@ from utils.visualization import show_data
 from utils.utils import get_logger
 log = get_logger(__name__)
 
+### NAME OF ALL CLASSES ###
 CLASSES = ('background', 'aeroplane', 'bag', 'bed', 'bedclothes', 'bench',
            'bicycle', 'bird', 'boat', 'book', 'bottle', 'building', 'bus',
            'cabinet', 'car', 'cat', 'ceiling', 'chair', 'cloth',
@@ -23,6 +24,7 @@ CLASSES = ('background', 'aeroplane', 'bag', 'bed', 'bedclothes', 'bench',
            'track', 'train', 'tree', 'truck', 'tvmonitor', 'wall', 'water',
            'window', 'wood')
 
+### COLORMAPPING FOR EACH CLASS ###
 PALETTE = [[120, 120, 120], [180, 120, 120], [6, 230, 230], [80, 50, 50],
            [4, 200, 3], [120, 120, 80], [140, 140, 140], [204, 5, 255],
            [230, 230, 230], [4, 250, 7], [224, 5, 255], [235, 255, 7],
@@ -67,75 +69,31 @@ class VOC2010_Context_dataset(torch.utils.data.Dataset):
 
 
     def reduce_num_classes(self,mask):
+        ### EXCLUDE BACKGROUND GLASS ###
         mask=mask-1
         mask[mask==-1]=self.ignore_index
         return mask
 
     def __getitem__(self, idx):
+        ### READ IMAGE (OPENCV READ IMAGES IN BGR) AND MASK
         img =cv2.imread(self.imgs[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         mask=cv2.imread(self.masks[idx],-1)
 
+        ### REDUCE THE NUMBER OF CLASSES IS SPECIFIED IN THE CONFIG - YES BY DEFAULT ###
         if self.num_classes==59:
             mask=self.reduce_num_classes(mask)
-        #if self.split=="val":
-        #    mask_o = torch.from_numpy(mask)
-        #transforms2 = A.Compose([
-        #    ToTensorV2()])
 
-        #if self.split in ["val3","test3"]:
-        #    transformed = self.transforms(image=img)
-        #    img = transformed['image']
-        #    mask = torch.from_numpy(mask)  # .unsqueeze(0)
-        #else:
-
+        ### APPLY ALBUMENTATIONS TRANSFORMS ###
         transformed = self.transforms(image=img, mask=mask)
         img = transformed['image']
         mask = transformed['mask']
-        #transformed = transforms2(image=None,mask=mask)
-        #mask = transformed['mask']
-        #if self.split=="val":
-        #    return img, mask.long(),mask_o
-        #    return img, mask.long(), idx
-        #sample={"img":img,"mask":mask.long()}
-        #return sample
 
         return img, mask.long()
 
     def __len__(self):
         return len(self.imgs)
-
-def viz_color_encoding():
-    width = 700
-    height = 60
-
-    def sub_viz(classes):
-        num = len(classes)
-        img = np.zeros((num * height, width, 3), np.uint8)
-
-        for index, c in enumerate(classes):
-            img[index * height:(height + 1) * height, :] = c.color
-            cv2.putText(img, str(index) + ".", (10, (index) * height + int(height * 0.75)), cv2.FONT_HERSHEY_COMPLEX,
-                        1.5,
-                        (255, 255, 255), 2)
-            cv2.putText(img, c.name, (150, (index) * height + int(height * 0.75)), cv2.FONT_HERSHEY_COMPLEX, 1.5,
-                        (255, 255, 255), 2)
-            print(c.name, c.color)
-            # break
-        for index in range(1, num):
-            cv2.line(img, (0, index * height), (width, index * height), (255, 255, 255))
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        return img
-
-    img_full=sub_viz(classes_34)
-    classes_eval = [c for c in classes_34 if c.ignore_in_eval == False]
-    img_eval= sub_viz(classes_eval)
-
-    cv2.imwrite('Cityscape_color_encoding_full.png', img_full)
-    cv2.imwrite('Cityscape_color_encoding.png', img_eval)
-
-
 
 if __name__ == "__main__":
 
@@ -162,9 +120,6 @@ if __name__ == "__main__":
     print(transforms)
     Path = "/home/l727r/Desktop/Datasets/VOC2010_Context"
     VOC2010_train = VOC2010_Context_dataset(Path, "train", transforms=transforms)
-
-
-
 
 
     #for i in range(0,50):

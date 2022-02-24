@@ -1,22 +1,24 @@
 import os
 import glob
-
-
-import torch
+import random
 
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
-import random
-from datasets.Cityscapes import Cityscapes_dataset, classes_19, classes_34
+import torch
 
+from datasets.Cityscapes import Cityscapes_dataset, classes_19, classes_34
 from utils.visualization import show_data
 from utils.utils import get_logger
 log = get_logger(__name__)
 
+
+### DATASET CLASS FOR USING FINE AND COARSE CITYSCAPES DATASET
+### SUBCLASS OF THE CITYSCAPES DATASET AND JUST ADOPT THE INIT
+### coarse_portion: defines the amount of coarse data which should be included, between 0 (none) and 1 (all)
 class Cityscape_fine_coarse_dataset(Cityscapes_dataset):
     def __init__(self,root,split="train",transforms=None,coarse_portion=1.0):
-
+        ### PROVIDING THE POSSIBILITY TO HAVE DATA AND LABELS AT DIFFERENT LOCATIONS ###
         if isinstance(root, str):
             root_imgs=root
             root_labels=root
@@ -24,36 +26,41 @@ class Cityscape_fine_coarse_dataset(Cityscapes_dataset):
             root_imgs = root.IMAGES
             root_labels = root.LABELS
 
-        if split=="test":
-            split="val"
+        ### NO TEST DATASET FOR CITYSCAPES SO RETURN THE VALIDATION SET INSTEAD
+        if split == "test":
+            split = "val"
 
         if split=="train":
+            ### BUILDING THE PATHS FOR FINE AND COARSE IMAGES###
             imgs_path_fine=os.path.join( root_imgs,"leftImg8bit_trainvaltest", "leftImg8bit" , split , "*" , "*_leftImg8bit.png" )
             imgs_path_coarse=os.path.join( root_imgs ,"leftImg8bit_trainextra", "leftImg8bit" , "train_extra" , "*" , "*_leftImg8bit.png" )
 
-            #if num_classes==19:
+            ### BUILDING THE PATHS FOR FINE AND COARSE MASKS###
             masks_path_fine = os.path.join(root_labels, "gtFine_trainvaltest", "gtFine", split, "*", "*_gt*_labelIds_19classes.png")
             masks_path_coarse = os.path.join(root_labels, "gtCoarse", "gtCoarse", "train_extra", "*", "*_gt*_labelIds_19classes.png")
             #elif num_classes==34:
             #    masks_path_fine = os.path.join(root_labels, "gtFine_trainvaltest", "gtFine", split, "*","*_gt*_labelIds.png")
             #    masks_path_coarse = os.path.join(root_labels, "gtCoarse", "gtCoarse", "train_extra", "*","*_gt*_labelIds.png")
 
-
+            ### SAVE ALL PATH IN LISTS ###
             imgs_fine = list(sorted(glob.glob( imgs_path_fine)))
             imgs_coarse = list(sorted(glob.glob( imgs_path_coarse)))
 
+            ### THIS IMAGE IS CORRUPT, SO EXCLUDE IT ###
             troisdorf=root_imgs+"/leftImg8bit_trainextra/leftImg8bit/train_extra/troisdorf/troisdorf_000000_000073_leftImg8bit.png"
             if troisdorf in imgs_coarse:
                 imgs_coarse.remove(troisdorf)
             masks_fine = list(sorted(glob.glob( masks_path_fine)))
             masks_coarse = list(sorted(glob.glob( masks_path_coarse)))
 
+            ### RANDOMLY SELECT coarse_portion OF THE COARSE DATA ###
             coarse_portion=max(coarse_portion,0)
             indices = random.sample(range(len(imgs_coarse)), int(len(imgs_coarse)*coarse_portion))
             indices.sort()
-
             imgs_coarse=[imgs_coarse[index] for index in indices]
             masks_coarse=[masks_coarse[index] for index in indices]
+
+            ### JOIN FILE AND SELECTED COARSE DATA ###
             self.masks=masks_fine+masks_coarse
             self.imgs=imgs_fine+imgs_coarse
 
@@ -64,11 +71,14 @@ class Cityscape_fine_coarse_dataset(Cityscapes_dataset):
 
 
         elif split == "val":
+            ### FOR VALIDATION ONLY THE FINE ANNOTATED DAT IS USED ###
+            ### BUILDING THE PATHS ###
             imgs_path = os.path.join(root_imgs, "leftImg8bit_trainvaltest", "leftImg8bit", split, "*",
                                      "*_leftImg8bit.png")
             masks_path = os.path.join(root_labels, "gtFine_trainvaltest", "gtFine", split, "*",
                                       "*_gt*_labelIds_19classes.png")
 
+            ### SAVE ALL PATH IN LISTS ###
             self.imgs = list(sorted(glob.glob(imgs_path)))
             self.masks = list(sorted(glob.glob(masks_path)))
 

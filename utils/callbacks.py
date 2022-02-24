@@ -4,12 +4,14 @@ import torch
 
 from pytorch_lightning.callbacks import Callback, ModelCheckpoint
 
+### small modification on the ModelCheckpoint -> naming the last epoch
 class customModelCheckpoint(ModelCheckpoint):
     def __init__(self,**kwargs):
         super(customModelCheckpoint,self,).__init__(**kwargs)
         self.CHECKPOINT_NAME_LAST="last_epoch_{epoch}"
 
 
+### Callback for measuring the time during train, validation and testing
 class TimeCallback(Callback):
     def __init__(self):
         self.t_train_start = torch.cuda.Event(enable_timing=True)
@@ -65,7 +67,7 @@ class TimeCallback(Callback):
         self.log("Time/test_time", test_time, logger=True)
 
 
-
+### Prototype, not used ###
 class MS_RestictionCallback(Callback):
     def __init__(self,ms_offset,m_scale_training,epochs):
         if isinstance(ms_offset, int):

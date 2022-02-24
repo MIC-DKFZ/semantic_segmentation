@@ -202,7 +202,7 @@ For more complex files you will end up with lists of dictionaries and dictionari
 
 # Configure the Configuration
 
-In the following, each configuration group is explained in detail.
+In the following, each configuration group and some other features are explained in detail.
 First, the provided functionality is explained and afterwards it is described how this can be customized, for example to add a new model or a new dataset to the framework.
 
 ## Model
@@ -259,7 +259,7 @@ Defining a custom model is done in two steps, first defining your custom pytorch
    For example if you have one output return as follows: ``return {"out": model_prediction}``. If you have multiple output to it analogues:
 ``return {"main": model_prediction, "aux": aux_out}``.
 It should be noted that the **order of the outputs is relevant**. Only the first output is used for updating the metric during validation.
-Further the order of the outputs should match the order of your losses in *lossfunction* and the weights in *lossweights*.(see **Lossfunction** for more details on that)
+Further the order of the outputs should match the order of your losses in *lossfunction* and the weights in *lossweights*.(see [Lossfunction](#loss-function) for more details on that)
    
 2. **Setting up your model config**
    - Create a *custom_model.yaml* file in *config/model/*. For the content of the *.yaml* file adopt the following dummy.
@@ -278,7 +278,7 @@ model:
 ### MODEL IS USED TO STORE INFORMATION WHICH ARE NEEDED FOR YOUR MODEL
 MODEL:
   #REQUIRED MODEL ARGUMENTS
-  NAME: MyModel            #Name of the file in models/, name is needed for logging
+  NAME: MyModel            #Name of the model is needed for logging
   #YOUR ARGUMENTS, FOR EXAMPLE SOMETHINNK LIKE THAT
   PRETRAINED: True         # you could want a parameter to indicate if pretrained weights should be used or not 
   PRETRAINED_WEIGHTS: /pretrained/weights.pth  # give the path to the weights      
@@ -368,7 +368,7 @@ Defining a custom dataset is done in two steps, first defining your custom pytor
    ### _target_: should point to your dataset class
    ### afterwards you can handle your custom input arguments which are used to initialize the dataset
    dataset:
-     _target_: datasets.MyDataset.dataset_class 
+     _target_: datasets.MyDataset.Custom_dataset 
      root: /home/.../Datasets/my_dataset     #the root to the data as an example input
      #root: ${path.my_dataset}               #the root if defined in config/environment/used_env.yaml
      input1: ...                    #All your other input arguments
@@ -537,7 +537,7 @@ python main lr_scheduler=polynomial_epoch
 
 To add a custom lr_scheduler create a *my_scheduler.yaml* file in *config/lr_scheduler/*.
 A dummy and how this can be used it shown below. 
-Besides the arguments which are defined in the config the optimizer will be also initialized with the optimizer following way:
+Besides the arguments which are defined in the config, the lr scheduler will be also initialized with the optimizer, in the following way:
 ``scheduler=hydra.utils.instantiate(self.config.lr_scheduler.scheduler,
                                                                  optimizer=self.optimizer,
                                                                  max_steps=max_steps)``

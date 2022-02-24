@@ -18,7 +18,7 @@ def show_data(img=None, mask=None, color_mapping=None,alpha=.5,black=[], mean=[0
         img_pil = torchvision.transforms.ToPILImage(mode='RGB')(img_tens)
         return img_pil
 
-    def show_mask(mask_tens, mappig,blacking):
+    def show_mask(mask_tens, mappig,black):
         if mask_tens.dim() != 2:    #mask is a prediction --> bring into GT format
             mask_tens = torch.argmax(mask_tens.squeeze(), dim=0).detach().cpu()
         w, h = mask_tens.shape

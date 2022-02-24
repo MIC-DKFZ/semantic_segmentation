@@ -208,12 +208,85 @@ def visualisation(ckpt_dir,hydra_args,init=True):
 
     #trainer.test(model, dataModule)
 
+def endocv2022():
+    import cv2
+    from datasets.EndoCV2022_extra import EndoCV2022_dataset_Test
+    import albumentations as A
+    from albumentations.pytorch import ToTensorV2
+    import torchvision
+    from PIL import Image
+
+    model_ckpt="/home/l727r/Desktop/Target_Folder/EndoCV2022/hrnet_ocr_ms/fold_final_waug__DATASET.FOLD_all__epochs_15__lossfunction_RMI_CE_CE_CE__lr_0.001__metric_Dice_class/2022-02-24_10-40-49/checkpoints/best_epoch_4__imageDice_0.9285.ckpt"
+    hydra.initialize(config_path="config")
+    overrides = ["model=hrnet_ocr_ms","dataset=EndoCV2022","MODEL.PRETRAINED=False","MODEL.MSCALE_INFERENCE=False","MODEL.PRETRAINED_WEIGHTS=''"]
+    cfg = hydra.compose(config_name="baseline", overrides=overrides)
+    model = SegModel.load_from_checkpoint(model_ckpt, config=cfg)
+
+    test_path="/home/l727r/Desktop/endocv2022/TestSet1"
+    preds=glob.glob(os.path.join(test_path,"EndoCV22_round1_test_seq","*.tif"))
+
+    transforms = A.Compose([
+        A.Normalize(
+            mean=[0.485, 0.456, 0.406],
+            std=[0.229, 0.224, 0.225]),
+        ToTensorV2()])
+
+    test_data="/home/l727r/Desktop/endocv2022/TestSet1/testDataRound-I_DONOTDISTRIBUTE/testDataRound-I/testImagesRound-I"
+    outdir = "/home/l727r/Desktop/endocv2022/TestSet1/lars_prediction_testDataRound-I"
+    outdir = "/home/l727r/Desktop/endocv2022/TestSet1/overlay"
+    test_dataset= EndoCV2022_dataset_Test(test_data,transforms)
+    #img=test_dataset[0]
+    #out = show_data(img, alpha=0.5, color_mapping=[[0, 0, 0], [255, 0, 0]], mean=[0.485, 0.456, 0.406],
+    #                std=[0.229, 0.224, 0.225])
+    model.cuda()
+    model.eval()
+    with torch.no_grad():
+        for img,name in test_dataset:
+            pred = model(img.unsqueeze(0).cuda())
+            pred = pred["out"]
+            pred=pred.detach().cpu()
+            #pred=torch.argmax(pred.squeeze(), dim=0).detach().cpu()*255
+            #print(pred.shape,torch.unique(pred))
+            out=show_data(img=img,mask=pred,color_mapping=[[0, 0, 0], [255, 0, 0]], mean=[0.485, 0.456, 0.406],
+                        std=[0.229, 0.224, 0.225])
+            #pred=pred.to(torch.qint8)
+            #pred_np=np.uint8(pred)
+            #print(pred_np.shape, np.unique(pred_np))
+            #img_pil=Image.fromarray(np.uint8(pred))
+
+            #img_pil=torchvision.transforms.ToPILImage(mode="int")(pred)
+            name=name.split("/")[-1].split(".")[0]
+            #naming=os.path.join(outdir,name+".tif")
+            naming=os.path.join(outdir,name+".png")
+            #print(naming)
+            #img_pil.save(naming)
+            out.save(naming)
+            #img_pil.show()
+
+            #break
+
+
+
+
+
+    #with torch.no_grad():
+        #print(img.shape)
+        #print(img.unsqueeze(0).shape)
+        #pred=model(img.unsqueeze(0).cuda())
+        #pred=pred["out"]
+    #out.show()
+    #print(preds)
+    #mask = cv2.imread(preds[0], -1)
+    #print(mask.shape)
+    #print(np.unique(mask))
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--valdir', type=str, default="")
     args, hydra_args = parser.parse_known_args()
 
-    validation(args.valdir,hydra_args)
+    endocv2022()
+    #validation(args.valdir,hydra_args)
     #visualisation(args.valdir,hydra_args)
 

@@ -38,12 +38,14 @@ def num_gpus(avail_GPUS,selected_GPUS):
 
 
 def hasTrueAttr(obj,attr):
+    #checking if the config contains a attribute and if this attribute is true
     if hasattr(obj,attr):
         if obj[attr]:
             return True
     return False
 
 def hasNotEmptyAttr(obj,attr):
+    # checking if the config contains a attribute and if this attribute is not empty
     if hasattr(obj,attr):
         if obj[attr]!=None:
             return True

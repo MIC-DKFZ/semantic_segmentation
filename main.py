@@ -12,24 +12,24 @@ from omegaconf import DictConfig, OmegaConf
 from Segmentation_Model import SegModel
 from validation import validation
 
-
-
 log = get_logger(__name__)
+
 #OmegaConf resolver for preventing problems in the output path
 OmegaConf.register_new_resolver('path_formatter', lambda s: s.replace("[","").replace("]","").replace(",","_").replace("=","_").replace("/",".").replace("+",""))
 @hydra.main(config_path="config", config_name="baseline")
 def training_loop(cfg: DictConfig):
     log.info("Output Directory: %s",os.getcwd())
-    ### SEEDING IF GIVEN BY CONFIG ####
+    ### SEEDING IF GIVEN BY CONFIG ###
     if hasNotEmptyAttr(cfg, "seed"):
         seed_everything(cfg.seed, workers=True)
 
-    ### IMPORTING CALLBACKS USING HYDRA ####
+    ### IMPORTING CALLBACKS USING HYDRA ###
     callbacks = []
     for _, cb_conf in cfg.CALLBACKS.items():
         if cb_conf is not None:
             cb = hydra.utils.instantiate(cb_conf)
             callbacks.append(cb)
+    ### Adding a Checkpoint Callback if checkpointing is enabled ###
     if hasTrueAttr(cfg.pl_trainer,"enable_checkpointing"):
         callbacks.append(hydra.utils.instantiate(cfg.ModelCheckpoint))
 
@@ -49,15 +49,15 @@ def training_loop(cfg: DictConfig):
     ### DEFINING DATASET ####
     dataModule=hydra.utils.instantiate(cfg.datamodule,_recursive_=False)
 
-    ### DEFINING MODEL AND LOAD CHECKPOINT IF WANTED####
+    ### DEFINING MODEL AND LOAD CHECKPOINT IF WANTED ###
+    ### cfg.finetune_from should be the path to a .ckpt file ###
     if hasNotEmptyAttr(cfg,"finetune_from"):
-        # +finetune_from = /home/l727r/Desktop/Target_Folder/Cityscape/hrnet/epochs\=400/2021-12-25_22-04-38_environment\=cluster_epochs\=400/checkpoints/best_epoch\=393_mIoU\=0.8144.ckpt
         log.info("finetune from: %s", cfg.finetune_from)
         model = SegModel.load_from_checkpoint(cfg.finetune_from, config=cfg)
     else:
         model = SegModel(config=cfg)
 
-    ### INITIALIAZING TRAINER ####
+    ### INITIALIAZING TRAINER ###
     trainer_args = getattr(cfg, "pl_trainer") if hasNotEmptyAttr(cfg, "pl_trainer") else {}
     trainer = Trainer(
         callbacks=callbacks,
@@ -68,9 +68,8 @@ def training_loop(cfg: DictConfig):
         **trainer_args
     )
 
-    ### START TRAINING ####
+    ### START TRAINING ###
     trainer.fit(model, dataModule)
-
 
     ### OPTIONAL TESTING, USED WHEN MODEL IS TESTED UNDER DIFFERENT CONDITIONS THAN TRAINING ###
     ### Currently this doesnt work for multi gpu training - some kind of cuda error

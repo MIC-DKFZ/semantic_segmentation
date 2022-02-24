@@ -94,9 +94,67 @@ class EndoCV2022_dataset(torch.utils.data.Dataset):
 
 
 
-if __name__ == "__main__":
+class EndoCV2022_dataset_Test(torch.utils.data.Dataset):
+    def __init__(self,root,transforms=None):
+        #print(len(data))
+        self.imgs = glob.glob(os.path.join(root,"*.jpg"))
 
-    transforms = A.Compose([
+
+        self.transforms = transforms
+        log.info("Dataset: EncoCV2022 Test - %s images",len(self.imgs))
+
+
+    def __getitem__(self, idx):
+
+        img =cv2.imread(self.imgs[idx])
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+        transformed = self.transforms(image=img)
+        img= transformed['image']
+
+        return img,self.imgs[idx]
+
+    def __len__(self):
+        return len(self.imgs)
+
+
+
+if __name__ == "__main__":
+    #print("HI")
+    #root = "/home/l727r/Desktop/endocv2022/official EndoCV2022 dataset"
+    #data_extra = pd.read_csv(os.path.join(root, "external_endocv2.csv"))
+    #print(data_extra)
+    #class_count=np.array([0,0])
+    #non_count=0
+    #for i,data in tqdm(data_extra.iterrows()):
+    #    mask = (cv2.imread(os.path.join(root,data.mask_path)) > 20).astype(np.uint8)[:, :, 0]
+    #    unique,count=np.unique(mask, return_counts=True)
+    #    if len(unique)==1:
+    #        non_count+=1
+    #    for u in unique:
+    #        class_count[u]=count[u]
+    #    #break
+    #print(class_count)
+    #print(non_count)
+    #[99397 11195]
+    from sklearn.utils import class_weight
+    from sklearn import preprocessing
+    zero=np.zeros(99397)#,dtype=int)
+    one=np.ones(11195)#,dtype=int)
+    y=np.concatenate((one,zero))
+    print(len(y))
+    w=class_weight.compute_class_weight(
+        class_weight='balanced',classes= np.unique(y),y= y
+    )
+    print(w)
+    print(preprocessing.scale(w))
+    scaler = preprocessing.StandardScaler()
+    # fit and transform the data
+    scaled_data = scaler.fit_transform([[w[0]],w[1]])
+    print(scaled_data)
+    #[99397 11195]
+        #self.masks.append(os.path.join(root, d.mask_path))
+    '''transforms = A.Compose([
         #A.RandomScale(scale_limit=(-0.5, 0), always_apply=True, p=1.0),
         A.RGBShift( p=1,r_shift_limit= 10,g_shift_limit= 10,b_shift_limit= 10),
         A.PadIfNeeded(min_height=512, min_width=1024),
@@ -118,7 +176,7 @@ if __name__ == "__main__":
     img,mask=EndoCV[3100]
     #print(img.shape,mask.shape)
     out = show_data(img,mask,alpha=0.5,color_mapping=[[0,0,0],[255,0,0]], mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    out.show()
+    out.show()'''
     #shapes=[]
     #for i in tqdm(range(0,len(EndoCV))):
     #    img,mask=EndoCV[i]

@@ -10,9 +10,12 @@ from utils.visualization import show_data
 from utils.utils import get_logger
 log = get_logger(__name__)
 
+
+### DATASET CLASS FOR THE COARSE CITYSCAPES DATASET
+### SUBCLASS OF THE CITYSCAPES DATASET AND JUST ADOPT THE INIT
 class Cityscapes_coarse_dataset(Cityscapes_dataset):
     def __init__(self,root,split="train",transforms=None):
-
+        ### PROVIDING THE POSSIBILITY TO HAVE DATA AND LABELS AT DIFFERENT LOCATIONS ###
         if isinstance(root, str):
             root_imgs=root
             root_labels=root
@@ -20,16 +23,23 @@ class Cityscapes_coarse_dataset(Cityscapes_dataset):
             root_imgs = root.IMAGES
             root_labels = root.LABELS
 
+        ### NO TEST DATASET FOR CITYSCAPES SO RETURN THE VALIDATION SET INSTEAD
+        if split == "test":
+            split = "val"
+
+        ### BUILDING THE PATHS ###
         if split=="train":
             imgs_path=os.path.join( root_imgs ,"leftImg8bit_trainextra", "leftImg8bit" , "train_extra" , "*" , "*_leftImg8bit.png" )
             masks_path = os.path.join(root_labels, "gtCoarse", "gtCoarse", "train_extra", "*","*_gt*_labelIds_19classes.png")
-        elif split=="test" or split=="val":
+        elif split=="val":
             imgs_path = os.path.join(root_imgs, "leftImg8bit_trainvaltest", "leftImg8bit", split, "*", "*_leftImg8bit.png")
             masks_path = os.path.join(root_labels, "gtFine_trainvaltest", "gtFine", split, "*", "*_gt*_labelIds_19classes.png")
 
+        ### SAVE ALL PATH IN LISTS ###
         self.imgs = list(sorted(glob.glob( imgs_path)))
         self.masks = list(sorted(glob.glob( masks_path)))
 
+        ### THIS IMAGE IS CORRUPT, SO EXCLUDE IT ###
         troisdorf = root_imgs + "/leftImg8bit_trainextra/leftImg8bit/train_extra/troisdorf/troisdorf_000000_000073_leftImg8bit.png"
         if troisdorf in self.imgs:
             self.imgs.remove(troisdorf)

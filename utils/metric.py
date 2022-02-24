@@ -1,12 +1,14 @@
 import os
+import numpy as np
 
 import torch
 from torchmetrics import Metric
 import torchmetrics.functional as tmF
-import numpy as np
 from torchmetrics.utilities.data import dim_zero_cat
+
 from utils.utils import hasNotEmptyAttr
 from utils.utils import get_logger
+
 log = get_logger(__name__)
 
 class ConfusionMatrix(Metric):

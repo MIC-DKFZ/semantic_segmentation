@@ -68,7 +68,7 @@ Albumentations provides a lot of augmentations that can be used. Also random ope
   
 ## Setting up the Data
 
-Currently, the following datasets are supported: Cityscapes, Cityscapes_coarse and Pascal Context Dataset(59 and 60 classes).
+Currently, the following datasets are supported: Cityscapes Dataset(fine and coarse) and Pascal Context Dataset(59 and 60 classes).
 Follow the instructions below to set up the respective datasets
 For adding other datasets look at the [customizing part](/config#dataset).
 
@@ -123,7 +123,7 @@ paths:
 <details><summary>Click to expand/collapse</summary>
 <p>
 
-The cityscapes dataset provides 20k additional coarse labeled images
+The cityscapes dataset provides 20k additional coarse labeled images.
 Since  cityscapes_coarse contains no validation data the fine annotated validation set is used for this purpose.
 This is an extension to cityscapes rather than a separate dataset, so [cityscapes](#cityscapes) should be set up first. 
 Afterwards download the cityscapes_coarse dataset from [here](https://www.cityscapes-dataset.com/downloads/). 
@@ -259,8 +259,8 @@ python main.py MODEL.pretrained_on=Mapillary    # Pretrained on Mapillary Datase
 In the same way dataset can be changed by:
 ````shell
 python main.py dataset=Cityscapes               # Cityscapes Dataset with 19 classes using fine annotated data
-python main.py dataset=Cityscapes_coase         # Cityscapes Dataset with 19 classes using coarse annotated data
-python main.py dataset=Cityscapes_fine_coase    # Cityscapes Dataset with 19 classes using fine and coarse annotated data
+python main.py dataset=Cityscapes_coarse        # Cityscapes Dataset with 19 classes using coarse annotated data
+python main.py dataset=Cityscapes_fine_coarse   # Cityscapes Dataset with 19 classes using fine and coarse annotated data
 python main.py dataset=VOC2010_Context          # VOC2010_Context Dataset with 59 classes setting
 python main.py dataset=VOC2010_Context_60       # VOC2010_Context Dataset with 60 classes setting
 ````
@@ -448,13 +448,13 @@ Using MS OCR with two scales gives similar results to the other networks, but ad
 <details><summary>Appendix</summary>
 <p>
 
-| Model                | Experiment | mean mIoU |    mIoU per Runs    |
-|----------------------|:----------:|:---------:|:-------------------:|
-| HRNet                |  Baseline  |   81.13   | 81.02, 81.44, 80.92 |
-| OCR                  |  Baseline  |   81.15   | 81.37, 81.23, 80.86 |
-| OCR + ASPP           |  Baseline  |   81.49   | 81.44, 81.51, 81.53 |
-| MS OCR [0.5, 1.]     |  Baseline  |   81.26   | 80.95, 81.35, 81.49 |
-| MS OCR [0.5, 1., 2.] |  Baseline  |   81.96   | 81.58, 81.99, 82.3  |
+|         Model          | Experiment | mean mIoU |    mIoU per Run     |
+|:----------------------:|:----------:|:---------:|:-------------------:|
+|         HRNet          |  Baseline  |   81.13   | 81.02, **81.44**, 80.92 |
+|          OCR           |  Baseline  |   81.15   | **81.37**, 81.23, 80.86 |
+|       OCR + ASPP       |  Baseline  |   81.49   | 81.44, 81.51, **81.53** |
+|    MS OCR [0.5, 1.]    |  Baseline  |   81.26   | 80.95, 81.35, **81.49** |
+|  MS OCR [0.5, 1., 2.]  |  Baseline  |   81.96   | 81.58, 81.99, **82.3**  |
 
 
 </p>
@@ -488,16 +488,16 @@ Only HRNet is used for this experiments.
 <details><summary>Appendix</summary>
 <p>
 
-| Model  | Experiment  | mean mIoU |    mIoU per Runs    |
-|:------:|:-----------:|:---------:|:-------------------:|
-| HRNet  |     CE      |   80.37   | 80.54, 80.41, 80.17 |
-| HRNet  |     wCE     |   81.13   | 81.02, 81.44, 80.92 |
-| HRNet  |     RMI     |   80.87   | 81.1, 80.43, 81.08  |
-| HRNet  |    wRMI     |   81.63   | 81.89, 81.37, 81.65 |
-| HRNet  |     DC      |     -     |          -          |
-| HRNet  |    DC+CE    |   73.63   | 74.0, 73.46, 73.43  |
-| HRNet  |    TOPK     |   75.86   | 75.44, 75.65, 76.5  |
-| HRNet  |   TOPK+DC   |   80.36   | 80.38, 80.46, 80.23 |
+| Model | Experiment | mean mIoU |      mIoU per Run       |
+|:-----:|:----------:|:---------:|:-----------------------:|
+| HRNet |     CE     |   80.37   | **80.54**, 80.41, 80.17 |
+| HRNet |    wCE     |   81.13   | 81.02, **81.44**, 80.92 |
+| HRNet |    RMI     |   80.87   | **81.1**, 80.43, 81.08  |
+| HRNet |    wRMI    |   81.63   | **81.89**, 81.37, 81.65 |
+| HRNet |     DC     |     -     |            -            |
+| HRNet |   DC+CE    |   73.63   | **74.0**, 73.46, 73.43  |
+| HRNet |    TOPK    |   75.86   | 75.44, 75.65, **76.5**  |
+| HRNet |  TOPK+DC   |   80.36   | 80.38, **80.46**, 80.23 |
 
 
 </p>
@@ -533,7 +533,7 @@ To keep this increase as low as possible, RMI loss is only used during training 
 <details><summary>Appendix</summary>
 <p>
 
-|        Model         | Experiment | mean mIoU |      mIoU per Runs      |
+|        Model         | Experiment | mean mIoU |      mIoU per Run       |
 |:--------------------:|:----------:|:---------:|:-----------------------:|
 |        HRNet         |    wCE     |   81.13   | 81.02, **81.44**, 80.92 |
 |        HRNet         |    wRMI    |   81.64   | **81.89**, 81.37, 81.65 |
@@ -591,28 +591,28 @@ MAPILLARY RESULTS ARE IN PROGRESS, FIGURE WILL BE UPDATED SOON
 <details><summary>Appendix</summary>
 <p>
 
-|        Model         |  Experiment  | mean mIoU |      mIoU per Runs      |
-|:--------------------:|:------------:|:---------:|:-----------------------:|
-|        HRNet         | From Scratch |   77.19   | **76.99**, 77.64, 76.95 |
-|        HRNet         |   ImageNet   |   81.13   | 81.02, **81.44**, 80.92 |
-|        HRNet         | PaddleClass  |   81.63   | **81.74**, 81.69, 81.45 |
-|        HRNet         |  Mapillary   |   82.74   | 82.80, 82.41, **83.02** |
-|        HRNet         | Coarse Data  |   81.91   | **82.03**, 81.79, 81.91 |
-|         OCR          | From Scratch |   78.03   | **78.60**, 77.43, 78.06 |
-|         OCR          |   ImageNet   |   81.15   | **81.37**, 81.23, 80.86 |
-|         OCR          | PaddleClass  |   81.85   | 81.80, 81.85, **81.89** |
-|         OCR          |  Mapillary   |   83.20   | 82.87, **83.37**, 83.36 |
-|         OCR          | Coarse Data  |     x     |                         |
-|   MS OCR [0.5, 1.]   | From Scratch |   78.13   | 77.76, 78.17, **78.46** |
-|   MS OCR [0.5, 1.]   |   ImageNet   |   81.26   | 80.95, 81.35, **81.49** |
-|   MS OCR [0.5, 1.]   | PaddleClass  |   81.94   | **82.18**, 82.09, 81.55 |
-|   MS OCR [0.5, 1.]   |  Mapillary   |   83.44   | 83.52, **83.63**, 83.18 |
-|   MS OCR [0.5, 1.]   | Coarse Data  |   82.15   | 82.08, **82.26**, 82.11 |
-| MS OCR [0.5, 1., 2.] | From Scratch |   79.12   | 78.59, 79.38, **79.39** |
-| MS OCR [0.5, 1., 2.] |   ImageNet   |   81.96   | 81.58, 81.99, **82.30** |
-| MS OCR [0.5, 1., 2.] | PaddleClass  |   82.58   | **82.79**, 82.71, 82.23 |
-| MS OCR [0.5, 1., 2.] |  Mapillary   |   84.06   | **84.31**, 84.15, 83.73 |
-| MS OCR [0.5, 1., 2.] | Coarse Data  |   82.91   | 82.91, **82.95**, 82.86 |
+|        Model         |  Experiment  | mean mIoU |      mIoU per Run       | Scrips                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+|:--------------------:|:------------:|:---------:|:-----------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|        HRNet         | From Scratch |   77.19   | **76.99**, 77.64, 76.95 | ``shell python main.py model=hrnet MODEL.PRETRAINED=False``                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+|        HRNet         |   ImageNet   |   81.13   | 81.02, **81.44**, 80.92 | ``python main.py model=hrnet MODEL.pretrained_on=ImageNet``                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+|        HRNet         | PaddleClass  |   81.63   | **81.74**, 81.69, 81.45 | ``python main.py model=hrnet MODEL.pretrained_on=Paddle``                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+|        HRNet         |  Mapillary   |   82.74   | 82.80, 82.41, **83.02** | ``python main.py model=hrnet MODEL.pretrained_on=Mapillary``                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+|        HRNet         | Coarse Data  |   81.91   | **82.03**, 81.79, 81.91 | ``python main.py model=hrnet`` <br /> ``python main.py model=hrnet epochs=25 lr=0.001 dataset=Cityscapes_coarse +finetune_from=<path.to.ckpt.of.previous.line>`` <br /> ``python main.py model=hrnet epochs=65 lr=0.001 +finetune_from=<path.to.ckpt.of.previous.line>``                                                                                                                                                                                                                                                    |
+|         OCR          | From Scratch |   78.03   | **78.60**, 77.43, 78.06 | ``python main.py model=hrnet_ocr MODEL.PRETRAINED=False``                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+|         OCR          |   ImageNet   |   81.15   | **81.37**, 81.23, 80.86 | ``python main.py model=hrnet_ocr MODEL.pretrained_on=ImageNet``                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+|         OCR          | PaddleClass  |   81.85   | 81.80, 81.85, **81.89** | ``python main.py model=hrnet_ocr MODEL.pretrained_on=Paddle``                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+|         OCR          |  Mapillary   |   83.20   | 82.87, **83.37**, 83.36 | ``python main.py model=hrnet_ocr MODEL.pretrained_on=Mapillary``                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+|         OCR          | Coarse Data  |   82.09   | 82.16, **82.24**, 81.86 | ``python main.py model=hrnet_ocr`` <br /> ``python main.py model=hrnet_ocr epochs=25 lr=0.001 dataset=Cityscapes_coarse +finetune_from=<path.to.ckpt.of.previous.line>`` <br /> ``python main.py model=hrnet_ocr epochs=65 lr=0.001 +finetune_from=<path.to.ckpt.of.previous.line>``                                                                                                                                                                                                                                        |
+|   MS OCR [0.5, 1.]   | From Scratch |   78.13   | 77.76, 78.17, **78.46** | ``python main.py model=hrnet_ocr_ms MODEL.PRETRAINED=False``                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+|   MS OCR [0.5, 1.]   |   ImageNet   |   81.26   | 80.95, 81.35, **81.49** | ``python main.py model=hrnet_ocr_ms MODEL.pretrained_on=ImageNet``                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+|   MS OCR [0.5, 1.]   | PaddleClass  |   81.94   | **82.18**, 82.09, 81.55 | ``python main.py model=hrnet_ocr_ms MODEL.pretrained_on=Paddle``                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+|   MS OCR [0.5, 1.]   |  Mapillary   |   83.44   | 83.52, **83.63**, 83.18 | ``python main.py model=hrnet_ocr_ms MODEL.pretrained_on=Mapillary``                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+|   MS OCR [0.5, 1.]   | Coarse Data  |   82.15   | 82.08, **82.26**, 82.11 | ``python main.py model=hrnet_ocr_ms`` <br /> ``python main.py model=hrnet_ocr_ms  epochs=25 lr=0.001 dataset=Cityscapes_coarse +finetune_from=<path.to.ckpt.of.previous.line>`` <br /> ``python main.py model=hrnet_ocr_ms  epochs=65 lr=0.001 +finetune_from=<path.to.ckpt.of.previous.line>``                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| MS OCR [0.5, 1., 2.] | From Scratch |   79.12   | 78.59, 79.38, **79.39** | ````                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| MS OCR [0.5, 1., 2.] |   ImageNet   |   81.96   | 81.58, 81.99, **82.30** | ````                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| MS OCR [0.5, 1., 2.] | PaddleClass  |   82.58   | **82.79**, 82.71, 82.23 | ````                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| MS OCR [0.5, 1., 2.] |  Mapillary   |   84.06   | **84.31**, 84.15, 83.73 | ````                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| MS OCR [0.5, 1., 2.] | Coarse Data  |   82.91   | 82.91, **82.95**, 82.86 | ````                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 </p>
 </details>

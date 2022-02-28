@@ -30,7 +30,7 @@ A more detailed analysis is given in the [experiments](#experiments) section.
 | Model                | Baseline | RMI loss | Paddle weights | Mapillaty pretrained | using Coarse Data | Coarse Data + RMI |
 |----------------------|:--------:|:--------:|:--------------:|:--------------------:|:-----------------:|:-----------------:|
 | HRNET                | 81.44    |  81.89   |     81.74      |        83.02         |       82.03       |         -         |
-| OCR                  | 81.37    |  82.08   |     81.89      |        83.37         |         X         |         -         |
+| OCR                  | 81.37    |  82.08   |     81.89      |        83.37         |       82.24       |         -         |
 | OCR + ASPP           | 81.53    |  82.20   |       -        |          -           |         -         |         -         |
 | MS OCR [0.5, 1.]     | 81.49    |  82.59   |     82.18      |        83.63         |       82.26       |       83.54       |
 | MS OCR [0.5, 1., 2.] | 82.30    |  82.88   |     82.79      |        84.31         |       82.95       |       83.96       |
@@ -217,46 +217,79 @@ Download the preferred weights (direct download links below) and put them in the
 
 ## Running Code
 
-The following is a **Quickstart** guide on how to run the code.
-A detailed explanation of all configurations and how they can be used can be found in the [*config/* folder](/config#walkthrough-the-config-jungle). 
+The following is a **Quickstart** guide on how to run the code. 
+To adopt the configuration you can edit the */config/baseline.yaml* file directly or use the hydra commandline syntax. 
+As you will see the basic syntax how to run and adopt the code is simple.
+The crucial thing is to know which parameters you can configure and how.
+Therefore, the [*config/* folder](/config) explains in detail how the configuration is composed and which parameters it contains.
+There is also an explanation how to add your own models/datasets etc.
+Some examples on how to execute the code are given below in the [experiment](#experiments) section.
+
+
+### Baseline
 After setting up the data and downloading the pretrained weights, you can directly run the baseline by:
 ````shell
 python main.py
 ````
-This trains HRNet on the Cityscape Dataset with default settings.
-To adopt the configuration you can edit the */config/baseline.yaml* file directly or use the hydra commandline syntax. 
-You can change the model from the commandline by:
+This trains HRNet on the Cityscape Dataset with the following default settings: 
+Stochastic Gradient Descent(SGD) with weight decay of 0.0005 and a momentum of 0.9 as optimizer.
+The initial learning rate is set to 0.01 and a polynomial learning rate scheduler with exponent of 0.9 is used.
+It is trained for 400 epochs and a batch size of 6 per GPU.
+Cross Entropy Loss is used as well as Mixed Precision and Synchronized Batch Normalization (for multiple GPUS)
+
+### Selecting a Model
+
+You can change the model by adopting the corresponding entry in */config/baseline.yaml* or from the commandline by:
 ````shell
-python main.py model=hrnet
-python main.py model=hrnet_ocr
-python main.py model=hrnet_ocr_aspp
-python main.py model=hrnet_ocr_ms         #How to validate with multiple scales is shown below
+python main.py model=hrnet                      # High-Resolution Representations for Semantic Segmentation
+python main.py model=hrnet_ocr                  # Object Contextual Representation
+python main.py model=hrnet_ocr_aspp             # Combination of OCR with an ASPP module
+python main.py model=hrnet_ocr_ms               # Hierarchical Multi-Scale Attention for Semantic Segmentation
 ````
+#### Selecting Pretrained weights
+
+````shell
+python main.py MODEL.PRETRAINED=False           # Trained from scratch without Pretraining
+python main.py MODEL.pretrained_on=ImageNet     # Pretrained on ImageNet
+python main.py MODEL.pretrained_on=Paddle       # Pretrained using PaddleClass weights
+python main.py MODEL.pretrained_on=Mapillary    # Pretrained on Mapillary Dataset
+````
+
+### Selecting a Dataset
 In the same way dataset can be changed by:
 ````shell
-python main.py dataset=Cityscapes               # Using Cityscapes with fine annotated data
-python main.py dataset=Cityscapes_coase         # for using the coarse annotated data
-python main.py dataset=Cityscapes_fine_coase    # for using both, fine and coarse annotated data
-python main.py dataset=VOC2010_Context          # by default VOC2010_Context dataset is used with 59 classes
-python main.py dataset=VOC2010_Context_60       # for using the 60 class setting
+python main.py dataset=Cityscapes               # Cityscapes Dataset with 19 classes using fine annotated data
+python main.py dataset=Cityscapes_coase         # Cityscapes Dataset with 19 classes using coarse annotated data
+python main.py dataset=Cityscapes_fine_coase    # Cityscapes Dataset with 19 classes using fine and coarse annotated data
+python main.py dataset=VOC2010_Context          # VOC2010_Context Dataset with 59 classes setting
+python main.py dataset=VOC2010_Context_60       # VOC2010_Context Dataset with 60 classes setting
 ````
-Also basic hyperparameters needed for training can be set by:
+### Changing Hyperparmeters
+Basic hyperparameters needed for training can be set by as shown below (in the example the basic values are shown):
 ````shell
 python main.py epochs=400 batch_size=6 val_batch_size=6 num_workers=10 lr=0.001 wd=0.0005 momentum=0.9
 ````
-For validation/testing under different conditions (e.g. additional scale for MS OCR, or multiscale testing for VOC2010_Context) run the following command.
-Consider that checkpointing hast to be enabled when training an experiment (``python main.py .... pl_trainer.enable_checkpointing=True`` or set to True in 'baseline.yaml') to validate/test it afterwards
-For MS OCR and VOC2010_Context a predefined validation setting is used, to change these or create a custom on look [here](/config#testing).
-````shell
-python validation.py --valdir=<path.to.the.outputdir.of.training>
-# eg python validation.py --valdir="/../Semantic_Segmentation/logs/VOC2010_Context/hrnet/baseline__/2022-02-15_13-51-42"
-````
-As you can see the basic syntax how to run the code is simple. 
-The crucial thing is to know which parameters you can configure and how.
-Therefore, the [*config/* folder](/config) explains in detail how the configuration is composed and which parameters it contains.
-Some more examples on how to run the code are given below in the [experiment](#experiments) section.
+#### Changing Lossfunction(s)
+For each model output a lossfunction can be set. 
+For a single output the lossfunction can be changed by ``lossfunction=RMI``.
+If the model has multiple outputs pass es list of lossfunctions ``lossfunction=[RMI,CE,CE,CE]``.
+The ``lossweight`` argument can be used analogues to weight the model outputs differently.
+The number of outputs for the provided models: model(num_putputs), hrnet(1), hrnet_ocr(2), hrnet_ocr_aspp(2), hrnet_ocr_ms(4).
 
-The output/logging behaviour of the code will look like this:
+````shell
+python main.py lossfunction=CE                  # default Cross Entropy loss
+python main.py lossfunction=wCE                 # including weights into Cross Entropy
+python main.py lossfunction=RMI                 # using Region Mutual Information(RMI) Loss
+python main.py lossfunction=wRMI                # using weighted RMI Loss
+python main.py lossfunction=[wRMI,wCE]          # can be arbitrarily combined for multiple outputs
+python main.py lossfunction=[CE,CE,CE,CE] lossweight=[1.0,0.4,0.05,0.05]    # default settings
+````
+### Logging
+
+The output/logging behaviour of the code will look like shown below and in the following a few customizations are explained.
+The ``LOGDIR=<some.folder.dir>`` argument defines the logging folder (*"logs/"* by default).
+Checkpointing can be disabled/enabled by ``pl_trainer.enable_checkpointing= <True or False>``.
+For a better overview, experiments can also be named by ``experiment="my_experiment"`` ("baseline" by default).
 
 ````
 LOGDIR                                      # logs/ by default
@@ -272,6 +305,16 @@ LOGDIR                                      # logs/ by default
                   ├── main.log              # logging
                   └── hparams.yaml          # resolved config
 ````
+### Run Validation/Testing
+Some models and datasets need validation/testing under different conditions than during training(e.g. additional scale for MS OCR, or multiscale testing for VOC2010_Context).
+Therefore run the following command.
+Consider that checkpointing hast to be enabled when training an experiment (``python main.py .... pl_trainer.enable_checkpointing=True`` or set to True in 'baseline.yaml') to validate/test afterwards
+For MS OCR and VOC2010_Context a predefined validation setting is used, to change these or create a custom on look [here](/config#testing).
+````shell
+python validation.py --valdir=<path.to.the.outputdir.of.training>
+# eg python validation.py --valdir="/../Semantic_Segmentation/logs/VOC2010_Context/hrnet/baseline__/2022-02-15_13-51-42"
+````
+
 
 # Experiments
 
@@ -623,6 +666,8 @@ python main.py model=hrnet_ocr_ms  epochs=65 lr=0.001 +finetune_from=<path.to.ck
 </p>
 </details>
 
+**some nodes**
+
 Paddle:
 - hrnet: [81.45, 81.69, 81.74]
 - ocr: [81.89, 81.85, 81.80]
@@ -633,6 +678,8 @@ PaddleRMI:
 - ms[0.5,1]: [82.75,82.67,81.95]
 - ms[0.5,1,2]: [83.01,83.07,82.27]
 
+Coarse
+- ocr: [82.16, 82.24, 81.86]
 
 Mapilarry:
 - hrnet: [82.80, 82.41, 83.02]

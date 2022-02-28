@@ -87,13 +87,16 @@ def training_loop(cfg: DictConfig)->int:
     # print(dir)
     # return 0#dir
 
-    #if hasattr(cfg, "TESTING"):
-    #    if hasTrueAttr(cfg.TESTING,"TEST_AFTERWARDS"):
-    #        torch.cuda.empty_cache()
-    #        # Hydra environment has to be cleared since a seperate one is creted during validation
-    #        hydra.core.global_hydra.GlobalHydra.instance().clear()
-    #        #GlobalHydra.instance().clear()
-    #        validation(os.getcwd(),[],False)
+    if hasattr(cfg, "TESTING"):
+        if hasTrueAttr(cfg.TESTING,"TEST_AFTERWARDS") and number_gpus<=1:
+            torch.cuda.empty_cache()
+            # Hydra environment has to be cleared since a seperate one is creted during validation
+            hydra.core.global_hydra.GlobalHydra.instance().clear()
+            validation(os.getcwd(),[],False)
+        elif hasTrueAttr(cfg.TESTING, "TEST_AFTERWARDS") and number_gpus > 1:
+            log.info("TEST_AFTERWARDS doesnt work for multi gpu training - some kind of cuda error caused by lightnings ddp environment")
+            log.info("instead use: python validation.py --valdir=<path.to.checkpoint>")
+
 
 
 if __name__ == "__main__":

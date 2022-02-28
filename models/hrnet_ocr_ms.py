@@ -465,7 +465,6 @@ class MscaleOCR(nn.Module):
                 "pred_10x": pred_10x, }  # [joint_aux,joint_pred]
 
     def forward(self, inputs):
-
         if self.n_scales and not self.training and self.m_scale_inference:
             return self.nscale_forward(inputs, self.n_scales)
         return self.two_scale_forward(inputs)

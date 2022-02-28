@@ -184,11 +184,12 @@ if __name__ == "__main__":
     transforms = A.Compose([
         #A.RandomCrop(width=768, height=768),
         A.RandomScale(scale_limit=(-0.5,1),always_apply=True,p=1.0),
-        A.PadIfNeeded(min_height=768,min_width=768),
+        #A.PadIfNeeded(min_height=768,min_width=768),
         #A.Resize(p=1.0,width=1024, height=512),
-        A.RandomCrop(width=768, height=768,always_apply=True,p=1.0),
+        A.RandomCrop(width=1024, height=512,always_apply=True,p=1.0),
         #A.ColorJitter(brightness=9,contrast=0,saturation=0,hue=0),
         A.RGBShift(p=1,r_shift_limit=10,g_shift_limit=10,b_shift_limit=10),
+        A.GaussianBlur(),
         A.HorizontalFlip(p=0.5),
         A.Normalize(
             mean=[0.485, 0.456, 0.406],
@@ -209,7 +210,7 @@ if __name__ == "__main__":
     print(torch.unique(mask))
 
     color_mapping=[x.color for x in classes_19]
-    out = show_data(img=img, mask=mask, alpha=0.7, black=[255], color_mapping=[x.color for x in classes_19],mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    out = show_data(img=img, mask=mask, alpha=0., black=[255], color_mapping=[x.color for x in classes_19],mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     out.show()
     #out.save("out.png")
 

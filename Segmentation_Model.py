@@ -157,7 +157,7 @@ class SegModel(LightningModule):
             self.log_results(metric_score, metrics_dict)
 
     def test_step(self, batch, batch_idx):
-
+        #log.info("Step")
         x, y_gt = batch
         x_size = x.size(2), x.size(3)
         total_pred = None

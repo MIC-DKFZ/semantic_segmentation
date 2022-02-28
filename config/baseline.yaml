@@ -39,12 +39,12 @@ pl_trainer:                     # parameters for the pytorch lightning trainer
   precision: 16                 # using Mixed Precision
   sync_batchnorm: True          # using synchronized batch normalization for multi gpu training
   benchmark: True               # using benchmark for faster training
-  enable_checkpointing: False   # Enable/Disable Checkpointing
+  #enable_checkpointing: False   # Enable/Disable Checkpointing
 
   # Some usefull pl parameters for debugging
   #limit_train_batches: 0.01
   #limit_val_batches: 0.25
-  #limit_test_batches: 0.1
+  #limit_test_batches: 0.25
   #track_grad_norm: 2
   #reload_dataloaders_every_epoch: true
   #accumulate_grad_batches: 2
@@ -83,7 +83,7 @@ datamodule:
 #DEFINING THE SAVING BEHAVIOR, ONLY USED WHEN CHECKPOINTING IS ENABLED
 ModelCheckpoint:
   _target_: utils.callbacks.customModelCheckpoint   #cusotom checkpointing
-  monitor: "metric/${METRIC.NAME}"   # name of the metric during logging
+  monitor: "metric/${METRIC.NAME}"        # name of the metric during logging
   mode: "max"                             # min or max: should be metric me maximised or minimized
   filename: 'best_epoch_{epoch}__${METRIC.NAME}_{metric/${METRIC.NAME}:.4f}'
   auto_insert_metric_name: False          # needs to be false for better naming of checkpoint

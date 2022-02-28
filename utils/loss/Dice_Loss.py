@@ -1,7 +1,7 @@
 '''
 ------------------------------------------------------------------------------
 Code slightly adapted and mainly from:
-https://github.com/MIC-DKFZ/nnUNet/tree/master/nnunet/training/loss_functions
+https://github.com/BloodAxe/pytorch-toolbelt/blob/ae796bb09cce0698258875ed56d82cde131431e4/pytorch_toolbelt/losses/functional.py#L181def
 ------------------------------------------------------------------------------
 '''
 
@@ -13,7 +13,6 @@ import torch
 
 
 def soft_dice_score(output, target, smooth = 0.0, eps = 1e-7, dims=None):
-    # https://github.com/BloodAxe/pytorch-toolbelt/blob/ae796bb09cce0698258875ed56d82cde131431e4/pytorch_toolbelt/losses/functional.py#L181def
     """
     :param output:
     :param target:

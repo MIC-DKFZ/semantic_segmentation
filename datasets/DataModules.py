@@ -28,18 +28,17 @@ class BaseDataModule(LightningDataModule):
 
     def setup(self, stage= None):
 
-        ### GET THE AUGMENTATIONS FOR TRAIN,VALIDATION AND TEST SET ###
-        transforms_train = self.get_augmentations_from_config(self.augmentations.TRAIN)[0]
-        transforms_val = self.get_augmentations_from_config(self.augmentations.VALIDATION)[0]
-        transforms_test = self.get_augmentations_from_config(self.augmentations.TEST)[0]
-
-        ### DEFINE THE DATASETS WHICH ARE DEFINED IN THE CONFIG ###
+        ### GET THE AUGMENTATIONS FOR TRAIN,VALIDATION AND TEST SET  ###
+        ### DEFINE THE DATASETS WHICH ARE DEFINED IN THE CONFIG      ###
         ### ADDITIONAL ARGUMENTS ARE THE SPLIT AND THE AUGMENTATIONS ###
         if stage in (None, "fit"):
+            transforms_train = self.get_augmentations_from_config(self.augmentations.TRAIN)[0]
             self.DS_train = hydra.utils.instantiate(self.dataset, split="train", transforms=transforms_train)
         if stage in (None,"fit","validate"):
+            transforms_val = self.get_augmentations_from_config(self.augmentations.VALIDATION)[0]
             self.DS_val = hydra.utils.instantiate(self.dataset, split="val", transforms=transforms_val)
         if stage in (None, "test"):
+            transforms_test = self.get_augmentations_from_config(self.augmentations.TEST)[0]
             self.DS_test = hydra.utils.instantiate(self.dataset, split="test", transforms=transforms_test)
 
     def max_steps(self):

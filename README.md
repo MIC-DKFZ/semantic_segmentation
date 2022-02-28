@@ -1,7 +1,3 @@
-Todo:
-- validation: catch invalid/old arguments
-- metric doc
-
 <div align="center">
 
 # Semantic Segmentation Framework using Pytorch Lightning
@@ -31,24 +27,13 @@ Overview about the results on the **Cityscapes val** set.
 The best result from three runs (mean intersection over union, mIoU) is reported.
 A more detailed analysis is given in the [experiments](#experiments) section.
 
-| Model              | Baseline | RMI loss | Paddle weights | Mapillaty pretrained | Mapillary pretrained + RMI | Coarse Data | Coarse Data + RMI |
-| -------------------|:--------:|:--------:|:--------------:|:--------------------:|:--------------------------:|:-----------:|:-----------------:|
-|HRNET               | 81.44    |  81.89   |     81.74      |        83.02         |             ?              |    82.03    |         ?         |
-|OCR                 | 81.37    |  82.08   |     81.89      |        83.37         |             -              |      -      |         -         |
-|OCR + ASPP          | 81.53    |  82.20   |       -        |          -           |             -              |      -      |         -         |
-|MS OCR [0.5, 1.]    | 81.49    |  82.59   |     82.18      |        83.63         |           84.45            |    82.26    |       83.54       |
-|MS OCR [0.5, 1., 2.]| 82.30    |  82.88   |     82.79      |        84.31         |           84.92            |    82.95    |       83.96       |
-
-Paddle:
-hrnet: [81.45, 81.69, 81.74]
-ocr: [81.89, 81.85, 81.80]
-ms [0.5,1]: [82.18,82.09,81.55]
-ms[0.5,1,2]: [82.79, 82.71, 82.23]
-Mapilarry:
-hrnet: [82.80, 82.41, 83.02]
-ocr: [82.87, 83.37, 83.36]
-ms [0.5,1]: [83.52, 83.63, 83.18]
-ms[0.5,1,2]: [84.31, 84.15, 83.73]
+| Model                | Baseline | RMI loss | Paddle weights | Mapillaty pretrained | using Coarse Data | Coarse Data + RMI |
+|----------------------|:--------:|:--------:|:--------------:|:--------------------:|:-----------------:|:-----------------:|
+| HRNET                | 81.44    |  81.89   |     81.74      |        83.02         |       82.03       |         -         |
+| OCR                  | 81.37    |  82.08   |     81.89      |        83.37         |         X         |         -         |
+| OCR + ASPP           | 81.53    |  82.20   |       -        |          -           |         -         |         -         |
+| MS OCR [0.5, 1.]     | 81.49    |  82.59   |     82.18      |        83.63         |       82.26       |       83.54       |
+| MS OCR [0.5, 1., 2.] | 82.30    |  82.88   |     82.79      |        84.31         |       82.95       |       83.96       |
 
 
 ### References
@@ -58,7 +43,7 @@ This repository adopts code from the following sources:
 - **OCR + ASPP** (Combines OCR with an ASPP module, [source code](https://github.com/NVIDIA/semantic-segmentation/tree/main/network))
 - **MS OCR** (Hierarchical Multi-Scale Attention for Semantic Segmentation, [paper](https://arxiv.org/pdf/2005.10821.pdf), [source code](https://github.com/NVIDIA/semantic-segmentation/tree/main/network))
 - **RMI** (Region Mutual Information Loss for Semantic Segmentation, [paper](https://arxiv.org/pdf/1910.12037.pdf), [source code](https://github.com/ZJULearning/RMI))
-- **DC** (Dice Loss), **DC+CE** (combination from Dice and Cross Entropy Loss), **TOPK**, **TOPK+DC** are all from nnUNet ([paper](https://www.nature.com/articles/s41592-020-01008-z), [source code](https://github.com/MIC-DKFZ/nnUNet))
+- **DC+CE** (combination from Dice and Cross Entropy Loss), **TOPK**, **TOPK+DC** are all from nnUNet ([paper](https://www.nature.com/articles/s41592-020-01008-z), [source code](https://github.com/MIC-DKFZ/nnUNet))
 # How To Run
 
 ## Requirements
@@ -417,6 +402,21 @@ Using MS OCR with two scales gives similar results to the other networks, but ad
 
 ![Models_Basic](imgs/Models_Basic.png)
 
+<details><summary>Appendix</summary>
+<p>
+
+| Model                | Experiment | mean mIoU |    mIoU per Runs    |
+|----------------------|:----------:|:---------:|:-------------------:|
+| HRNet                |  Baseline  |   81.13   | 81.02, 81.44, 80.92 |
+| OCR                  |  Baseline  |   81.15   | 81.37, 81.23, 80.86 |
+| OCR + ASPP           |  Baseline  |   81.49   | 81.44, 81.51, 81.53 |
+| MS OCR [0.5, 1.]     |  Baseline  |   81.26   | 80.95, 81.35, 81.49 |
+| MS OCR [0.5, 1., 2.] |  Baseline  |   81.96   | 81.58, 81.99, 82.3  |
+
+
+</p>
+</details>
+
 <details><summary>Scrips</summary>
 <p>
 
@@ -442,7 +442,23 @@ Only HRNet is used for this experiments.
 
 ![Lossfunctions](imgs/Lossfunctions.png)
 
+<details><summary>Appendix</summary>
+<p>
 
+| Model  | Experiment  | mean mIoU |    mIoU per Runs    |
+|:------:|:-----------:|:---------:|:-------------------:|
+| HRNet  |     CE      |   80.37   | 80.54, 80.41, 80.17 |
+| HRNet  |     wCE     |   81.13   | 81.02, 81.44, 80.92 |
+| HRNet  |     RMI     |   80.87   | 81.1, 80.43, 81.08  |
+| HRNet  |    wRMI     |   81.63   | 81.89, 81.37, 81.65 |
+| HRNet  |     DC      |     -     |          -          |
+| HRNet  |    DC+CE    |   73.63   | 74.0, 73.46, 73.43  |
+| HRNet  |    TOPK     |   75.86   | 75.44, 75.65, 76.5  |
+| HRNet  |   TOPK+DC   |   80.36   | 80.38, 80.46, 80.23 |
+
+
+</p>
+</details>
 
 <details><summary>Scrips</summary>
 <p>
@@ -470,6 +486,25 @@ However, it also leads to an increased runtime.
 To keep this increase as low as possible, RMI loss is only used during training and CE loss is still used during validation (validation loss).
 
 ![RMI_Loss](imgs/RMI_Loss.png)
+
+<details><summary>Appendix</summary>
+<p>
+
+|        Model         | Experiment | mean mIoU |      mIoU per Runs      |
+|:--------------------:|:----------:|:---------:|:-----------------------:|
+|        HRNet         |    wCE     |   81.13   | 81.02, **81.44**, 80.92 |
+|        HRNet         |    wRMI    |   81.64   | **81.89**, 81.37, 81.65 |
+|         OCR          |    wCE     |   81.15   | **81.37**, 81.23, 80.86 |
+|         OCR          |    wRMI    |   81.88   | 81.84, **82.08**, 81.73 |
+|      OCR + ASPP      |    wCE     |   81.49   | 81.44, 81.51, **81.53** |
+|      OCR + ASPP      |    wRMI    |   81.89   | 81.59, **82.20**, 81.88 |
+|   MS OCR [0.5, 1.]   |    wCE     |   81.26   | 80.95, **81.35**, 81.49 |
+|   MS OCR [0.5, 1.]   |    wRMI    |   82.35   | 82.19, 82.28, **82.59** |
+| MS OCR [0.5, 1., 2.] |    wCE     |   81.96   | 81.58, 81.99, **82.30** |
+| MS OCR [0.5, 1., 2.] |    wRMI    |   82.70   | 82.57, **82.88**, 82.64 |
+
+</p>
+</details>
 
 <details><summary>Scrips</summary>
 <p>
@@ -510,6 +545,36 @@ In the end, the best results were achieved in this way and with MS OCR.
 
 MAPILLARY RESULTS ARE IN PROGRESS, FIGURE WILL BE UPDATED SOON
 
+<details><summary>Appendix</summary>
+<p>
+
+|        Model         |  Experiment  | mean mIoU |      mIoU per Runs      |
+|:--------------------:|:------------:|:---------:|:-----------------------:|
+|        HRNet         | From Scratch |   77.19   | **76.99**, 77.64, 76.95 |
+|        HRNet         |   ImageNet   |   81.13   | 81.02, **81.44**, 80.92 |
+|        HRNet         | PaddleClass  |   81.63   | **81.74**, 81.69, 81.45 |
+|        HRNet         |  Mapillary   |   82.74   | 82.80, 82.41, **83.02** |
+|        HRNet         | Coarse Data  |   81.91   | **82.03**, 81.79, 81.91 |
+|         OCR          | From Scratch |   78.03   | **78.60**, 77.43, 78.06 |
+|         OCR          |   ImageNet   |   81.15   | **81.37**, 81.23, 80.86 |
+|         OCR          | PaddleClass  |   81.85   | 81.80, 81.85, **81.89** |
+|         OCR          |  Mapillary   |   83.20   | 82.87, **83.37**, 83.36 |
+|         OCR          | Coarse Data  |     x     |                         |
+|   MS OCR [0.5, 1.]   | From Scratch |   78.13   | 77.76, 78.17, **78.46** |
+|   MS OCR [0.5, 1.]   |   ImageNet   |   81.26   | 80.95, 81.35, **81.49** |
+|   MS OCR [0.5, 1.]   | PaddleClass  |   81.94   | **82.18**, 82.09, 81.55 |
+|   MS OCR [0.5, 1.]   |  Mapillary   |   83.44   | 83.52, **83.63**, 83.18 |
+|   MS OCR [0.5, 1.]   | Coarse Data  |   82.15   | 82.08, **82.26**, 82.11 |
+| MS OCR [0.5, 1., 2.] | From Scratch |   79.12   | 78.59, 79.38, **79.39** |
+| MS OCR [0.5, 1., 2.] |   ImageNet   |   81.96   | 81.58, 81.99, **82.30** |
+| MS OCR [0.5, 1., 2.] | PaddleClass  |   82.58   | **82.79**, 82.71, 82.23 |
+| MS OCR [0.5, 1., 2.] |  Mapillary   |   84.06   | **84.31**, 84.15, 83.73 |
+| MS OCR [0.5, 1., 2.] | Coarse Data  |   82.91   | 82.91, **82.95**, 82.86 |
+
+</p>
+</details>
+
+
 <details><summary>Scrips</summary>
 <p>
 
@@ -520,13 +585,24 @@ python main.py model=hrnet_ocr MODEL.PRETRAINED=False
 python main.py model=hrnet_ocr_aspp MODEL.PRETRAINED=False
 python main.py model=hrnet_ocr_ms MODEL.PRETRAINED=False
 ````
-Training Models with pretrained weights on ImageNet
+Training Models with different pretrained weights
 ````shell
-#Running Different Models
-python main.py model=hrnet
-python main.py model=hrnet_ocr
-python main.py model=hrnet_ocr_aspp
-python main.py model=hrnet_ocr_ms MODEL.MSCALE_TRAINING=False
+#Pretrained on ImageNet
+python main.py model=hrnet MODEL.pretrained_on=ImageNet
+python main.py model=hrnet_ocr MODEL.pretrained_on=ImageNet
+python main.py model=hrnet_ocr_aspp MODEL.pretrained_on=ImageNet
+python main.py model=hrnet_ocr_ms MODEL.pretrained_on=ImageNet
+#Pretrained with PaddleClass
+python main.py model=hrnet MODEL.pretrained_on=Paddle
+python main.py model=hrnet_ocr MODEL.pretrained_on=Paddle
+python main.py model=hrnet_ocr_aspp MODEL.pretrained_on=Paddle
+python main.py model=hrnet_ocr_ms MODEL.pretrained_on=Paddle
+#Pretrained on Mapillary
+python main.py model=hrnet MODEL.pretrained_on=Mapillary
+python main.py model=hrnet_ocr MODEL.pretrained_on=Mapillary
+python main.py model=hrnet_ocr_aspp MODEL.pretrained_on=Mapillary
+python main.py model=hrnet_ocr_ms MODEL.pretrained_on=Mapillary
+
 ````
 Training Models with coarse data
 ````shell
@@ -534,6 +610,10 @@ Training Models with coarse data
 python main.py model=hrnet
 python main.py model=hrnet epochs=25 lr=0.001 dataset=Cityscapes_coarse +finetune_from=<path.to.ckpt.of.previous.line>
 python main.py model=hrnet epochs=65 lr=0.001 +finetune_from=<path.to.ckpt.of.previous.line>
+#HRNET OCR
+python main.py model=hrnet_ocr
+python main.py model=hrnet_ocr epochs=25 lr=0.001 dataset=Cityscapes_coarse +finetune_from=<path.to.ckpt.of.previous.line>
+python main.py model=hrnet_ocr epochs=65 lr=0.001 +finetune_from=<path.to.ckpt.of.previous.line>
 #MS OCR
 python main.py model=hrnet_ocr_ms 
 python main.py model=hrnet_ocr_ms  epochs=25 lr=0.001 dataset=Cityscapes_coarse +finetune_from=<path.to.ckpt.of.previous.line>
@@ -543,6 +623,26 @@ python main.py model=hrnet_ocr_ms  epochs=65 lr=0.001 +finetune_from=<path.to.ck
 </p>
 </details>
 
+Paddle:
+- hrnet: [81.45, 81.69, 81.74]
+- ocr: [81.89, 81.85, 81.80]
+- ms [0.5,1]: [82.18,82.09,81.55]
+- ms[0.5,1,2]: [82.79, 82.71, 82.23]
+
+PaddleRMI:
+- ms[0.5,1]: [82.75,82.67,81.95]
+- ms[0.5,1,2]: [83.01,83.07,82.27]
+
+
+Mapilarry:
+- hrnet: [82.80, 82.41, 83.02]
+- ocr: [82.87, 83.37, 83.36]
+- ms [0.5,1]: [83.52, 83.63, 83.18]
+- ms[0.5,1,2]: [84.31, 84.15, 83.73]
+
+MapilarryRMI:
+- ms[0.5,1]: [84.55, 83.61, 83.77]
+- ms[0.5,1,2]: [84.92, 84.04, 84.23]
 
 ## PASCAL VOC2010 Context
 

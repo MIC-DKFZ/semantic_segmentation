@@ -42,27 +42,25 @@ def get_test_config(cfg):
     return cfg
 
 def validation(ckpt_dir,hydra_args,init=True):
+    hydra.initialize(config_path="config")
 
-    if init:
-        hydra.initialize(config_path="config")
+    os.chdir(ckpt_dir)
 
-        os.chdir(ckpt_dir)
+    ###  load parameters from the checkpoint directory which are overritten ###
+    overrides = OmegaConf.load(os.path.join("hydra","overrides.yaml"))
+    train_overrides=["MODEL.PRETRAINED=False"]#,"pl_trainer.gpus=-1"]
 
-        ###  load parameters from the checkpoint directory which are overritten ###
-        overrides = OmegaConf.load(os.path.join("hydra","overrides.yaml"))
-        train_overrides=["MODEL.PRETRAINED=False"]#,"pl_trainer.gpus=-1"]
+    ### load local config and first override by the the parameters frm the checkpoint dir
+    ### afterward override the parameters from the commandline ###
+    cfg = hydra.compose(config_name="baseline", overrides=overrides+hydra_args+train_overrides)
 
-        ### load local config and first override by the the parameters frm the checkpoint dir
-        ### afterward override the parameters from the commandline ###
-        cfg = hydra.compose(config_name="baseline", overrides=overrides+hydra_args+train_overrides)
-
-        ### change some testing specific parameters ###
+    ### change some testing specific parameters ###
     cfg=get_test_config(cfg)
     #print(cfg)
     ### load checkpoint and load model ###
     ckpt_file = glob.glob(os.path.join("checkpoints", "best_*"))[0]
     log.info("Checkpoint Directory: %s",ckpt_file)
-    model = SegModel.load_from_checkpoint(ckpt_file, config=cfg)
+    model = SegModel.load_from_checkpoint(ckpt_file, strict=False,config=cfg)
 
     dataModule = hydra.utils.instantiate(cfg.datamodule, _recursive_=False)
 
@@ -286,7 +284,7 @@ if __name__ == "__main__":
     parser.add_argument('--valdir', type=str, default="")
     args, hydra_args = parser.parse_known_args()
 
-    endocv2022()
-    #validation(args.valdir,hydra_args)
+    #endocv2022()
+    validation(args.valdir,hydra_args)
     #visualisation(args.valdir,hydra_args)
 

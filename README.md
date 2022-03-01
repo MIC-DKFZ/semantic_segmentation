@@ -341,11 +341,9 @@ That's why MS OCR [0.5, 1.] is used for training and only for inference MS OCR [
 The runtime measurements are done using a single GPU (NVIDIA GeForce RTX 3090). 
 To fit on a single GPU, the batch_size is reduced compared to the baseline.
 
-![](imgs/Time_Complexity.png?raw=true "Time")
+![Time Complexity](imgs/Time_Complexity.png?raw=true "Time Complexity")
 
-<div align="center">
-  <img src="imgs/Time_Complexity.png" width=80% height=80%>
-</div>
+
 
 ### Defining the Baseline
 
@@ -585,6 +583,7 @@ Three different strategies how to integrate the additional data are tested.
 The bes result are from Strategy 2 when the model is first trained on fine data, afterwards the model is finetuned (with reduced lr) with only the coarse data and finally the model is finetuned again (with reduced lr) on the fine data.
 
 ![Data](imgs/Data.png)
+![Data](imgs/Data2.png)
 
 
 <details><summary>Appendix</summary>

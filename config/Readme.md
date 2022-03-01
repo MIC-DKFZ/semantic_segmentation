@@ -237,17 +237,15 @@ python main.py MODEL.PRETRAINED=False MODEL.INIT_WEIGHTS=True
 There is also the possibility to select between different **pretrained weights**.
 ImageNet, PaddleClass and Mapillary pretrained weights are provided.
 Consider that *MODEL.PRETRAINED* need to be True.
-By default, PaddleClass weights are used and they can be changed by:
+By default, ImageNet weights are used and they can be changed by:
 ````shell 
 python main.py MODEL.pretrained_on=ImageNet
 python main.py MODEL.pretrained_on=Paddle
 python main.py MODEL.pretrained_on=Mapillary
 ````
 
-
 </p>
  </details>
-
 
 <details><summary>Customize</summary>
 <p>
@@ -335,7 +333,7 @@ Defining a custom dataset is done in two steps, first defining your custom pytor
         if split=="train":
              self.imgs = ...
              self.masks = ...
-        if split=="val":
+        if split=="val" or split=="test":       #if you have dont have a test set use the validation set
              self.imgs = ...
              self.masks = ...
         
@@ -381,7 +379,7 @@ Defining a custom dataset is done in two steps, first defining your custom pytor
      IGNORE_INDEX:    #Needed for the loss function, if no ignore indes set to 255 or another number which do no occur in your dataset 
      ## OPTIONAL, BUT NEEDED IF WEIGHTED LOSSFUNCTIONS ARE USED
      CLASS_WEIGHTS: [ 0.9, 1.1, ...]                #should be standardized for using wRMI (mean=1)
-     ##OPTIONAL, ONLY NEEDED FOR NICER LOGGING
+     ##OPTIONAL, CAN BE USED FOR NICER FOR LOGGING 
      CLASS_LABELS:
         - class1
         - class2 ...
@@ -708,8 +706,16 @@ TRAIN:
 <details><summary>Configure</summary>
 <p>
 
-Currently Intersection over Union (IoU) is the only supported metric. 
-This metric updates a confusion matrix and outputs a mean IoU (mIoU) at the end of each epoch, as well as a dict with the IoU of each class.
+Currently mean Intersection over Union (mean_IoU) is the default metric. 
+This metric updates a confusion matrix and outputs a mean IoU (mIoU) at the end of each epoch.
+If you additionally want to log the results for each class you can use mean_IoU_Class.
+A binary Dice score is also provided.
+
+````shell
+python main.py metric=mean_IoU                  # mean intersection over union
+python main.py metric=mean_IoU_Class            # mean intersection over union with logging IoU of each class
+python main.py metric=binary_Dice               # binary Dice score
+````
 
 </p>
  </details>
@@ -822,6 +828,7 @@ python main.py environment=custom_env
 <p>
 
 **Currently out ot use since problems occur together with multi gpu training**
+**Instead use Separate Testing**
 
 If your model has different behaviour during inference or testing than during training you may directly want to evaluate your model with this changed behaviour.
 For example if you want multiscale testing or want to add a scale to MS OCR.
@@ -844,7 +851,7 @@ Change the config there to meet your desires.
 </p>
  </details>
 
-<details><summary>Seperate Testing</summary>
+<details><summary>Separate Testing</summary>
 <p>
 
 If you have trained a model and want to test it with other settings or other data you can use the validation.py file.

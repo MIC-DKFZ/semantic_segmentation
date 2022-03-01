@@ -71,7 +71,7 @@ def validation(ckpt_dir,hydra_args,init=True):
             callbacks.append(cb)
 
     tb_logger = pl_loggers.TensorBoardLogger(save_dir=".", name="", version="",
-                                             sub_dir="validation")  # ,default_hp_metric=False)
+                                             sub_dir="validation")#,default_hp_metric=False)
 
     trainer_args = getattr(cfg, "pl_trainer") if hasNotEmptyAttr(cfg, "pl_trainer") else {}
     trainer = Trainer(

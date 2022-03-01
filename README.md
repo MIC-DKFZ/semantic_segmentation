@@ -31,8 +31,8 @@ A more detailed analysis is given in the [experiments](#experiments) section.
 | HRNET                | 81.44    |  81.89   |     81.74      |        83.02         |       82.03       |         -         |
 | OCR                  | 81.37    |  82.08   |     81.89      |        83.37         |       82.24       |         -         |
 | OCR + ASPP           | 81.53    |  82.20   |       -        |          -           |         -         |         -         |
-| MS OCR [0.5, 1.]     | 81.49    |  82.59   |     82.18      |        83.63         |       82.26       |       X       |
-| MS OCR [0.5, 1., 2.] | 82.30    |  82.88   |     82.79      |        84.31         |       82.95       |       X       |
+| MS OCR [0.5, 1.]     | 81.49    |  82.59   |     82.18      |        83.63         |       82.26       |       84.80       |
+| MS OCR [0.5, 1., 2.] | 82.30    |  82.88   |     82.79      |        84.31         |       82.95       |       85.31       |
 
 
 ### References
@@ -209,7 +209,7 @@ For MS OCR pretrained weights on Mapillary are available [here](https://github.c
 These Mapillary weights can be also be used for the other models.
 Download the preferred weights (direct download links below) and put them in the *pretrained/* folder.
 - ImageNet weights: [download](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk)
-- PaddleClass weights: [download](https://github.com/HRNet/HRNet-Image-Classification/releases/download/PretrainedWeights/HRNet_W18_C_ssld_pretrained.pth)
+- PaddleClas weights: [download](https://github.com/HRNet/HRNet-Image-Classification/releases/download/PretrainedWeights/HRNet_W18_C_ssld_pretrained.pth)
 - Mapillary weights: [download](https://drive.google.com/file/d/1Whz--rurtBoIsfF-t3YB9NEt3GT6hBQI/view?usp=sharing)
 
 ## Running Code
@@ -249,7 +249,7 @@ python main.py model=hrnet_ocr_ms               # Hierarchical Multi-Scale Atten
 ````shell
 python main.py MODEL.PRETRAINED=False           # Trained from scratch without Pretraining
 python main.py MODEL.pretrained_on=ImageNet     # Pretrained on ImageNet
-python main.py MODEL.pretrained_on=Paddle       # Pretrained using PaddleClass weights
+python main.py MODEL.pretrained_on=Paddle       # Pretrained using PaddleClas weights
 python main.py MODEL.pretrained_on=Mapillary    # Pretrained on Mapillary Dataset
 ````
 
@@ -478,7 +478,7 @@ python main.py model=hrnet_ocr_ms
 
 ### Different Loss Funcitons 
 
-Looking at the different loss functions, it can be seen that the best results can be achieved with Cross-Entropy (CE) and Region Mutual Information (RMI).
+Looking at the different loss functions, it can be seen that the best results can be achieved with Cross-Entropy (CE) and Region Mutual Information (RMI) Loss.
 Dice Loss based functions are way behind. 
 With changes to the lr and number of epochs, these can be tuned somewhat, but are still significantly worse.
 What is also seen is that the use of weights (wCE and wRMI) to compensate for class imbalances in Cityscapes significantly improve the results.
@@ -575,17 +575,15 @@ python main.py model=hrnet_ocr_ms lossfunction=[wRMI,wCE,wCE,wCE]
 
 Since the previous experiments focused on model and training parameters, a closer look at the used data is given here.
 For the baseline so far ImageNet pretrained weights are used.
-Comparison of the results with models without additional data (trained from scratch) shows that the use of pre-trained weights has a large impact in these experiments.
-The use of PaddlClas weights can further enhance results, and the best results can be achieved by pretraining on Mapillary.
+Comparison of the results with models without additional data (trained from scratch) shows that the use of pretrained weights has a large impact in these experiments.
+The use of PaddleClas weights can further enhance results, and the best results can be achieved by pretraining on Mapillary.
 The reason for this is the similarity of Mapillary to Cityscapes (both urban setting).
-Besides this, the use of the coarsen cityscapes data can also improve the results.
+Besides this, the use of the coarse cityscapes data can also improve the results.
 Three different strategies how to integrate the additional data are tested.
 The bes result are from Strategy 2 when the model is first trained on fine data, afterwards the model is finetuned (with reduced lr) with only the coarse data and finally the model is finetuned again (with reduced lr) on the fine data.
+The experiments show that there are strong differences in the results, depending on which data are used.
 
 ![Data](imgs/Data.png)
-![Data](imgs/Data2.png)
-![Data](imgs/Data3.png)
-
 
 <details><summary>Appendix</summary>
 <p>
@@ -632,7 +630,7 @@ python main.py model=hrnet MODEL.pretrained_on=ImageNet
 python main.py model=hrnet_ocr MODEL.pretrained_on=ImageNet
 python main.py model=hrnet_ocr_aspp MODEL.pretrained_on=ImageNet
 python main.py model=hrnet_ocr_ms MODEL.pretrained_on=ImageNet
-#Pretrained with PaddleClass
+#Pretrained with PaddleClas
 python main.py model=hrnet MODEL.pretrained_on=Paddle
 python main.py model=hrnet_ocr MODEL.pretrained_on=Paddle
 python main.py model=hrnet_ocr_aspp MODEL.pretrained_on=Paddle
@@ -664,9 +662,15 @@ python main.py model=hrnet_ocr_ms epochs=65 lr=0.001 +finetune_from=<path.to.ckp
 
 ### Going Further
 
-To achieve highscores the use of coarse data is combined with RMI loss.
-However, RMI loss is only used for fine data, as it has been shown to not work as well for coarsely annotated data.
-In the end, the best results were achieved in this way and with MS OCR.
+The previous experiments have shown different ways to improve the results, here they are now combined.
+The experiments have shown that MS OCR provides the best results, which is why the focus is on this model.
+First, the use of the additional data is combined with the RMI loss which leads to highly increased results.
+The RMI loss was only used in the training blocks with the fine annotated data, because the experiments showed that the RMI loss does not work well with the coarse data.
+Mapillary and PaddleClas pretraining gave better results than using ImageNet weight, so they will be tested in combination with RMI loss too.
+Again, an increase in performance can be seen, with the best results for pretraining with Mapillary and RMI loss.
+Finally, Mapillariy pretraing, RMI loss and the use of coarse data are combined.
+In the previous experiments, using strategy 2 to include coarse data produced the best results.
+But for this, strategy 3 delivers better results, which are also the absolute highscores in these experiments.
 
 ![Data](imgs/Further.png)
 
@@ -679,11 +683,13 @@ In the end, the best results were achieved in this way and with MS OCR.
 |   MS OCR [0.5, 1.]   | Baseline |   81.26   | 80.95, 81.35, **81.49** |
 |   MS OCR [0.5, 1.]   |   Paddle + RMI   |   82.46   | **82.75**,82.67,81.95 |
 |   MS OCR [0.5, 1.]   | Mapillary + RMI   | 83.98 | 84.55, 83.61, 83.77 |
-|   MS OCR [0.5, 1.]   |  Mapillary + RMI +Coarse   | - | - |
+|   MS OCR [0.5, 1.]   | Coarse + RMI   | 83.37 | 83.54, 83.37, 83.21 |
+|   MS OCR [0.5, 1.]   |  Mapillary + RMI + Coarse   | 84.77 | 84.80, 84.78, 84.73 |
 | MS OCR [0.5, 1., 2.] | Baseline |   81.96   | 81.58, 81.99, **82.30** |
 | MS OCR [0.5, 1., 2.] |   Paddle + RMI   |  82.78    | 83.01,**83.07**,82.27 |
 | MS OCR [0.5, 1., 2.] | Mapillary + RMI  |   84.37  | 84.92, 84.04, 84.23 |
-| MS OCR [0.5, 1., 2.] |  Mapillary + RMI +Coarse   |    - | - |
+|   MS OCR [0.5, 1., 2.]   |  Coarse + RMI   | 83.78 | 83.96, 83.80, 83.59 |
+| MS OCR [0.5, 1., 2.] |  Mapillary + RMI +Coarse   |    85.27 | 85.31, 85.28, 85.22 |
 
 </p>
 </details>
@@ -691,7 +697,6 @@ In the end, the best results were achieved in this way and with MS OCR.
 <details><summary>Scrips</summary>
 <p>
 
-Training Models with and without different pretrained weights
 ````shell
 #Paddle + RMI
 python main.py model=hrnet_ocr_ms lossfunction=[wRMI,wCE,wCE,wCE] MODEL.pretrained_on=Paddle

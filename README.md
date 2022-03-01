@@ -682,14 +682,14 @@ But for this, strategy 3 delivers better results, which are also the absolute hi
 |:--------------------:|:------------:|:---------:|:-----------------------:|
 |   MS OCR [0.5, 1.]   | Baseline |   81.26   | 80.95, 81.35, **81.49** |
 |   MS OCR [0.5, 1.]   |   Paddle + RMI   |   82.46   | **82.75**,82.67,81.95 |
-|   MS OCR [0.5, 1.]   | Mapillary + RMI   | 83.98 | 84.55, 83.61, 83.77 |
-|   MS OCR [0.5, 1.]   | Coarse + RMI   | 83.37 | 83.54, 83.37, 83.21 |
-|   MS OCR [0.5, 1.]   |  Mapillary + RMI + Coarse   | 84.77 | 84.80, 84.78, 84.73 |
+|   MS OCR [0.5, 1.]   | Mapillary + RMI   | 83.98 | **84.55**, 83.61, 83.77 |
+|   MS OCR [0.5, 1.]   | Coarse + RMI   | 83.37 | **83.54**, 83.37, 83.21 |
+|   MS OCR [0.5, 1.]   |  Mapillary + RMI + Coarse   | 84.77 | **84.80**, 84.78, 84.73 |
 | MS OCR [0.5, 1., 2.] | Baseline |   81.96   | 81.58, 81.99, **82.30** |
 | MS OCR [0.5, 1., 2.] |   Paddle + RMI   |  82.78    | 83.01,**83.07**,82.27 |
-| MS OCR [0.5, 1., 2.] | Mapillary + RMI  |   84.37  | 84.92, 84.04, 84.23 |
-|   MS OCR [0.5, 1., 2.]   |  Coarse + RMI   | 83.78 | 83.96, 83.80, 83.59 |
-| MS OCR [0.5, 1., 2.] |  Mapillary + RMI +Coarse   |    85.27 | 85.31, 85.28, 85.22 |
+| MS OCR [0.5, 1., 2.] | Mapillary + RMI  |   84.37  | **84.92**, 84.04, 84.23 |
+|   MS OCR [0.5, 1., 2.]   |  Coarse + RMI   | 83.78 | **83.96**, 83.80, 83.59 |
+| MS OCR [0.5, 1., 2.] |  Mapillary + RMI +Coarse   |    85.27 | **85.31**, 85.28, 85.22 |
 
 </p>
 </details>
@@ -705,7 +705,7 @@ python main.py model=hrnet_ocr_ms lossfunction=[wRMI,wCE,wCE,wCE] MODEL.pretrain
 #Mapillary + RMI + coarse Data (Strategy 2)
 python main.py model=hrnet_ocr_ms epochs=75 lossfunction=[wRMI,wCE,wCE,wCE]
 python main.py model=hrnet_ocr_ms epochs=25 lr=0.001 dataset=Cityscapes_coarse +finetune_from=<path.to.ckpt.of.previous.line>
-python main.py model=hrnet_ocr_ms epochs=15 lr=0.001 lossfunction=[wRMI,wCE,wCE,wCE] +finetune_from=<path.to.ckpt.of.previous.line>
+python main.py model=hrnet_ocr_ms epochs=20 lr=0.001 lossfunction=[wRMI,wCE,wCE,wCE] +finetune_from=<path.to.ckpt.of.previous.line>
 #Mapillary + RMI + coarse Data (Strategy 3)
 python main.py model=hrnet_ocr_ms epochs=75 lossfunction=[wRMI,wCE,wCE,wCE]
 python main.py model=hrnet_ocr_ms epochs=25 lr=0.001 dataset=Cityscapes_fine_coarse +finetune_from=<path.to.ckpt.of.previous.line>

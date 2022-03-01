@@ -210,7 +210,7 @@ class SegModel(LightningModule):
 
         ### LOGGING METRIC ###
         self.log_results(metric_score, metrics_dict)
-        if hasattr(self.metric, "save"):
-            self.metric.save(path=self.logger.log_dir,name="%.4f" % metric_score.detach())
+        #if hasattr(self.metric, "save"):
+        #    self.metric.save(path=self.logger.log_dir,name="%.4f" % metric_score.detach())
 
 

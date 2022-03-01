@@ -584,6 +584,7 @@ The bes result are from Strategy 2 when the model is first trained on fine data,
 
 ![Data](imgs/Data.png)
 ![Data](imgs/Data2.png)
+![Data](imgs/Data3.png)
 
 
 <details><summary>Appendix</summary>

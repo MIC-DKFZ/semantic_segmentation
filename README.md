@@ -2,7 +2,6 @@
 
 # Semantic Segmentation Framework using Pytorch Lightning
 
- 
   <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/-Python 3.9-3776AB?&logo=python&logoColor=white"></a>
   <a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/-PyTorch 1.10-EE4C2C?logo=pytorch&logoColor=white"></a>
   <a href="https://pytorchlightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Pytorch Lightning 1.5.4-792EE5?logo=pytorchlightning&logoColor=white"></a>
@@ -18,7 +17,7 @@ Additionally, features like [Region Mutual Information (RMI)](https://arxiv.org/
 This repository uses new and upcoming packages such as Pytorch Lightning and Hydra, and is designed to be extended with additional models and datasets, as well as other optimizers, schedulers, metrics, loss functions, and data augmentations.
 
 The following contains information about how to [set up the data](#setting-up-the-data) and [run the code](#running-code).
-A comparison between different SOTA approaches(HRNet, OCR,OCR+ASPP, MS OCR) on the Cityscapes and PASCAL VOC Context datasets is shown in the [experiments](#experiments) section.
+A comparison between different SOTA approaches (HRNet, OCR,OCR+ASPP, MS OCR) on the Cityscapes and PASCAL VOC Context datasets is shown in the [experiments](#experiments) section.
 For an advanced use of this framework, the [***config/* folder**](/config#walkthrough-the-config-jungle) contains a full explanation of all available configurations and how to customize the code to your needs.
 
 ### Overview
@@ -27,13 +26,13 @@ Overview about the results on the **Cityscapes val** set.
 The best result from three runs (mean intersection over union, mIoU) is reported.
 A more detailed analysis is given in the [experiments](#experiments) section.
 
-| Model                | Baseline | RMI loss | Paddle weights | Mapillaty pretrained | using Coarse Data | Coarse Data + RMI |
+| Model                | Baseline | RMI loss | Paddle weights | Mapillary pretrained | using Coarse Data | Mapillary + Coarse Data + RMI |
 |----------------------|:--------:|:--------:|:--------------:|:--------------------:|:-----------------:|:-----------------:|
 | HRNET                | 81.44    |  81.89   |     81.74      |        83.02         |       82.03       |         -         |
 | OCR                  | 81.37    |  82.08   |     81.89      |        83.37         |       82.24       |         -         |
 | OCR + ASPP           | 81.53    |  82.20   |       -        |          -           |         -         |         -         |
-| MS OCR [0.5, 1.]     | 81.49    |  82.59   |     82.18      |        83.63         |       82.26       |       83.54       |
-| MS OCR [0.5, 1., 2.] | 82.30    |  82.88   |     82.79      |        84.31         |       82.95       |       83.96       |
+| MS OCR [0.5, 1.]     | 81.49    |  82.59   |     82.18      |        83.63         |       82.26       |       X       |
+| MS OCR [0.5, 1., 2.] | 82.30    |  82.88   |     82.79      |        84.31         |       82.95       |       X       |
 
 
 ### References
@@ -65,11 +64,10 @@ It provides the ability to dynamically create a hierarchical configuration by co
 - **[Albumentations](https://albumentations.ai):** Package for fast and flexible data augmentation in Semantic Segmentation (Albumentations is not limited to segmentation, but only that is used in this repository). 
 Albumentations provides a lot of augmentations that can be used. Also random operations (e.g. random cropping) can be applied directly to images and masks.
 
-  
 ## Setting up the Data
 
 Currently, the following datasets are supported: Cityscapes Dataset(fine and coarse) and Pascal Context Dataset(59 and 60 classes).
-Follow the instructions below to set up the respective datasets
+Follow the instructions below to set up the respective datasets.
 For adding other datasets look at the [customizing part](/config#dataset).
 
 ### Cityscapes
@@ -80,7 +78,7 @@ Download the Cityscapes dataset from [here](https://www.cityscapes-dataset.com/d
 You have to create an account and afterward download: *leftImg8bit_trainvaltest.zip* (11GB)  and *gtFine_trainvaltest.zip* (241MB).
 Unzip them and put them into a folder, the structure of the folder should now look like this:
 ````
-Datasets/cityscapes
+cityscapes
     ├── leftImg8bit_trainvaltest
     │   └── leftImg8bit
     │       ├── train
@@ -102,7 +100,7 @@ Datasets/cityscapes
 The cityscapes dataset contain 34 classes by default but only 19 of them are used in practices.
 To avoid doing this conversion at each training step, it is done in a preprocessing step.
 To do this preprocessing run the following code with adjusting the data_path to the location which contains the *leftImg8bit_trainvaltest* and *gtFine_trainvaltest* folders. 
-This will create a new img for each data sample with the converted class labeling which will be merged into the folder/data structure of the cityscapes dataset.
+This will create a new mask for each data sample with the converted class labeling which will be merged into the folder/data structure of the cityscapes dataset.
 ````
 python datasets/utils/process_Cityscapes.py home/.../Datasets/cityscapes
 ````
@@ -126,11 +124,10 @@ paths:
 The cityscapes dataset provides 20k additional coarse labeled images.
 Since  cityscapes_coarse contains no validation data the fine annotated validation set is used for this purpose.
 This is an extension to cityscapes rather than a separate dataset, so [cityscapes](#cityscapes) should be set up first. 
-Afterwards download the cityscapes_coarse dataset from [here](https://www.cityscapes-dataset.com/downloads/). 
-Download *leftImg8bit_trainextra.zip (44GB)* and *gtCoarse.zip (1.3GB)* and unzip them in the same folder as your cityscapes data.
+Afterwards download the cityscapes_coarse dataset from [here](https://www.cityscapes-dataset.com/downloads/) (*leftImg8bit_trainextra.zip (44GB)* and *gtCoarse.zip (1.3GB)*) and unzip them in the same folder as your cityscapes data.
 You then should end up with this:
 ````
-Datasets/cityscapes
+cityscapes
     ├── leftImg8bit_trainvaltest
     │   └── leftImg8bit
     │       └── ...
@@ -205,11 +202,11 @@ paths:
 
 ## Download Pretrained Weights
 
-Pretrained weights for HRNet can be found here [here](https://github.com/HRNet/HRNet-Image-Classification#imagenet-pretrained-models).
-Pretrained weights on ImageNet and PadddleClass weights are available.
-Since all models (HRNet, OCR, OCR+ASPP, MS OCR) are using an HRNet backbone, these weights can be used for all of them.
-For MS OCR pretrained weights on [Mapillary](https://github.com/NVIDIA/semantic-segmentation#download-weights) are available.
-These Mapillary weights can be partially be used for the other models.
+Pretrained weights for HRNet can be found [here](https://github.com/HRNet/HRNet-Image-Classification#imagenet-pretrained-models).
+Thereby pretrained weights on ImageNet and PadddleClas weights are available.
+Since all models (HRNet, OCR, OCR+ASPP, MS OCR) are using a HRNet backbone, these weights can be used for all of them.
+For MS OCR pretrained weights on Mapillary are available [here](https://github.com/NVIDIA/semantic-segmentation#download-weights).
+These Mapillary weights can be also be used for the other models.
 Download the preferred weights (direct download links below) and put them in the *pretrained/* folder.
 - ImageNet weights: [download](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk)
 - PaddleClass weights: [download](https://github.com/HRNet/HRNet-Image-Classification/releases/download/PretrainedWeights/HRNet_W18_C_ssld_pretrained.pth)
@@ -223,7 +220,7 @@ As you will see the basic syntax how to run and adopt the code is simple.
 The crucial thing is to know which parameters you can configure and how.
 Therefore, the [*config/* folder](/config) explains in detail how the configuration is composed and which parameters it contains.
 There is also an explanation how to add your own models/datasets etc.
-Some examples on how to execute the code are given below in the [experiment](#experiments) section.
+Some examples on how to execute code are given below in the [experiment](#experiments) section.
 
 
 ### Baseline
@@ -235,7 +232,8 @@ This trains HRNet on the Cityscape Dataset with the following default settings:
 Stochastic Gradient Descent(SGD) with weight decay of 0.0005 and a momentum of 0.9 as optimizer.
 The initial learning rate is set to 0.01 and a polynomial learning rate scheduler with exponent of 0.9 is used.
 It is trained for 400 epochs and a batch size of 6 per GPU.
-Cross Entropy Loss is used as well as Mixed Precision and Synchronized Batch Normalization (for multiple GPUS)
+Cross Entropy Loss is used as well as Mixed Precision and Synchronized Batch Normalization (for multiple GPUS).
+By default ImageNet pretrained weights are used for each model.
 
 ### Selecting a Model
 
@@ -256,7 +254,7 @@ python main.py MODEL.pretrained_on=Mapillary    # Pretrained on Mapillary Datase
 ````
 
 ### Selecting a Dataset
-In the same way dataset can be changed by:
+In the same way the dataset can be changed by:
 ````shell
 python main.py dataset=Cityscapes               # Cityscapes Dataset with 19 classes using fine annotated data
 python main.py dataset=Cityscapes_coarse        # Cityscapes Dataset with 19 classes using coarse annotated data
@@ -265,14 +263,14 @@ python main.py dataset=VOC2010_Context          # VOC2010_Context Dataset with 5
 python main.py dataset=VOC2010_Context_60       # VOC2010_Context Dataset with 60 classes setting
 ````
 ### Changing Hyperparmeters
-Basic hyperparameters needed for training can be set by as shown below (in the example the basic values are shown):
+Basic hyperparameters needed for training can be set by as shown below (in the example below the default values are shown):
 ````shell
 python main.py epochs=400 batch_size=6 val_batch_size=6 num_workers=10 lr=0.001 wd=0.0005 momentum=0.9
 ````
 #### Changing Lossfunction(s)
-For each model output a lossfunction can be set. 
+For each model output a separate lossfunction can be set/has to be set. 
 For a single output the lossfunction can be changed by ``lossfunction=RMI``.
-If the model has multiple outputs pass es list of lossfunctions ``lossfunction=[RMI,CE,CE,CE]``.
+If the model has multiple outputs pass es list of lossfunctions ``lossfunction=[RMI,CE,CE,CE]``, with one entry for each model output.
 The ``lossweight`` argument can be used analogues to weight the model outputs differently.
 The number of outputs for the provided models: model(num_putputs), hrnet(1), hrnet_ocr(2), hrnet_ocr_aspp(2), hrnet_ocr_ms(4).
 
@@ -300,11 +298,12 @@ LOGDIR                                      # logs/ by default
                   ├── checkpoints/          # if checkpointing is enabled this contains the best and the last epochs checkpoint
                   ├── hydra/                # contains hydra files
                   ├── validation/           # optional (only when model is validated) - contains testing results
-                  ├── ConfusionMatrix.pt    # Confusion Matrix of best epoch, for the case that other metrics are needed
+                  ├── ConfusionMatrix.pt    # Confusion Matrix of best epoch, for the case that other metrics are needed later
                   ├── event.out...          # Tensorboard log
                   ├── main.log              # logging
                   └── hparams.yaml          # resolved config
 ````
+
 ### Run Validation/Testing
 Some models and datasets need validation/testing under different conditions than during training(e.g. additional scale for MS OCR, or multiscale testing for VOC2010_Context).
 Therefore run the following command.
@@ -315,21 +314,21 @@ python validation.py --valdir=<path.to.the.outputdir.of.training>
 # eg python validation.py --valdir="/../Semantic_Segmentation/logs/VOC2010_Context/hrnet/baseline__/2022-02-15_13-51-42"
 ````
 
-
 # Experiments
 
 ## Cityscapes
 
 The following experiments were performed under the following training settings and the reported results are for the Cityscapes validation set.
-Stochastic Gradient Descent(SGD) with *momentum = 0.9* and *weight decay = 0.0005* is used for optimization. 
+*Stochastic Gradient Descent(SGD)* with *momentum = 0.9* and *weight decay = 0.0005* is used for optimization. 
 The models are trained with an initial learning rate of 0.01 and a polynomial learning rate scheduler.
-These setting have established themselves as a kind of standard for cityscapes and are therefore also used here.
+These settings have established themselves as a kind of standard for cityscapes and are therefore also used here.
 Additionally, the batch size is set to 12 and the number of epochs to 400 (see [Defining the Baseline](#defining_the_baseline)).
 For data augmentation the images are randomly scaled to a range of [0.5, 2] and randomly cropped to a size of 1024x512 afterwards.
 Besides that, only random flipping and normalization is performed.
-By default the models are pretrained weights on ImageNet are used.
-If not specified, training is done on 2 GPUs (with a batch size of 6 per GPU) and each experiment is run 3 times.
-The *MS OCR* model is trained with two scales (*[0.5, 1.]*) during training and for inference a third (*[0.5, 1., 2]*) is added.
+By default the models are initialized using pretrained weights on ImageNet.
+If not specified, training is done on 2 GPUs (with a batch size of 6 per GPU) and each experiment is rerun 3 times.
+Unless specified, training is performed on 2 GPUs (with a batch size of 6 per GPU) and each experiment was repeated 3 times.
+The *MS OCR* model is trained with two scales (*[0.5, 1.]*) during training and for inference a third (*[0.5, 1., 2.]*) is added.
 Typically, both settings are evaluated in the following experiments.
 
 ### Time Complexity
@@ -338,11 +337,15 @@ The following figure shows the training and inference time of each model, as wel
 It can be seen that the number of parameters is in a similar range for all models, but still as the number of parameters increases, the time complexity of the models also increases.
 Thereby OCR-ASPP has by far the highest training time.
 Using an additional scale to MS OCR highly increases the inference time of the model. 
-That's why MS OCR [0.5, 1.] is used for training and only for inference MS OCR [0.5, 1., 2] is used (that's why both have the same training time)
+That's why MS OCR [0.5, 1.] is used for training and only for inference MS OCR [0.5, 1., 2.] is used (that's why both have the same training time)
 The runtime measurements are done using a single GPU (NVIDIA GeForce RTX 3090). 
 To fit on a single GPU, the batch_size is reduced compared to the baseline.
 
-![](imgs/Time_Complexity.png)
+![](imgs/Time_Complexity.png?raw=true "Time")
+
+<div align="center">
+  <img src="imgs/Time_Complexity.png" width=80% height=80%>
+</div>
 
 ### Defining the Baseline
 
@@ -373,7 +376,7 @@ python main.py epochs=400
 python main.py epochs=450
 python main.py epochs=500
 ````
-Running HRNet with different batch sizes (ON A SINGLE GPU)
+Running HRNet with different batch sizes (on a single GPU)
 ````shell
 #for the same number of epochs
 python main.py batch_size=4 epochs=400
@@ -521,7 +524,7 @@ python main.py lossfunction=DC_TOPK
 </p>
 </details>
 
-### Close look at RMI loss 
+### Closer look at RMI loss 
 
 As seen in the previous experiments, using the RMI loss gives the best results, so this is tested with the other models as well.
 RMI loss results in significantly increased mIoU (compared to CE) for all models.
@@ -575,18 +578,14 @@ python main.py model=hrnet_ocr_ms lossfunction=[wRMI,wCE,wCE,wCE]
 Since the previous experiments focused on model and training parameters, a closer look at the used data is given here.
 For the baseline so far ImageNet pretrained weights are used.
 Comparison of the results with models without additional data (trained from scratch) shows that the use of pre-trained weights has a large impact in these experiments.
-The use of PaddlClass weights can further enhance results, and the best results can be achieved by pretraining on Mapillary.
+The use of PaddlClas weights can further enhance results, and the best results can be achieved by pretraining on Mapillary.
 The reason for this is the similarity of Mapillary to Cityscapes (both urban setting).
 Besides this, the use of the coarsen cityscapes data can also improve the results.
 Three different strategies how to integrate the additional data are tested.
 The bes result are from Strategy 2 when the model is first trained on fine data, afterwards the model is finetuned (with reduced lr) with only the coarse data and finally the model is finetuned again (with reduced lr) on the fine data.
-To achieve highscores the use of coarse data is combined with RMI loss.
-However, RMI loss is only used for fine data, as it has been shown to not work as well for coarsely annotated data.
-In the end, the best results were achieved in this way and with MS OCR.
 
 ![Data](imgs/Data.png)
 
-MAPILLARY RESULTS ARE IN PROGRESS, FIGURE WILL BE UPDATED SOON
 
 <details><summary>Appendix</summary>
 <p>
@@ -595,22 +594,22 @@ MAPILLARY RESULTS ARE IN PROGRESS, FIGURE WILL BE UPDATED SOON
 |:--------------------:|:------------:|:---------:|:-----------------------:|
 |        HRNet         | From Scratch |   77.19   | **76.99**, 77.64, 76.95 |
 |        HRNet         |   ImageNet   |   81.13   | 81.02, **81.44**, 80.92 |
-|        HRNet         | PaddleClass  |   81.63   | **81.74**, 81.69, 81.45 |
+|        HRNet         | PaddleClas  |   81.63   | **81.74**, 81.69, 81.45 |
 |        HRNet         |  Mapillary   |   82.74   | 82.80, 82.41, **83.02** |
 |        HRNet         | Coarse Data  |   81.91   | **82.03**, 81.79, 81.91 |
 |         OCR          | From Scratch |   78.03   | **78.60**, 77.43, 78.06 |
 |         OCR          |   ImageNet   |   81.15   | **81.37**, 81.23, 80.86 |
-|         OCR          | PaddleClass  |   81.85   | 81.80, 81.85, **81.89** |
+|         OCR          | PaddleClas  |   81.85   | 81.80, 81.85, **81.89** |
 |         OCR          |  Mapillary   |   83.20   | 82.87, **83.37**, 83.36 |
 |         OCR          | Coarse Data  |   82.09   | 82.16, **82.24**, 81.86 |
 |   MS OCR [0.5, 1.]   | From Scratch |   78.13   | 77.76, 78.17, **78.46** |
 |   MS OCR [0.5, 1.]   |   ImageNet   |   81.26   | 80.95, 81.35, **81.49** |
-|   MS OCR [0.5, 1.]   | PaddleClass  |   81.94   | **82.18**, 82.09, 81.55 |
+|   MS OCR [0.5, 1.]   | PaddleClas  |   81.94   | **82.18**, 82.09, 81.55 |
 |   MS OCR [0.5, 1.]   |  Mapillary   |   83.44   | 83.52, **83.63**, 83.18 |
 |   MS OCR [0.5, 1.]   | Coarse Data  |   82.15   | 82.08, **82.26**, 82.11 |
 | MS OCR [0.5, 1., 2.] | From Scratch |   79.12   | 78.59, 79.38, **79.39** |
 | MS OCR [0.5, 1., 2.] |   ImageNet   |   81.96   | 81.58, 81.99, **82.30** |
-| MS OCR [0.5, 1., 2.] | PaddleClass  |   82.58   | **82.79**, 82.71, 82.23 |
+| MS OCR [0.5, 1., 2.] | PaddleClas  |   82.58   | **82.79**, 82.71, 82.23 |
 | MS OCR [0.5, 1., 2.] |  Mapillary   |   84.06   | **84.31**, 84.15, 83.73 |
 | MS OCR [0.5, 1., 2.] | Coarse Data  |   82.91   | 82.91, **82.95**, 82.86 |
 
@@ -639,10 +638,10 @@ python main.py model=hrnet_ocr MODEL.pretrained_on=Paddle
 python main.py model=hrnet_ocr_aspp MODEL.pretrained_on=Paddle
 python main.py model=hrnet_ocr_ms MODEL.pretrained_on=Paddle
 #Pretrained on Mapillary
-python main.py model=hrnet MODEL.pretrained_on=Mapillary
-python main.py model=hrnet_ocr MODEL.pretrained_on=Mapillary
-python main.py model=hrnet_ocr_aspp MODEL.pretrained_on=Mapillary
-python main.py model=hrnet_ocr_ms MODEL.pretrained_on=Mapillary
+python main.py model=hrnet MODEL.pretrained_on=Mapillary epochs=75
+python main.py model=hrnet_ocr MODEL.pretrained_on=Mapillary epochs=75
+python main.py model=hrnet_ocr_aspp MODEL.pretrained_on=Mapillary epochs=75
+python main.py model=hrnet_ocr_ms MODEL.pretrained_on=Mapillary epoch=75
 ````
 Training Models with coarse data
 ````shell
@@ -656,38 +655,56 @@ python main.py model=hrnet_ocr epochs=25 lr=0.001 dataset=Cityscapes_coarse +fin
 python main.py model=hrnet_ocr epochs=65 lr=0.001 +finetune_from=<path.to.ckpt.of.previous.line>
 #MS OCR
 python main.py model=hrnet_ocr_ms 
-python main.py model=hrnet_ocr_ms  epochs=25 lr=0.001 dataset=Cityscapes_coarse +finetune_from=<path.to.ckpt.of.previous.line>
-python main.py model=hrnet_ocr_ms  epochs=65 lr=0.001 +finetune_from=<path.to.ckpt.of.previous.line>
+python main.py model=hrnet_ocr_ms epochs=25 lr=0.001 dataset=Cityscapes_coarse +finetune_from=<path.to.ckpt.of.previous.line>
+python main.py model=hrnet_ocr_ms epochs=65 lr=0.001 +finetune_from=<path.to.ckpt.of.previous.line>
 ````
 
 </p>
 </details>
 
-**some nodes**
+### Going Further
 
-Paddle:
-- hrnet: [81.45, 81.69, 81.74]
-- ocr: [81.89, 81.85, 81.80]
-- ms [0.5,1]: [82.18,82.09,81.55]
-- ms[0.5,1,2]: [82.79, 82.71, 82.23]
+To achieve highscores the use of coarse data is combined with RMI loss.
+However, RMI loss is only used for fine data, as it has been shown to not work as well for coarsely annotated data.
+In the end, the best results were achieved in this way and with MS OCR.
 
-PaddleRMI:
-- ms[0.5,1]: [82.75,82.67,81.95]
-- ms[0.5,1,2]: [83.01,83.07,82.27]
+![Data](imgs/Further.png)
 
-Coarse
-- ocr: [82.16, 82.24, 81.86]
+<details><summary>Appendix</summary>
+<p>
 
-Mapilarry:
-- hrnet: [82.80, 82.41, 83.02]
-- ocr: [82.87, 83.37, 83.36]
-- ms [0.5,1]: [83.52, 83.63, 83.18]
-- ms[0.5,1,2]: [84.31, 84.15, 83.73]
 
-MapilarryRMI:
-- ms[0.5,1]: [84.55, 83.61, 83.77]
-- ms[0.5,1,2]: [84.92, 84.04, 84.23]
+|        Model         |  Experiment  | mean mIoU |      mIoU per Run       |
+|:--------------------:|:------------:|:---------:|:-----------------------:|
+|   MS OCR [0.5, 1.]   | Baseline |   81.26   | 80.95, 81.35, **81.49** |
+|   MS OCR [0.5, 1.]   |   Paddle + RMI   |   82.46   | **82.75**,82.67,81.95 |
+|   MS OCR [0.5, 1.]   | Mapillary + RMI   | 83.98 | 84.55, 83.61, 83.77 |
+|   MS OCR [0.5, 1.]   |  Mapillary + RMI +Coarse   | - | - |
+| MS OCR [0.5, 1., 2.] | Baseline |   81.96   | 81.58, 81.99, **82.30** |
+| MS OCR [0.5, 1., 2.] |   Paddle + RMI   |  82.78    | 83.01,**83.07**,82.27 |
+| MS OCR [0.5, 1., 2.] | Mapillary + RMI  |   84.37  | 84.92, 84.04, 84.23 |
+| MS OCR [0.5, 1., 2.] |  Mapillary + RMI +Coarse   |    - | - |
 
-## PASCAL VOC2010 Context
+</p>
+</details>
 
-**IN PROGRESS**
+<details><summary>Scrips</summary>
+<p>
+
+Training Models with and without different pretrained weights
+````shell
+#Paddle + RMI
+python main.py model=hrnet_ocr_ms lossfunction=[wRMI,wCE,wCE,wCE] MODEL.pretrained_on=Paddle
+#Mapillary + RMI
+python main.py model=hrnet_ocr_ms lossfunction=[wRMI,wCE,wCE,wCE] MODEL.pretrained_on=Mapillary epochs=75
+#Mapillary + RMI + coarse Data (Strategy 2)
+python main.py model=hrnet_ocr_ms epochs=75 lossfunction=[wRMI,wCE,wCE,wCE]
+python main.py model=hrnet_ocr_ms epochs=25 lr=0.001 dataset=Cityscapes_coarse +finetune_from=<path.to.ckpt.of.previous.line>
+python main.py model=hrnet_ocr_ms epochs=15 lr=0.001 lossfunction=[wRMI,wCE,wCE,wCE] +finetune_from=<path.to.ckpt.of.previous.line>
+#Mapillary + RMI + coarse Data (Strategy 3)
+python main.py model=hrnet_ocr_ms epochs=75 lossfunction=[wRMI,wCE,wCE,wCE]
+python main.py model=hrnet_ocr_ms epochs=25 lr=0.001 dataset=Cityscapes_fine_coarse +finetune_from=<path.to.ckpt.of.previous.line>
+python main.py model=hrnet_ocr_ms epochs=15 lr=0.001 lossfunction=[wRMI,wCE,wCE,wCE] +finetune_from=<path.to.ckpt.of.previous.line>
+````
+</p>
+</details>

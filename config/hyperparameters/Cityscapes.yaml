@@ -1,7 +1,6 @@
 # @package _global_
 
-#This file is currently not used since hyperparameters in baseline.yaml correspond to the ones for Cityscapes
-#This file is used for saving the hyperparameter setting
+#Hyperparameters for Cityscapes Dataset
 num_workers: 10                 # number of workers for dataloader
 batch_size: 6                   # batch size per gpu for training
 val_batch_size: ${batch_size}   # batch size per gpu for validation
@@ -17,4 +16,4 @@ pl_trainer:                     # parameters for the pytorch lightning trainer
   precision: 16                 # using Mixed Precision
   sync_batchnorm: True          # using synchronized batch normalization for multi gpu training
   benchmark: True               # using benchmark for faster training
-  enable_checkpointing: False   # Enable/Disable Checkpointing
+  #enable_checkpointing: True    # Enable/Disable Checkpointing

@@ -287,6 +287,7 @@ python main.py lossfunction=[CE,CE,CE,CE] lossweight=[1.0,0.4,0.05,0.05]    # de
 The output/logging behaviour of the code will look like shown below and in the following a few customizations are explained.
 The ``LOGDIR=<some.folder.dir>`` argument defines the logging folder (*"logs/"* by default).
 Checkpointing can be disabled/enabled by ``pl_trainer.enable_checkpointing= <True or False>``.
+To resume or finetune from a checkpoint use the finetune_from argument(`` python main.py +finetune_from=<path.to.ckpt>``).
 For a better overview, experiments can also be named by ``experiment="my_experiment"`` ("baseline" by default).
 
 ````

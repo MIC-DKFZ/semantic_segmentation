@@ -79,23 +79,16 @@ def training_loop(cfg: DictConfig)->int:
 
 
     ### OPTIONAL TESTING, USED WHEN MODEL IS TESTED UNDER DIFFERENT CONDITIONS THAN TRAINING ###
-    ### Currently this doesnt work for multi gpu training - some kind of cuda error - ddp environment blocks
-    # cfg.MODEL.MSCALE_INFERENCE=True
-    # model = SegModel(config=cfg)
-    # trainer.test(model, dataModule,ckpt_path="best")
-    # dir=os.getcwd()
-    # print(dir)
-    # return 0#dir
-
-    if hasattr(cfg, "TESTING"):
-        if hasTrueAttr(cfg.TESTING,"TEST_AFTERWARDS") and number_gpus<=1:
-            torch.cuda.empty_cache()
-            # Hydra environment has to be cleared since a seperate one is creted during validation
-            hydra.core.global_hydra.GlobalHydra.instance().clear()
-            validation(os.getcwd(),[],False)
-        elif hasTrueAttr(cfg.TESTING, "TEST_AFTERWARDS") and number_gpus > 1:
-            log.info("TEST_AFTERWARDS doesnt work for multi gpu training - some kind of cuda error caused by lightnings ddp environment")
-            log.info("instead use: python validation.py --valdir=<path.to.checkpoint>")
+    ### Currently this doesnt work for multi gpu training - some kind of cuda error - ddp environment block
+    #if hasattr(cfg, "TESTING"):
+    #    if hasTrueAttr(cfg.TESTING,"TEST_AFTERWARDS") and number_gpus<=1:
+    #        torch.cuda.empty_cache()
+    #        # Hydra environment has to be cleared since a seperate one is creted during validation
+    #        hydra.core.global_hydra.GlobalHydra.instance().clear()
+    #        validation(os.getcwd(),[],False)
+    #    elif hasTrueAttr(cfg.TESTING, "TEST_AFTERWARDS") and number_gpus > 1:
+    #        log.info("TEST_AFTERWARDS doesnt work for multi gpu training - some kind of cuda error caused by lightnings ddp environment")
+    #        log.info("instead use: python validation.py --valdir=<path.to.checkpoint>")
 
 
 

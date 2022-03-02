@@ -485,8 +485,9 @@ class MscaleOCR(nn.Module):
             #print(model_dict.keys())
             #print(pretrained_dict.keys())
             pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict.keys() and "ocr.cls_head" not in k and "ocr.aux_head" not in k}
+
             model_dict.update(pretrained_dict)
-            self.load_state_dict(model_dict)
+            self.load_state_dict(model_dict,strict=False)
             del model_dict
         elif pretrained:
             raise RuntimeError('No such file {}'.format(pretrained))

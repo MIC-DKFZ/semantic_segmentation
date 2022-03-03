@@ -42,7 +42,7 @@ def get_test_config(cfg):
     return cfg
 
 def validation(ckpt_dir,hydra_args,init=True):
-    hydra.initialize(config_path="config")
+    hydra.initialize(config_path="config")#,strict=False)
 
     os.chdir(ckpt_dir)
 
@@ -52,7 +52,8 @@ def validation(ckpt_dir,hydra_args,init=True):
 
     ### load local config and first override by the the parameters frm the checkpoint dir
     ### afterwards override the parameters from the commandline ###
-    cfg = hydra.compose(config_name="baseline", overrides=overrides+hydra_args+train_overrides)
+    #print(overrides)
+    cfg = hydra.compose(config_name="baseline", overrides=overrides+hydra_args+train_overrides)#,strict=False)
 
     ### change some testing specific parameters ###
     cfg=get_test_config(cfg)
@@ -62,17 +63,23 @@ def validation(ckpt_dir,hydra_args,init=True):
     log.info("Checkpoint Directory: %s",ckpt_file)
     model = SegModel.load_from_checkpoint(ckpt_file, strict=False,config=cfg)
 
+    ### load datamodule ###
     dataModule = hydra.utils.instantiate(cfg.datamodule, _recursive_=False)
 
+    ### instantiate callbacks ###
     callbacks = []
     for _, cb_conf in cfg.CALLBACKS.items():
         if cb_conf is not None:
             cb = hydra.utils.instantiate(cb_conf)
             callbacks.append(cb)
 
+    ### Sometimes Tensorboard doesnt create the 'validation' folder, to prevent this it is created manually ###
+    if not os.path.exists('validation'):
+        os.makedirs('validation')
     tb_logger = pl_loggers.TensorBoardLogger(save_dir=".", name="", version="",
                                              sub_dir="validation")#,default_hp_metric=False)
 
+    ### parsing the pl_trainer args ###
     trainer_args = getattr(cfg, "pl_trainer") if hasNotEmptyAttr(cfg, "pl_trainer") else {}
     trainer = Trainer(
         logger=tb_logger,
@@ -80,12 +87,13 @@ def validation(ckpt_dir,hydra_args,init=True):
         **trainer_args
     )
 
+    ### run testing ###
     trainer.test(model, dataModule)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-
+    #F:\Desktop\Target_Folder\Cityscapes\hrnet_ocr_ms\baseline__MODEL.MSCALE_TRAINING_False__epochs_65__lr_0.001\2022-01-25_11-18-48
     parser.add_argument('--valdir', type=str, default="")
     args, hydra_args = parser.parse_known_args()
 

@@ -34,13 +34,13 @@ defaults:
   - optimizer: SGD
   - lr_scheduler: polynomial
   - metric: confmat_IoU
-  - model: hrnet
   - dataset: Cityscapes
+    -   - model: hrnet
   - environment: local
 ````
 The configs of each config group are merged from top to bottom, where later groups can overwrite the parameters of earlier groups.
 In addition to the order, the default list also sets default values for the configuration groups.
-This means if not changed, the parameters defined in *baseline.yaml*,..., *model/hrnet.yaml* and *datasets/Cityscapes.yaml* are used in this case.
+This means if not changed, the parameters defined in *baseline.yaml*,..., *datasets/Cityscapes.yaml* and *model/hrnet.yaml* are used in this case.
 To change the used config file of a config group, the corresponding entry in the default list can be changed in the *baseline.yaml*, or the entry can be overwritten from the commandline.
 Hydra's [commandline syntax](https://hydra.cc/docs/advanced/override_grammar/basic/#working-with-your-shell) is straight forward and elements can be changed, added or removed in the following ways.
 Thereby this syntax is the same for single parameters like *batch_size* as well as for config files from config groups like *model*.

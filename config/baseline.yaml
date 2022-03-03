@@ -10,8 +10,8 @@ defaults:
   - callbacks: default
   - data_augmentation: default
   - metric: mean_IoU
-  - model: hrnet
   - dataset: Cityscapes
+  - model: hrnet
   - environment: local
 
   # USING COLORLOG PLUGIN OF HYDRA

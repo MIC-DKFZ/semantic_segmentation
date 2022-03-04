@@ -15,13 +15,12 @@ AUGMENTATIONS:
           - PadIfNeeded:
               min_height: 520
               min_width: 520
-              #border_mode: 0 #"cv2.BORDER_CONSTANT"
-              #value: 0
-              #mask_value: ${DATASET.IGNORE_INDEX}
+              border_mode: 0 #"cv2.BORDER_CONSTANT"
+              value: 0
+              mask_value: ${DATASET.IGNORE_INDEX}
           - RandomCrop:
-              height: 520
-              width: 520
-          #- GaussianBlur:
+              height: 512
+              width: 512
           - HorizontalFlip:
               p: 0.5
           - Normalize:
@@ -32,8 +31,8 @@ AUGMENTATIONS:
   VALIDATION:
     - Compose:
         transforms:
-          - LongestMaxSize:
-              max_size: 520
+          #- LongestMaxSize:
+          #    max_size: 520
           - PadIfNeeded:
               min_height: 520
               min_width: 520

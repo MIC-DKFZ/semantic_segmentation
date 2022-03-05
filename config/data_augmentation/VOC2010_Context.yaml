@@ -31,8 +31,8 @@ AUGMENTATIONS:
   VALIDATION:
     - Compose:
         transforms:
-          #- LongestMaxSize:
-          #    max_size: 520
+          - LongestMaxSize:
+              max_size: 520
           - PadIfNeeded:
               min_height: 520
               min_width: 520

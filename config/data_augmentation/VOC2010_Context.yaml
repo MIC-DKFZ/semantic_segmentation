@@ -19,8 +19,8 @@ AUGMENTATIONS:
               value: 0
               mask_value: ${DATASET.IGNORE_INDEX}
           - RandomCrop:
-              height: 512
-              width: 512
+              height: 520
+              width: 520
           - HorizontalFlip:
               p: 0.5
           - Normalize:

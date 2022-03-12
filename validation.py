@@ -1,4 +1,4 @@
-import hydra
+
 import numpy as np
 import torch
 from omegaconf import OmegaConf
@@ -15,6 +15,7 @@ from utils.utils import hasTrueAttr, hasNotEmptyAttr
 from utils.utils import get_logger
 log = get_logger(__name__)
 
+import hydra
 from utils.visualization import show_data
 
 # Inference Time
@@ -30,24 +31,30 @@ def parse_key_into_cfg(cfg,key,value):
         except:
             print("Validation Override: key ", key, " not found")
 
-def get_test_config(cfg):
+def get_test_config(cfg,hydra_args):
+    #hydra args are needed since all arguments should be overwritten from from commandline
+    # otherwise the TESTING.OVERRIDES arguments could be overwritten
+    alrady_override=[h.split("=")[0]for h in hydra_args]
     cfg.ORG_CWD = ""
     if hasNotEmptyAttr(cfg,"TESTING"):
         if hasNotEmptyAttr(cfg.TESTING,"OVERRIDES"):
             keys=cfg.TESTING.OVERRIDES.keys()
             for key in keys:
-                #needed recursice Funciton to catch definiition like cfg.xx.xx ...
-                parse_key_into_cfg(cfg,key,cfg.TESTING.OVERRIDES[key])
+                if key not in alrady_override:
+                    #needed recursice Funciton to catch definiition like cfg.xx.xx ...
+                    parse_key_into_cfg(cfg,key,cfg.TESTING.OVERRIDES[key])
 
     return cfg
 
 def validation(ckpt_dir,hydra_args,init=True):
+    log = get_logger(__name__)
     hydra.initialize(config_path="config")#,strict=False)
 
     os.chdir(ckpt_dir)
 
     ###  load parameters from the checkpoint directory which are overritten ###
     overrides = OmegaConf.load(os.path.join("hydra","overrides.yaml"))
+    #train_overrides=
     train_overrides=["MODEL.PRETRAINED=False"]#,"pl_trainer.gpus=-1"]
 
     ### load local config and first override by the the parameters frm the checkpoint dir
@@ -56,7 +63,7 @@ def validation(ckpt_dir,hydra_args,init=True):
     cfg = hydra.compose(config_name="baseline", overrides=overrides+hydra_args+train_overrides)#,strict=False)
 
     ### change some testing specific parameters ###
-    cfg=get_test_config(cfg)
+    cfg=get_test_config(cfg,hydra_args)
     #print(cfg)
     ### load checkpoint and load model ###
     ckpt_file = glob.glob(os.path.join("checkpoints", "best_*"))[0]

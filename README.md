@@ -733,7 +733,8 @@ python main.py model=hrnet_ocr_ms epochs=15 lr=0.001 lossfunction=[wRMI,wCE,wCE,
 
 ## Pascal VOC2010 Context
 
-
+Some experiments are repeated using another dataset, which is the Pascal VOC2010 Context dataset.
+This dataset contains natural images and no longer the urban setting as in cityscapes.
 However, the focus is not on achieving the highest possible scores, but rather on verifying the results of the experiments on cityscapes.
 Therefore the hyperparameters were taken from other experiments on PASCAL VOC2010 Context and only barely optimized.
 *Stochastic Gradient Descent(SGD)* with *momentum = 0.9* and *weight decay = 0.0001* is used for optimization. 

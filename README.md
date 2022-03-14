@@ -26,7 +26,7 @@ For an advanced use of this framework, the [***config/* folder**](/config#walkth
 
 Overview about the results on the **Cityscapes val** set. 
 The best result from three runs (mean intersection over union, mIoU) is reported.
-A more detailed analysis is given in the [experiments](#experiments) section.
+A more detailed analysis is given in the [experiments](#cityscapes-1) section.
 
 | Model                | Baseline | RMI loss | Paddle weights | Mapillary pretrained | using Coarse Data | Mapillary + Coarse Data + RMI |
 |----------------------|:--------:|:--------:|:--------------:|:--------------------:|:-----------------:|:-----------------:|
@@ -38,7 +38,19 @@ A more detailed analysis is given in the [experiments](#experiments) section.
 
 **Pascal VOC**
 
+Overview about the results on the **PASCAL VOC2010 Context** set. 
+The best result from three runs (mean intersection over union, mIoU) is reported.
+A more detailed analysis is given in the [experiments](#pascal-voc2010-context) section.
+Models are tested with and without multiscale testing.
 
+| Model | Baseline | PaddleClass |PaddleClass + RMI | Baseline * | PaddleClass * |PaddleClass + RMI * |
+|:-----:|:--------:|:-----------:|:--------------:|:--------:|:-----------:|:--------------:|
+| HRNet              | 50.61 | 54.19 | 54.55 | 53.21 | 56.31 | 56.67 |
+| OCR                | 51.68 | 55.98 | 57.20 | 53.94 | 58.18 | 59.34 |
+| MS OCR [0.5, 1]    | 52.00 | 56.03 | 57.54 | 54.24 | 58.10 | 59.58 |
+| MS OCR [0.5, 1, 2] | 53.71 | 57.50 | 58.97 | 54.81 | 58.68 | 59.94 |
+
+**Multi Scale Testing with Scales [0.5, 0.75, 1., 1.25, 1.5, 1.75, 2.] and flipping*
 
 ### References
 This repository adopts code from the following sources:
@@ -332,7 +344,6 @@ Additionally, the batch size is set to 12 and the number of epochs to 400 (see [
 For data augmentation the images are randomly scaled to a range of [0.5, 2] and randomly cropped to a size of 1024x512 afterwards.
 Besides that, only random flipping and normalization is performed.
 By default the models are initialized using pretrained weights on ImageNet.
-If not specified, training is done on 2 GPUs (with a batch size of 6 per GPU) and each experiment is rerun 3 times.
 Unless specified, training is performed on 2 GPUs (with a batch size of 6 per GPU) and each experiment was repeated 3 times.
 The *MS OCR* model is trained with two scales (*[0.5, 1.]*) during training and for inference a third (*[0.5, 1., 2.]*) is added.
 Typically, both settings are evaluated in the following experiments.
@@ -722,6 +733,29 @@ python main.py model=hrnet_ocr_ms epochs=15 lr=0.001 lossfunction=[wRMI,wCE,wCE,
 
 ## Pascal VOC2010 Context
 
+
+However, the focus is not on achieving the highest possible scores, but rather on verifying the results of the experiments on cityscapes.
+Therefore the hyperparameters were taken from other experiments on PASCAL VOC2010 Context and only barely optimized.
+*Stochastic Gradient Descent(SGD)* with *momentum = 0.9* and *weight decay = 0.0001* is used for optimization. 
+The models are trained with an initial learning rate of 0.004 for HRNet and an initial learning rate of 0.001 for OCR and MS OCR.
+A polynomial learning rate scheduler is used as well as a batch size of 16 and the model is trained for 200 epochs
+For data augmentation the images are resized and randomly scaled in the range *[0.5, 2]*, resulting in a size of *520x520* after random cropping.
+Besides that, only RGB-Shift, random flipping and normalization is performed. 
+Similar as for the cityscapes experiments, the data augmentation is kept rather minimal.
+By default the models are initialized using pretrained weights on ImageNet.
+Unless specified, training is performed on 2 GPUs (with a batch size of 8 per GPU) and each experiment was repeated 3 times.
+The *MS OCR* model is trained with two scales (*[0.5, 1.]*) during training and for inference a third (*[0.5, 1., 2.]*) is added.
+Typically, both settings are evaluated in the following experiments.
+Since SOTA approaches typically report their results on VOC2010 using multiscale testing, both validation with and without multiscale testing is reported here.
+For multiscale Testing the scales [0.5, 0.75, 1., 1.25, 1.5, 1.75, 2.] and vertical flipping are used.
+
+When looking at the results is can be seen that they are consistent to the previous ones on Cityscapes.
+Starting with the models, the results are getting better by increasing the complexity, starting with HRNet then OCR and finally MS OCR.
+Although it is worth noting that the difference between HRNet and OCR is more evident than for Cityscapes.
+For MS OCR again using the additional scale increases the results for each experiment.
+What is even more significant for VOC2010 than for Cityscapes, is the improvement through the PaddleClas weights.
+Furthermore, the RMI loss again leads to an improved result.
+
 ![Data](imgs/VOC2010.png)
 
 <details><summary>Appendix</summary>
@@ -732,15 +766,54 @@ python main.py model=hrnet_ocr_ms epochs=15 lr=0.001 lossfunction=[wRMI,wCE,wCE,
 | HRNet | Baseline   |   50.50   | 50.61, 50.31, 50.57     |   52.95   | 53.21, 52.76, 52.89     |
 | HRNet | PaddleClas |   53.96   | 53.85, 54.19, 53.83     |   56.20   | 56.19, 56.10, 56.31     |
 | HRNet |    RMI     |   54.40   | 54.55, 54.35, 54.31     |   56.53   | 56.52, 56.41, 56.67     |
-| OCR | Baseline   |   51.51   | 51.49, 51.36, 51.68     |   53.86   | 53.74, 53.91, 53.94     |
-| OCR | PaddleClas |   55.68   | 55.67, 55.98, 55.39     |   57.78   | 57.72, 58.18, 57.43     |
-| OCR |    RMI     |   57.10   | 57.11, 57.00, 57.20     |   59.18   | 59.34, 59.12, 59.09     |
-| MS OCR [0.5, 1.]  | Baseline   |   51.93   | 52.00, 51.87, 51.93    |   54.09   | 53.83, 54.24, 54.19     |
-| MS OCR [0.5, 1.]  | PaddleClas |   55.94   | 55.84, 55.94, 56.03     |   57.95   | 57.77, 58.10, 57.97    |
-| MS OCR [0.5, 1.]  |    RMI     |   57.52   | 57.54, 57.53, 57.48    |   59.51   | 59.51, 59.43, 59.58    |
+| OCR | Baseline   |   51.51   | 51.49, 51.36, 51.68 | 53.86 | 53.74, 53.91, 53.94     |
+| OCR | PaddleClas |   55.68   | 55.67, 55.98, 55.39 | 57.78 | 57.72, 58.18, 57.43     |
+| OCR |    RMI     |   57.10   | 57.11, 57.00, 57.20 | 59.18 | 59.34, 59.12, 59.09     |
+| MS OCR [0.5, 1.]  | Baseline   |   51.93   | 52.00, 51.87, 51.93  |   54.09   | 53.83, 54.24, 54.19     |
+| MS OCR [0.5, 1.]  | PaddleClas |   55.94   | 55.84, 55.94, 56.03  |   57.95   | 57.77, 58.10, 57.97    |
+| MS OCR [0.5, 1.]  |    RMI     |   57.52   | 57.54, 57.53, 57.48  |   59.51   | 59.51, 59.43, 59.58    |
 | MS OCR [0.5, 1., 2.]  | Baseline   |   53.60   | 53.47, 53.63, 53.71     |   54.61   | 54.79, 54.23, 54.81     |
 | MS OCR [0.5, 1., 2.]  | PaddleClas |   57.33   | 57.50, 57.21, 57.29     |   58.49   | 58.68, 58.24, 58.54     |
 | MS OCR [0.5, 1., 2.]  |    RMI     |   58.89   | 58.81, 58.89, 58.97     |   59.83   | 59.72, 59.94, 59.82     |
 
+</p>
+</details>
+
+<details><summary>Scrips</summary>
+<p>
+
+How to train and validate the models correctly. Consider disabling cuda benchmark for (multi-scale) testing by ``pl_trainer.benchmark=False``.
+````shell
+#HRNet
+python main.py model=hrnet dataset=VOC2010                                                               # Baseline
+python main.py model=hrnet dataset=VOC2010 MODEL.pretrained_on=Paddle                                    # using PaddleClas weights
+python main.py model=hrnet dataset=VOC2010 MODEL.pretrained_on=Paddle lossfunction=RMI                   # using PaddleClas + RMI
+### Since some pseudo validation is used for runtime reduction during training, the models have to be validated seperatly ###
+###<path.to.output.dir> would look similar to this: /home/.../VOC2010/hrnet/baseline_.../2022-01-18_16-05-09
+python validation.py --valdir==<path.to.output.dir> TESTING.SCALES=[1.0]  TESTING.FLIP=False  # testing without Multiscale
+python validation.py --valdir==<path.to.output.dir>                                           # testing with Multiscale
+
+#OCR
+python main.py model=hrnet_ocr dataset=VOC2010                                                          # Baseline
+python main.py model=hrnet_ocr dataset=VOC2010 MODEL.pretrained_on=Paddle                               # using PaddleClas weights
+python main.py model=hrnet_ocr dataset=VOC2010 MODEL.pretrained_on=Paddle lossfunction=[RMI,CE]         # using PaddleClas + RMI
+### Since some pseudo validation is used for runtime reduction during training, the models have to be validated seperatly ###
+###<path.to.output.dir> would look similar to this: /home/.../VOC2010/hrnet_ocr/baseline_.../2022-01-18_16-05-09
+python validation.py --valdir==<path.to.output.dir> TESTING.SCALES=[1.0]  TESTING.FLIP=False  # testing without Multiscale
+python validation.py --valdir==<path.to.output.dir>                                           # testing with Multiscale
+
+#MS OCR
+python main.py model=hrnet_ocr_ms dataset=VOC2010                                                       # Baseline
+python main.py model=hrnet_ocr_ms dataset=VOC2010 MODEL.pretrained_on=Paddle                            # using PaddleClas weights
+python main.py model=hrnet_ocr_ms dataset=VOC2010 MODEL.pretrained_on=Paddle lossfunction=[RMI,CE,CE,CE]   # using PaddleClas + RMI
+### Since some pseudo validation is used for runtime reduction during training, the models have to be validated seperatly ###
+###<path.to.output.dir> would look similar to this: /home/.../VOC2010/hrnet_ocr_ms/baseline_.../2022-01-18_16-05-09
+#MS OCR[0.5,1]
+python validation.py --valdir==<path.to.output.dir> MODEL.MSCALE_INFERENCE=False TESTING.SCALES=[1.0]  TESTING.FLIP=False  # testing without Multiscale
+python validation.py --valdir==<path.to.output.dir> MODEL.MSCALE_INFERENCE=False              # testing with Multiscale
+#MS OCR[0.5,1,2]
+python validation.py --valdir==<path.to.output.dir> TESTING.SCALES=[1.0]  TESTING.FLIP=False  # testing without Multiscale
+python validation.py --valdir==<path.to.output.dir>                                           # testing with Multiscale 
+````
 </p>
 </details>

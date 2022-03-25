@@ -8,7 +8,7 @@ from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.plugins import DDPPlugin
 
-from utils.utils import hasTrueAttr, hasNotEmptyAttr,get_logger, num_gpus
+from utils.utils import hasTrueAttr, hasNotEmptyAttr,get_logger, num_gpus, log_hyperparameters
 from omegaconf import DictConfig, OmegaConf
 from Segmentation_Model import SegModel
 from validation import validation
@@ -62,17 +62,17 @@ def training_loop(cfg: DictConfig)->int:
 
     ### INITIALIAZING TRAINER ###
     trainer_args = getattr(cfg, "pl_trainer") if hasNotEmptyAttr(cfg, "pl_trainer") else {}
-    ddp=DDPPlugin(find_unused_parameters=False) if number_gpus > 1 else None
+    #ddp=DDPPlugin(find_unused_parameters=False) if number_gpus > 1 else None
     trainer = Trainer(
         callbacks=callbacks,
         logger=tb_logger,
 
-        #strategy='ddp' if number_gpus > 1 else None,
-        strategy=ddp,#DDPPlugin(find_unused_parameters=False) if number_gpus > 1 else None,
+        strategy='ddp' if number_gpus > 1 else None,
 
         **trainer_args
     )
 
+    log_hyperparameters(cfg,model,trainer)
     ### START TRAINING ###
 
     trainer.fit(model, dataModule)
@@ -93,5 +93,6 @@ def training_loop(cfg: DictConfig)->int:
 
 
 if __name__ == "__main__":
-
+    #hydra.core.hydra_config.HydraConfig.get()
+    #print(hydra.core.hydra_config.HydraConfig.initialized())
     training_loop()

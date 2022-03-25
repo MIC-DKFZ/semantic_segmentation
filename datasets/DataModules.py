@@ -49,7 +49,7 @@ class BaseDataModule(LightningDataModule):
         acc_steps_per_gpu = int(np.ceil(steps_per_gpu / self.trainer.accumulate_grad_batches))
         max_steps = (self.trainer.max_epochs * acc_steps_per_gpu)
 
-        log.info("MAX STEPS: %s", max_steps)
+        log.info("Number of Training steps: %s", max_steps)
         return max_steps
 
     def get_augmentations_from_config(self,augmentations):

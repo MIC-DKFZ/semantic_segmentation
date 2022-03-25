@@ -3,7 +3,6 @@ import numpy as np
 
 import torch
 from torchmetrics import Metric
-import torchmetrics.functional as tmF
 from torchmetrics.utilities.data import dim_zero_cat
 
 from utils.utils import hasNotEmptyAttr
@@ -36,9 +35,9 @@ class ConfusionMatrix(Metric):
         path = os.path.join(path, name)
         torch.save(self.mat.detach().cpu(), path)
 
-    def reset(self):
-        if self.mat is not None:
-            self.mat.zero_()
+    #def reset(self):
+    #    if self.mat is not None:
+    #        self.mat.zero_()
 
 class IoU(ConfusionMatrix):
 

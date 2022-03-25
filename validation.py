@@ -1,4 +1,3 @@
-
 import numpy as np
 import torch
 from omegaconf import OmegaConf
@@ -105,4 +104,3 @@ if __name__ == "__main__":
     args, hydra_args = parser.parse_known_args()
 
     validation(args.valdir,hydra_args)
-

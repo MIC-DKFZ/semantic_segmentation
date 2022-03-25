@@ -1,17 +1,88 @@
-import time
 import numpy as np
 import torch
-
+from tqdm import tqdm
 from pytorch_lightning.callbacks import Callback, ModelCheckpoint
+from pytorch_lightning.callbacks.progress import TQDMProgressBar
+from pytorch_lightning.callbacks.progress.tqdm_progress import convert_inf, Tqdm
+import sys
+import time
 
-### small modification on the ModelCheckpoint -> naming the last epoch
+### small modification on the ModelCheckpoint -> naming the last epoch ###
 class customModelCheckpoint(ModelCheckpoint):
     def __init__(self,**kwargs):
         super(customModelCheckpoint,self,).__init__(**kwargs)
         self.CHECKPOINT_NAME_LAST="last_epoch_{epoch}"
 
+### small modification on the TQDMProgressBar class to get rid of the v_num entry and duple printing during validation###
+### https://stackoverflow.com/questions/59455268/how-to-disable-progress-bar-in-pytorch-lightning/66731318#66731318
+### https://github.com/PyTorchLightning/pytorch-lightning/issues/765
+class customTQDMProgressBar(TQDMProgressBar):
+    def __init__(self,*args,**kwargs):
+        #super(customTQDMProgressBar,self).__init__(**kwargs)
+        super().__init__(*args,**kwargs)
+        self.status="None"
 
-### Callback for measuring the time during train, validation and testing
+    def get_metrics(self, trainer, model):
+        # don't show the version number
+        items = super().get_metrics(trainer, model)
+        items.pop("v_num", None)
+        items["status"]=self.status
+
+        return items
+
+    def init_validation_tqdm(self):
+        ### disable validation tqdm instead only use main_progress_bar###
+        bar = tqdm(
+            disable=True,
+        )
+        return bar
+
+    def on_validation_epoch_start(self,trainer: "pl.Trainer", pl_module: "pl.LightningModule"):
+        super().on_validation_epoch_start(trainer,pl_module)
+        if not trainer.sanity_checking:
+            self.status="Validation"
+            self.main_progress_bar.set_postfix(self.get_metrics(trainer, pl_module))
+
+    def on_validation_epoch_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+        super().on_validation_epoch_end(trainer,pl_module)
+        self.status = "Done"
+        self.main_progress_bar.set_postfix(self.get_metrics(trainer, pl_module))
+
+    def on_train_epoch_start(self, trainer, pl_module):
+        super().on_train_epoch_start(trainer,pl_module)
+        self.status = "Training"
+        self.main_progress_bar.set_postfix(self.get_metrics(trainer, pl_module))
+
+    '''
+    ### Some testing functions for improving the progressbar ###
+    ### But not used to keep the changes more minimal        ###
+    def on_train_epoch_start(self, trainer, *_) -> None:
+    #    total_train_batches = self.total_train_batches
+    #    total_val_batches = self.total_val_batches#
+        self.main_progress_bar.reset(convert_inf(self.total_train_batches))
+        #self.main_progress_bar.total = convert_inf(self.total_train_batches)
+        self.main_progress_bar.set_description(f"Epoch {trainer.current_epoch} - Train     ")
+
+    def on_validation_epoch_start(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+        ### Forcing a line break for having the validation progressbar in a new line   ###
+        ### otherwise the train progressbar would be overwritten                       ###
+        print(" ")
+        ### Update the description of the Progressbar
+        #self.main_progress_bar.close()
+        self.main_progress_bar.reset(convert_inf(self.total_val_batches))
+        #self.main_progress_bar.refresh()
+        #self.main_progress_bar.total = convert_inf(self.total_val_batches)
+        self.main_progress_bar.set_description(f"Epoch {trainer.current_epoch} - Validation")
+
+    def on_validation_epoch_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+        ### a little bitt hacky but prevents that the next log or print ###
+        ### statement is written into the same line as the progressbar  ###
+        super().on_validation_epoch_end(trainer,pl_module)
+        
+        if not trainer.sanity_checking: print(" ")
+    '''
+
+### Callback for measuring the time during train, validation and testing ###
 class TimeCallback(Callback):
     def __init__(self):
         self.t_train_start = torch.cuda.Event(enable_timing=True)

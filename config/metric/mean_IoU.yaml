@@ -4,3 +4,4 @@ metric:
   num_classes: ${DATASET.NUM_CLASSES}
 METRIC:
   NAME: meanIoU
+  DURING_TRAIN: True

@@ -30,15 +30,15 @@ A more detailed analysis is given in the [experiments](#cityscapes-1) section.
 
 | Model                | Baseline | RMI loss | Paddle weights | Mapillary pretrained | using Coarse Data | Mapillary + Coarse Data + RMI |
 |----------------------|:--------:|:--------:|:--------------:|:--------------------:|:-----------------:|:-----------------:|
-| HRNET                | 81.44    |  81.89   |     81.74      |        83.02         |       82.03       |         -         |
-| OCR                  | 81.37    |  82.08   |     81.89      |        83.37         |       82.24       |         -         |
-| OCR + ASPP           | 81.53    |  82.20   |       -        |          -           |         -         |         -         |
-| MS OCR [0.5, 1.]     | 81.49    |  82.59   |     82.18      |        83.63         |       82.26       |       84.80       |
-| MS OCR [0.5, 1., 2.] | 82.30    |  82.88   |     82.79      |        84.31         |       82.95       |       85.31       |
+| HRNET                | 81.44    |  81.89   |     81.74      |      **83.02**       |       82.03       |         -         |
+| OCR                  | 81.37    |  82.08   |     81.89      |        **83.37**         |       82.24       |         -         |
+| OCR + ASPP           | 81.53    |  **82.20**   |       -        |          -           |         -         |         -         |
+| MS OCR [0.5, 1.]     | 81.49    |  82.59   |     82.18      |        83.63         |       82.26       |       **84.80**       |
+| MS OCR [0.5, 1., 2.] | 82.30    |  82.88   |     82.79      |        84.31         |       82.95       |       **85.31**       |
 
 **Pascal VOC**
 
-Overview about the results on the **PASCAL VOC2010 Context** set. 
+Overview of the results on the **PASCAL VOC2010 Context** set. 
 The best result from three runs (mean intersection over union, mIoU) is reported.
 A more detailed analysis is given in the [experiments](#pascal-voc2010-context) section.
 Models are tested with and without multiscale testing.
@@ -85,7 +85,7 @@ Albumentations provides a lot of augmentations that can be used. Also random ope
 
 Currently, the following datasets are supported: Cityscapes Dataset(fine and coarse) and Pascal Context Dataset(59 and 60 classes).
 Follow the instructions below to set up the respective datasets.
-For adding other datasets look at the [customizing part](/config#dataset).
+Moreover, the [customization section](/config#dataset) gives advice on adding further datasets.
 
 ### Cityscapes
 <details><summary>Click to expand/collapse</summary>
@@ -114,7 +114,7 @@ cityscapes
                 └── ...
 
 ````
-The cityscapes dataset contain 34 classes by default but only 19 of them are used in practices.
+The cityscapes dataset contains 34 classes by default but only 19 of them are used in practices.
 To avoid doing this conversion at each training step, it is done in a preprocessing step.
 To do this preprocessing run the following code with adjusting the data_path to the location which contains the *leftImg8bit_trainvaltest* and *gtFine_trainvaltest* folders. 
 This will create a new mask for each data sample with the converted class labeling which will be merged into the folder/data structure of the cityscapes dataset.
@@ -186,12 +186,12 @@ Datasets
             ├── *.mat
             └── ...
 ````
-Since the VOC2010 dataset contains a lot of unnecessary stuff (unnecessary for this repo), only the needed data is extracted and merged with the transformed label data from *trainval/*.
+Since the VOC2010 dataset contains a lot of unnecessary stuff (unnecessary for this repo), only the required data is extracted and merged with the transformed label data from *trainval/*.
 Run the following script which creates a new folder structure with only the relevant and transformed data.
 ````shell
 python datasets/utils/process_VOC2010_Context.py home/.../Datasets/
 ````
-Afterward a new dataset is created and the data from *trainval* and *VOCtrainval_03-May-2010*  is not further needed.
+Afterwards a new dataset is created and the data from *trainval* and *VOCtrainval_03-May-2010*  is not further needed.
 The new dataset looks like this:
 ````
 Datasets
@@ -220,7 +220,7 @@ paths:
 ## Download Pretrained Weights
 
 Pretrained weights for HRNet can be found [here](https://github.com/HRNet/HRNet-Image-Classification#imagenet-pretrained-models).
-Thereby pretrained weights on ImageNet and PadddleClas weights are available.
+Pretrained weights on ImageNet and PadddleClas are available.
 Since all models (HRNet, OCR, OCR+ASPP, MS OCR) are using a HRNet backbone, these weights can be used for all of them.
 For MS OCR pretrained weights on Mapillary are available [here](https://github.com/NVIDIA/semantic-segmentation#download-weights).
 These Mapillary weights can be also be used for the other models.
@@ -233,10 +233,10 @@ Download the preferred weights (direct download links below) and put them in the
 
 The following is a **Quickstart** guide on how to run the code. 
 To adopt the configuration you can edit the */config/baseline.yaml* file directly or use the hydra commandline syntax. 
-As you will see the basic syntax how to run and adopt the code is simple.
-The crucial thing is to know which parameters you can configure and how.
+As you will see, the basic syntax of how to run and adopt the code is simple.
+The crucial part is to know which parameters you can configure and how.
 Therefore, the [*config/* folder](/config) explains in detail how the configuration is composed and which parameters it contains.
-There is also an explanation how to add your own models/datasets etc.
+There is also an explanation on how to add your own models/datasets etc.
 Some examples on how to execute code are given below in the [experiment](#experiments) section.
 
 
@@ -280,16 +280,16 @@ python main.py dataset=VOC2010_Context          # VOC2010_Context Dataset with 5
 python main.py dataset=VOC2010_Context_60       # VOC2010_Context Dataset with 60 classes setting
 ````
 ### Changing Hyperparmeters
-Basic hyperparameters needed for training can be set by as shown below (in the example below the default values are shown):
+The basic hyperparameters needed for training can be set as shown below (in the example below the default values are shown):
 ````shell
 python main.py epochs=400 batch_size=6 val_batch_size=6 num_workers=10 lr=0.001 wd=0.0005 momentum=0.9
 ````
-#### Changing Lossfunction(s)
-For each model output a separate lossfunction can be set/has to be set. 
-For a single output the lossfunction can be changed by ``lossfunction=RMI``.
-If the model has multiple outputs pass es list of lossfunctions ``lossfunction=[RMI,CE,CE,CE]``, with one entry for each model output.
+#### Changing Loss Function(s)
+For each model output a separate loss function can be set/has to be set. 
+For a single output the loss function can be changed by ``lossfunction=RMI``.
+If the model has multiple outputs, pass a list of loss functions ``lossfunction=[RMI,CE,CE,CE]``, with one entry for each model output.
 The ``lossweight`` argument can be used analogues to weight the model outputs differently.
-The number of outputs for the provided models: model(num_putputs), hrnet(1), hrnet_ocr(2), hrnet_ocr_aspp(2), hrnet_ocr_ms(4).
+The provided models have the following number of outputs: model(num_putputs), hrnet(1), hrnet_ocr(2), hrnet_ocr_aspp(2), hrnet_ocr_ms(4).
 
 ````shell
 python main.py lossfunction=CE                  # default Cross Entropy loss
@@ -301,7 +301,7 @@ python main.py lossfunction=[CE,CE,CE,CE] lossweight=[1.0,0.4,0.05,0.05]    # de
 ````
 ### Logging
 
-The output/logging behaviour of the code will look like shown below and in the following a few customizations are explained.
+The logging structure of the code is depicted below.
 The ``LOGDIR=<some.folder.dir>`` argument defines the logging folder (*"logs/"* by default).
 Checkpointing can be disabled/enabled by ``pl_trainer.enable_checkpointing= <True or False>``.
 To resume or finetune from a checkpoint use the finetune_from argument(`` python main.py +finetune_from=<path.to.ckpt>``).
@@ -324,9 +324,9 @@ LOGDIR                                      # logs/ by default
 
 ### Run Validation/Testing
 Some models and datasets need validation/testing under different conditions than during training(e.g. additional scale for MS OCR, or multiscale testing for VOC2010_Context).
-Therefore run the following command.
-Consider that checkpointing hast to be enabled when training an experiment (``python main.py .... pl_trainer.enable_checkpointing=True`` or set to True in 'baseline.yaml') to validate/test afterwards
-For MS OCR and VOC2010_Context a predefined validation setting is used, to change these or create a custom on look [here](/config#testing).
+Therefore, the following command must be executed beforehand.
+Consider that checkpointing hast to be enabled when training (``python main.py .... pl_trainer.enable_checkpointing=True`` or set to True in 'baseline.yaml') to validate/test afterwards.
+MS OCR and VOC2010_Context use a predefined validation setting. However, this setting can be changed [here](/config#testing).
 ````shell
 python validation.py --valdir=<path.to.the.outputdir.of.training>
 # eg python validation.py --valdir="/../Semantic_Segmentation/logs/VOC2010_Context/hrnet/baseline__/2022-02-15_13-51-42"
@@ -339,7 +339,7 @@ python validation.py --valdir=<path.to.the.outputdir.of.training>
 The following experiments were performed under the following training settings and the reported results are for the Cityscapes validation set.
 *Stochastic Gradient Descent(SGD)* with *momentum = 0.9* and *weight decay = 0.0005* is used for optimization. 
 The models are trained with an initial learning rate of 0.01 and a polynomial learning rate scheduler.
-These settings have established themselves as a kind of standard for cityscapes and are therefore also used here.
+These settings have established themselves as a standard setting for cityscapes and are therefore also used here.
 Additionally, the batch size is set to 12 and the number of epochs to 400 (see [Defining the Baseline](#defining_the_baseline)).
 For data augmentation the images are randomly scaled to a range of [0.5, 2] and randomly cropped to a size of 1024x512 afterwards.
 Besides that, only random flipping and normalization is performed.
@@ -376,7 +376,7 @@ Resulting from the experiments, a batch size of 12 and 400 epochs are used for f
 
 ![](imgs/Epochs_Batch_Size.png)
 
-<details><summary>Scrips</summary>
+<details><summary>Scripts</summary>
 <p>
 
 Running HRNet for different number of epochs
@@ -416,13 +416,13 @@ python main.py batch_size=14 epochs=468
 
 #### Mixed Precision 
 
-The use of [Mixed Precision](https://pytorch-lightning.readthedocs.io/en/latest/advanced/mixed_precision.html#mixed-precision) reduces the training time of the models by 20 to 30%.
+The use of [Mixed Precision](https://pytorch-lightning.readthedocs.io/en/latest/advanced/mixed_precision.html#mixed-precision) reduces the training time of the models by 20% to 30%.
 In addition, Mixed Precision was able to improve the results in these experiments.
-Since Mixed Precision has a positive effect and the training time is drastically reduced, Mixed Precision is used as default for further experiments.
+Since Mixed Precision drastically reduces the training time, Mixed Precision is used as default for further experiments.
 
 ![](imgs/Mixed_Precision.png)
 
-<details><summary>Scrips</summary>
+<details><summary>Scripts</summary>
 <p>
 
 Training with Mixed Precision
@@ -478,7 +478,7 @@ Using MS OCR with two scales gives similar results to the other networks, but ad
 </p>
 </details>
 
-<details><summary>Scrips</summary>
+<details><summary>Scripts</summary>
 <p>
 
 Training the different Models
@@ -493,13 +493,13 @@ python main.py model=hrnet_ocr_ms
 </details>
 
 
-### Different Loss Funcitons 
+### Different Loss Functions 
 
 Looking at the different loss functions, it can be seen that the best results can be achieved with Cross-Entropy (CE) and Region Mutual Information (RMI) Loss.
-Dice Loss based functions are way behind. 
-With changes to the lr and number of epochs, these can be tuned somewhat, but are still significantly worse.
-What is also seen is that the use of weights (wCE and wRMI) to compensate for class imbalances in Cityscapes significantly improve the results.
-Only HRNet is used for this experiments.
+By contrast, Dice Loss based functions perform considerably worse in terms of mIOU. 
+With changes to the learning rate and number of epochs, these can be tuned somewhat, but are still significantly worse.
+It can also be seen that the use of weights (wCE and wRMI) compensate the class imbalances in Cityscapes and significantly improve the results.
+Only HRNet is used for these experiments.
 
 ![Lossfunctions](imgs/Lossfunctions.png)
 
@@ -521,7 +521,7 @@ Only HRNet is used for this experiments.
 </p>
 </details>
 
-<details><summary>Scrips</summary>
+<details><summary>Scripts</summary>
 <p>
 
 Training HRNet with different loss functions
@@ -567,7 +567,7 @@ To keep this increase as low as possible, RMI loss is only used during training 
 </p>
 </details>
 
-<details><summary>Scrips</summary>
+<details><summary>Scripts</summary>
 <p>
 
 ````shell
@@ -592,13 +592,13 @@ python main.py model=hrnet_ocr_ms lossfunction=[wRMI,wCE,wCE,wCE]
 
 Since the previous experiments focused on model and training parameters, a closer look at the used data is given here.
 For the baseline so far ImageNet pretrained weights are used.
-Comparison of the results with models without additional data (trained from scratch) shows that the use of pretrained weights has a large impact in these experiments.
+Comparison of the results with models without additional data (trained from scratch) show that the use of pretrained weights has a large impact in these experiments.
 The use of PaddleClas weights can further enhance results, and the best results can be achieved by pretraining on Mapillary.
 The reason for this is the similarity of Mapillary to Cityscapes (both urban setting).
 Besides this, the use of the coarse cityscapes data can also improve the results.
-Three different strategies how to integrate the additional data are tested.
-The bes result are from Strategy 2 when the model is first trained on fine data, afterwards the model is finetuned (with reduced lr) with only the coarse data and finally the model is finetuned again (with reduced lr) on the fine data.
-The experiments show that there are strong differences in the results, depending on which data are used.
+Three different strategies on how to integrate the additional data are tested.
+The best result is achieved with strategy 2 when the model is first trained on fine annotated data, afterwards the model is finetuned (with reduced lr) with only the coarse annotated data and finally the model is finetuned again (with reduced lr) on the fine annotated data.
+The experiments show that there are strong differences in the results, depending on which data is used.
 
 ![Data](imgs/Data.png)
 
@@ -632,7 +632,7 @@ The experiments show that there are strong differences in the results, depending
 </details>
 
 
-<details><summary>Scrips</summary>
+<details><summary>Scripts</summary>
 <p>
 
 Training Models with and without different pretrained weights
@@ -679,13 +679,13 @@ python main.py model=hrnet_ocr_ms epochs=65 lr=0.001 +finetune_from=<path.to.ckp
 
 ### Going Further
 
-The previous experiments have shown different ways to improve the results, here they are now combined.
+The previous experiments have shown different methods to improve the results. These methods are combined in this section.
 The experiments have shown that MS OCR provides the best results, which is why the focus is on this model.
 First, the use of the additional data is combined with the RMI loss which leads to highly increased results.
 The RMI loss was only used in the training blocks with the fine annotated data, because the experiments showed that the RMI loss does not work well with the coarse data.
 Mapillary and PaddleClas pretraining gave better results than using ImageNet weight, so they will be tested in combination with RMI loss too.
 Again, an increase in performance can be seen, with the best results for pretraining with Mapillary and RMI loss.
-Finally, Mapillariy pretraing, RMI loss and the use of coarse data are combined.
+Finally, Mapillariy pretraining, RMI loss and the use of coarse annotated data are combined.
 In the previous experiments, using strategy 2 to include coarse data produced the best results.
 But for this, strategy 3 delivers better results, which are also the absolute highscores in these experiments.
 
@@ -711,7 +711,7 @@ But for this, strategy 3 delivers better results, which are also the absolute hi
 </p>
 </details>
 
-<details><summary>Scrips</summary>
+<details><summary>Scripts</summary>
 <p>
 
 ````shell
@@ -739,8 +739,8 @@ However, the focus is not on achieving the highest possible scores, but rather o
 Therefore the hyperparameters were taken from other experiments on PASCAL VOC2010 Context and only barely optimized.
 *Stochastic Gradient Descent(SGD)* with *momentum = 0.9* and *weight decay = 0.0001* is used for optimization. 
 The models are trained with an initial learning rate of 0.004 for HRNet and an initial learning rate of 0.001 for OCR and MS OCR.
-A polynomial learning rate scheduler is used as well as a batch size of 16 and the model is trained for 200 epochs
-For data augmentation the images are resized and randomly scaled in the range *[0.5, 2]*, resulting in a size of *520x520* after random cropping.
+A polynomial learning rate scheduler is used as well as a batch size of 16 and the model is trained for 200 epochs.
+For data augmentation the images are resized and randomly scaled in the range *[0.5, 2]*, resulting in a size of *520x520* pixels after random cropping.
 Besides that, only RGB-Shift, random flipping and normalization is performed. 
 Similar as for the cityscapes experiments, the data augmentation is kept rather minimal.
 By default the models are initialized using pretrained weights on ImageNet.
@@ -750,7 +750,7 @@ Typically, both settings are evaluated in the following experiments.
 Since SOTA approaches typically report their results on VOC2010 using multiscale testing, both validation with and without multiscale testing is reported here.
 For multiscale Testing the scales [0.5, 0.75, 1., 1.25, 1.5, 1.75, 2.] and vertical flipping are used.
 
-When looking at the results is can be seen that they are consistent to the previous ones on Cityscapes.
+When looking at the results it can be seen that they are consistent to the previous ones on Cityscapes.
 Starting with the models, the results are getting better by increasing the complexity, starting with HRNet then OCR and finally MS OCR.
 Although it is worth noting that the difference between HRNet and OCR is more evident than for Cityscapes.
 For MS OCR again using the additional scale increases the results for each experiment.
@@ -780,7 +780,7 @@ Furthermore, the RMI loss again leads to an improved result.
 </p>
 </details>
 
-<details><summary>Scrips</summary>
+<details><summary>Scripts</summary>
 <p>
 
 How to train and validate the models correctly. Consider disabling cuda benchmark for (multi-scale) testing by ``pl_trainer.benchmark=False``.

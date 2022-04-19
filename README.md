@@ -220,7 +220,7 @@ paths:
 ## Download Pretrained Weights
 
 Pretrained weights for HRNet can be found [here](https://github.com/HRNet/HRNet-Image-Classification#imagenet-pretrained-models).
-Thereby pretrained weights on ImageNet and PadddleClas weights are available. (<- This line sounds weird)
+Pretrained weights on ImageNet and PadddleClas are available.
 Since all models (HRNet, OCR, OCR+ASPP, MS OCR) are using a HRNet backbone, these weights can be used for all of them.
 For MS OCR pretrained weights on Mapillary are available [here](https://github.com/NVIDIA/semantic-segmentation#download-weights).
 These Mapillary weights can be also be used for the other models.
@@ -287,9 +287,9 @@ python main.py epochs=400 batch_size=6 val_batch_size=6 num_workers=10 lr=0.001 
 #### Changing Loss Function(s)
 For each model output a separate loss function can be set/has to be set. 
 For a single output the loss function can be changed by ``lossfunction=RMI``.
-If the model has multiple outputs passes list of loss functions ``lossfunction=[RMI,CE,CE,CE]``, with one entry for each model output. (<- This sentence is bad)
+If the model has multiple outputs, pass a list of loss functions ``lossfunction=[RMI,CE,CE,CE]``, with one entry for each model output.
 The ``lossweight`` argument can be used analogues to weight the model outputs differently.
-The number of outputs for the provided models: model(num_putputs), hrnet(1), hrnet_ocr(2), hrnet_ocr_aspp(2), hrnet_ocr_ms(4). (<- This sentence is bad)
+The provided models have the following number of outputs: model(num_putputs), hrnet(1), hrnet_ocr(2), hrnet_ocr_aspp(2), hrnet_ocr_ms(4).
 
 ````shell
 python main.py lossfunction=CE                  # default Cross Entropy loss
@@ -418,7 +418,7 @@ python main.py batch_size=14 epochs=468
 
 The use of [Mixed Precision](https://pytorch-lightning.readthedocs.io/en/latest/advanced/mixed_precision.html#mixed-precision) reduces the training time of the models by 20% to 30%.
 In addition, Mixed Precision was able to improve the results in these experiments.
-Since Mixed Precision has a positive mIOU effect (<- das mit dem positiven effekt würde ich rausnehmen, das ist glaube ich hier nur zufall. Kann technisch **glaube** ich zu keiner verbesserung führen) and the training time is drastically reduced, Mixed Precision is used as default for further experiments.
+Since Mixed Precision drastically reduces the training time, Mixed Precision is used as default for further experiments.
 
 ![](imgs/Mixed_Precision.png)
 
@@ -493,7 +493,7 @@ python main.py model=hrnet_ocr_ms
 </details>
 
 
-### Different Loss Funcitons 
+### Different Loss Functions 
 
 Looking at the different loss functions, it can be seen that the best results can be achieved with Cross-Entropy (CE) and Region Mutual Information (RMI) Loss.
 By contrast, Dice Loss based functions perform considerably worse in terms of mIOU. 
@@ -597,7 +597,7 @@ The use of PaddleClas weights can further enhance results, and the best results 
 The reason for this is the similarity of Mapillary to Cityscapes (both urban setting).
 Besides this, the use of the coarse cityscapes data can also improve the results.
 Three different strategies on how to integrate the additional data are tested.
-The best result is achieved with strategy 2 when the model is first trained on fine (<- high-resolution?) data, afterwards the model is finetuned (with reduced lr) with only the coarse data and finally the model is finetuned again (with reduced lr) on the fine data.
+The best result is achieved with strategy 2 when the model is first trained on fine annotated data, afterwards the model is finetuned (with reduced lr) with only the coarse annotated data and finally the model is finetuned again (with reduced lr) on the fine annotated data.
 The experiments show that there are strong differences in the results, depending on which data is used.
 
 ![Data](imgs/Data.png)
@@ -685,7 +685,7 @@ First, the use of the additional data is combined with the RMI loss which leads 
 The RMI loss was only used in the training blocks with the fine annotated data, because the experiments showed that the RMI loss does not work well with the coarse data.
 Mapillary and PaddleClas pretraining gave better results than using ImageNet weight, so they will be tested in combination with RMI loss too.
 Again, an increase in performance can be seen, with the best results for pretraining with Mapillary and RMI loss.
-Finally, Mapillariy pretraining, RMI loss and the use of coarse data are combined.
+Finally, Mapillariy pretraining, RMI loss and the use of coarse annotated data are combined.
 In the previous experiments, using strategy 2 to include coarse data produced the best results.
 But for this, strategy 3 delivers better results, which are also the absolute highscores in these experiments.
 

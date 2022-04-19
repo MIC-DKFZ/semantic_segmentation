@@ -1,11 +1,11 @@
-# Walkthrough of Config Jungle
+# Walkthrough of the Config Jungle
 
 In this repository [Hydra](https://hydra.cc/) is used for configuring and managing experiments.
 Therefore, configuration files and their handling are of major importance, which is why they are explained in more detail below.
 First, the basic functionality of Hydra will be briefly explained. 
 At first glance, the use of Hydra may make the configuration more complicated and confusing, but this will quickly disappear if you familiarize yourself with it a bit.
 The advantage that Hydra provides is the ease of managing experiments and to easily add new models or datasets (and more) without changing the base code.
-Since Hydra uses the [OmegaConf](https://omegaconf.readthedocs.io/en/2.1_branch/) package to handle .yaml files, Omegaconf and YAML are also briefly introduced.
+Since Hydra uses the [OmegaConf](https://omegaconf.readthedocs.io/en/2.1_branch/) package to handle *.yaml* files, Omegaconf and YAML are also briefly introduced.
 
 ## Basics
 

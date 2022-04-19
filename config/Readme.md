@@ -1,22 +1,21 @@
-# Walkthrough the Config Jungle
+# Walkthrough of Config Jungle
 
 In this repository [Hydra](https://hydra.cc/) is used for configuring and managing experiments.
 Therefore, configuration files and their handling are of major importance, which is why they are explained in more detail below.
 First, the basic functionality of Hydra will be briefly explained. 
-At first glance, the use of hydra may make the configuration more complicated and confusing, but this will quickly disappear if you familiarize yourself with it a bit.
-The advantage that Hydra provides is the ease of managing experiments and allows to easily add new models or datasets (and more) without changing the base code.
-Since Hydra uses the [OmegaConf](https://omegaconf.readthedocs.io/en/2.1_branch/) package to handle .yaml files, also Omegaconf and YAML are also briefly introduced.
-Following this is a walkthrough of all the available configurations in this repository and how to use them.
+At first glance, the use of Hydra may make the configuration more complicated and confusing, but this will quickly disappear if you familiarize yourself with it a bit.
+The advantage that Hydra provides is the ease of managing experiments and to easily add new models or datasets (and more) without changing the base code.
+Since Hydra uses the [OmegaConf](https://omegaconf.readthedocs.io/en/2.1_branch/) package to handle .yaml files, Omegaconf and YAML are also briefly introduced.
 
 ## Basics
 
-[Hydra](https://hydra.cc/) automatically loads and composes different configuration files and allows to dynamically overriding values at runtime via the command line.
+[Hydra](https://hydra.cc/) automatically loads and composes different configuration files and allows to dynamically override values at runtime via the command line.
 In Hydra, *.yaml* files are used to set configurations. 
 In this repository the *config/baseline.yaml* can be seen as the main file from which other configurations are composed.
 Each subfolder in *config/* is a [config group](https://hydra.cc/docs/tutorials/basic/your_first_app/config_groups/), which contains a separate config file for each alternative inside.
 For example the config group *model* is located in the *config/model* subfolder with a separate *.yaml* file for each available model (hrnet.yaml, hrnet_ocr.yaml, ...).
 The individual config files contain model/dataset/etc. specific parameters, such as the number of channels in a layer of the model or the number of classes in a dataset.
-Having a separate config files for each model/dataset/etc. makes it easy to switch between them and arbitrary combine different config files from different config groups.
+Having a separate config file for each model/dataset/etc. makes it easy to switch between them and arbitrarily combine different config files from different config groups.
 Additionally, this ensures that only the relevant parameters are loaded into the job configuration.
 Hydra creates the [job configuration](https://hydra.cc/docs/1.0/configure_hydra/job/) by composing the configuration files from the different configuration groups.
 Basically, exactly one config file from each config group is used in this process 
@@ -57,7 +56,7 @@ This enables to fully define classes in the config files and then instantiate th
 An example for both is shown below.
 The reason for doing this is that it is possible to add new optimizers, models, datasets etc. from the config without having to change the base code.
 This makes this repository easy to change and flexible to extend without having to search yourself through the implementation.
-For example to use or define another optimizer in the example below, just the optimizer entry in the *example.yaml* have to be changed.
+For example, to use or define another optimizer in the example below, only the optimizer entry in the *example.yaml* has to be changed.
 ````yaml
 example.yaml
 ─────────────────────────────
@@ -134,7 +133,7 @@ x = cfg.Parameters.whatever[0]
 [**Variable interpolation**](https://omegaconf.readthedocs.io/en/latest/usage.html#variable-interpolation) is another important concept of Hydra and Omegaconf.
 When defining config files the situation will occur that variables from other config files are needed.
 For example for defining the last layer of a model, the number of classes, which is defined in the specific dataset configs, may be needed.
-Therefore, variable interpolation is used, which can be seen as a link to a position in the config, that resolved at runtime.
+Therefore, variable interpolation is used, which can be seen as a link to a position in the config, that is resolved at runtime.
 Therefore, the variable is resolved from the dataset which used the current job and no conflicts occur between different dataset configs and the model config.
 Variable interpolation is done with the following syntax:``${path.to.another.node.in.the.config}``.
 and in that case the value will be the value of that node.
@@ -161,7 +160,7 @@ num_output_classes: ${dataset.number_classes}      #num_output_classes will have
 <details><summary>Click to expand/collapse</summary>
 <p>
 
-This is only a short introduction to YAML and only shows its basic syntax. This should be enough for defining you own yaml files but if you need more information they can be found [here](https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html) for example.
+This is only a short introduction to YAML and only shows its basic syntax. This should be enough for defining your own yaml files, but if you need more information they can be found [here](https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html) for example.
 The following examples are for Yaml in combination with OmegaConf and may not work for yaml alone.
 
 Some  **Basic Assignments** are shown here:

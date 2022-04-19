@@ -1,14 +1,8 @@
-'''
-------------------------------------------------------------------------------
-Code slightly adapted and mainly from:
-https://github.com/HRNet/HRNet-Semantic-Segmentation/blob/HRNet-OCR/lib/models/seg_hrnet.py
-        ------------------------------------------------------------------------------
-        Copyright (c) Microsoft
-        Licensed under the MIT License.
-        Written by Ke Sun (sunk@mail.ustc.edu.cn), Jingyi Xie (hsfzxjy@gmail.com)
-        ------------------------------------------------------------------------------
-------------------------------------------------------------------------------
-'''
+# ------------------------------------------------------------------------------
+# Copyright (c) Microsoft
+# Licensed under the MIT License.
+# Written by Ke Sun (sunk@mail.ustc.edu.cn)
+# ------------------------------------------------------------------------------
 
 from __future__ import absolute_import
 from __future__ import division
@@ -489,22 +483,14 @@ class HighResolutionNet(nn.Module):
 
     def load_weights(self, pretrained):
         if os.path.isfile(pretrained):
-            #pretrained_dict = torch.load(pretrained)
-            pretrained_dict = torch.load(pretrained,
-                                         map_location={'cuda:0': 'cpu'})
+            pretrained_dict = torch.load(pretrained)
             log.info('=> loading pretrained model {}'.format(pretrained))
-            if "state_dict" in pretrained_dict.keys():
-                pretrained_dict=pretrained_dict["state_dict"]
-            pretrained_dict = {k.replace('model.', '').replace('module.', '').replace('backbone.', ''): v for k, v in pretrained_dict.items()}
-
             model_dict = self.state_dict()
             pretrained_dict = {k: v for k, v in pretrained_dict.items()
                                if k in model_dict.keys()}
-            #print("A",set(model_dict) - set(pretrained_dict))
-            #print("B",set(pretrained_dict) - set(model_dict))
             model_dict.update(pretrained_dict)
             self.load_state_dict(model_dict)
-            del model_dict,pretrained_dict
+            #del model_dict
 
 
 def get_seg_model(cfg):

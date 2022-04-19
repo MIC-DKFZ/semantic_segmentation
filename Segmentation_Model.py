@@ -28,7 +28,7 @@ class SegModel(LightningModule):
         self.metric_val = hydra.utils.instantiate(config.metric)
         self.register_buffer("best_metric_val", torch.as_tensor(0))
 
-        if hasNotEmptyAttr(config.METRIC,"DURING_TRAIN"):
+        if hasTrueAttr(config.METRIC,"DURING_TRAIN"):
             self.metric_train = hydra.utils.instantiate(config.metric)
             self.register_buffer("best_metric_train", torch.as_tensor(0))
 
@@ -64,65 +64,63 @@ class SegModel(LightningModule):
 
         x = self.model(x)
 
-        ####COVERT TO DICT IF OUTPUT IS LIST OR TENSOR####
+        ####COVERT OUTPUT TO DICT IF OUTPUT IS LIST, TUPEL OR TENSOR####
         if not isinstance(x, dict):
             if isinstance(x, list) or isinstance(x, tuple):
                 keys=["out"+str(i) for i in range(len(x))]
                 x = dict(zip(keys, x))
             elif isinstance(x, torch.Tensor):
                 x = {"out": x}
-            elif isinstance(x, tuple):
 
-                keys=list(range(0, len(x)))
-                x=dict(zip(keys,x))
         return x
-
-
-    def on_train_epoch_start(self) -> None:
-        ### ENSURE METRIC IS RESET AT BEGIN OF EACH EPOCH ###
-        if hasattr(self, "metric_train"):
-            self.metric_train.reset()
 
     def training_step(self, batch, batch_idx):
 
+        ### PREDICT BATCH ###
         x, y_gt = batch
         y_pred = self(x)
 
+        ### COMPUTE AND LOG LOSS ###
         loss = self.get_loss(y_pred, y_gt)
-        self.log("Loss/training_loss", loss, on_step=True, on_epoch=True, logger=True)#,prog_bar=True)
+        self.log("Loss/training_loss", loss, on_step=True, on_epoch=True, logger=True)
 
+        ### (OPTIONAL) UPDATE TRAIN METRIC ###
         if hasattr(self, "metric_train"):
-            self.metric_train(y_gt, list(y_pred.values())[0])
+            self.metric_train.update(y_gt, list(y_pred.values())[0])
 
         return loss
 
-
-    def on_validation_epoch_start(self) -> None:
-        ### ENSURE METRIC IS RESET AT BEGIN OF EACH EPOCH ###
-        self.metric_val.reset()
-
     def validation_step(self, batch, batch_idx):
 
+        ### PREDICT BATCH ###
         x, y_gt = batch
-
         y_pred = self(x)
 
+        ### COMPUTE AND LOG LOSS ###
         val_loss = self.get_loss(y_pred, y_gt)
         self.log("Loss/validation_loss", val_loss, on_step=True, on_epoch=True, logger=True)#,prog_bar=True)
 
-        self.metric_val(y_gt, list(y_pred.values())[0])
+        ### UPDATE VALIDATION METRIC ###
+        self.metric_val.update(y_gt, list(y_pred.values())[0])
+
         return val_loss
 
-    def on_validation_epoch_end(self) -> None:
+    def on_validation_epoch_end(self):
 
         if not self.trainer.sanity_checking:
+
             log.info("EPOCH: %s", self.current_epoch)
+            ### (OPTIONAL) COMPUTE AND LOG THE TRAIN METRIC ###
             if hasattr(self, "metric_train"):
                 self.log_metric(self.metric_train, "best_metric_train", "Train", "metric_train/")
+                ### RESET METRIC MANUALLY###
+                self.metric_train.reset()
 
+            ### COMPUTE AND LOG THE VALIDATION METRIC ###
             self.log_metric(self.metric_val, "best_metric_val", "Validation", "metric/",True)
 
-
+        ### RESET METRIC MANUALLY###
+        self.metric_val.reset()
 
     def test_step(self, batch, batch_idx):
 
@@ -163,7 +161,7 @@ class SegModel(LightningModule):
         ### UPDATE THE METRIC WITH THE AGGREGATED PREDICTION ###
         self.metric.update(y_gt, total_pred)
 
-    def on_test_epoch_end(self) -> None:
+    def on_test_epoch_end(self):
         ### COMPUTE THE METRIC AND LOG THE METRIC ###
         log.info("TEST RESULTS")
         self.log_metric(self.metric, None, "Test", "metric/", False)
@@ -171,7 +169,7 @@ class SegModel(LightningModule):
 
 
     def get_loss(self, y_pred, y_gt):
-        ### COMPUTING LOSS OF EVERY INPUT AND THE CORRESPONDING WEIGHT   ###
+        ### COMPUTING LOSS OF EVERY OUTPUT AND THE CORRESPONDING WEIGHT   ###
         ### DURING VALIDATION ONLY CE LOSS IS USED FOR RUNTIME REDUCTION ###
         if self.training:
             loss = sum([self.loss_functions[i](y, y_gt) * self.loss_weights[i] for i, y in enumerate(y_pred.values())])

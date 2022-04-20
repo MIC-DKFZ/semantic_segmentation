@@ -1,14 +1,25 @@
 import os
 import numpy as np
+import hydra
 
 import torch
-from torchmetrics import Metric
+from torchmetrics import Metric,MetricCollection
 from torchmetrics.utilities.data import dim_zero_cat
-
 from utils.utils import hasNotEmptyAttr
 from utils.utils import get_logger
 
 log = get_logger(__name__)
+
+class MetricModule(MetricCollection):
+    ### subclass of MetricCollection which can directly be initialized with the config ###
+    def __init__(self,config,**kwargs):
+        metrics={}
+        for name, m_conf in config.items():
+            if m_conf is not None:
+                metric = hydra.utils.instantiate(m_conf)
+                metrics[name] = metric
+
+        super().__init__(metrics,**kwargs)
 
 class ConfusionMatrix(Metric):
     def __init__(self, num_classes,dist_sync_on_step=False):
@@ -16,10 +27,9 @@ class ConfusionMatrix(Metric):
         self.num_classes = num_classes
         self.add_state("mat", default=torch.zeros((num_classes, num_classes), dtype=torch.int64), dist_reduce_fx="sum")
 
-    def update(self, gt, pred):
+    def update(self,pred, gt):
         gt=gt.flatten().detach()#.cpu()
         pred=pred.argmax(1).flatten().detach()#.cpu()
-
         n = self.num_classes
 
         with torch.no_grad():
@@ -62,14 +72,16 @@ class IoU_Class(ConfusionMatrix):
         mIoU,IoU_class= self.compute_IoU(self.mat)
 
         dic_score = {}
+        dic_score["IoU"]=mIoU
         if self.labels!=None:
             for i,l in zip(IoU_class,self.labels):
-                dic_score[l]= i
+                dic_score["IoU_"+l]= i
         else:
             for i,l in zip(IoU_class,range(0,len(IoU_class))):
-                dic_score[str(l)]=i
+                dic_score["IoU_"+str(l)]=i
 
-        return mIoU,dic_score
+        #return mIoU,dic_score
+        return dic_score
 
     def compute_IoU(self, mat):
 

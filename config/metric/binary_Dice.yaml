@@ -1,6 +1,8 @@
 #@package _global_
-metric:
-  _target_: utils.metric.binary_per_image_Dice
-  num_classes: ${DATASET.NUM_CLASSES}
 METRIC:
-  NAME: imageDice
+  NAME: mIoU
+  DURING_TRAIN: False
+  METRICS:
+    Dice(sample_wise):
+      _target_: utils.metric.binary_per_image_Dice
+      num_classes: ${DATASET.NUM_CLASSES}

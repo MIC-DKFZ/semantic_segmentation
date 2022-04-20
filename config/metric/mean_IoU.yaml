@@ -1,7 +1,11 @@
 #@package _global_
-metric:
-  _target_: utils.metric.IoU
-  num_classes: ${DATASET.NUM_CLASSES}
 METRIC:
-  NAME: meanIoU
-  DURING_TRAIN: True
+  NAME: mIoU
+  DURING_TRAIN: False
+  METRICS:
+    mIoU:
+      _target_: utils.metric.IoU
+      num_classes: ${DATASET.NUM_CLASSES}
+
+
+

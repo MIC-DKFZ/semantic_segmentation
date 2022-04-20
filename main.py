@@ -72,9 +72,11 @@ def training_loop(cfg: DictConfig)->int:
         **trainer_args
     )
 
-    log_hyperparameters(cfg,model,trainer)
-    ### START TRAINING ###
+    ### LOG HYPERPARAMETERS, IF STATEMENT IS NEEDED TO CATCH fast_dev_run ###
+    if hasattr(trainer.logger, "log_dir"):
+        log_hyperparameters(cfg,model,trainer)
 
+    ### START TRAINING ###
     trainer.fit(model, dataModule)
 
 

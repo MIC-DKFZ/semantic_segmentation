@@ -6,9 +6,9 @@ import torch
 import torch.nn.functional as F
 from pytorch_lightning import LightningModule
 
+from utils.metric import MetricModule
 from utils.loss_function import get_loss_function_from_cfg
 from utils.utils import hasNotEmptyAttr,hasTrueAttr, hasNotEmptyAttr_rec
-
 from utils.utils import get_logger
 
 log = get_logger(__name__)
@@ -24,13 +24,15 @@ class SegModel(LightningModule):
 
         ### INSTANTIATE MEDRIC FROM CONFIG AND METRIC RELATED PARAMETERS ###
         self.metric_name = config.METRIC.NAME
+        ### INSTANTIATE VALIDATION MEDRIC FROM CONFIG AND SAVE BEST METRIC PARAMETER ###
+        self.metric=MetricModule(config.METRIC.METRICS)#,persistent=False)
+        self.register_buffer("best_metric_val", torch.as_tensor(0),persistent=False)
 
-        self.metric_val = hydra.utils.instantiate(config.metric)
-        self.register_buffer("best_metric_val", torch.as_tensor(0))
+        ### (OPTIONAL) INSTANTIATE TRAINING MEDRIC FROM CONFIG AND SAVE BEST METRIC PARAMETER ###
+        if hasTrueAttr(config.METRIC, "DURING_TRAIN"):
+            self.metric_train=self.metric.clone()
+            self.register_buffer("best_metric_train", torch.as_tensor(0),persistent=False)
 
-        if hasTrueAttr(config.METRIC,"DURING_TRAIN"):
-            self.metric_train = hydra.utils.instantiate(config.metric)
-            self.register_buffer("best_metric_train", torch.as_tensor(0))
 
     def configure_optimizers(self):
         ### INSTANTIATE LOSSFUNCTION AND LOSSWEIGHT FOR EACH ELEMENT IN LIST ###
@@ -44,8 +46,7 @@ class SegModel(LightningModule):
         else:
             self.loss_weights = [1] * len(self.loss_functions)
 
-        #log.info("Loss Functions: %s", self.loss_functions)
-        #log.info("Weighting: %s", self.loss_weights)
+        log.info("Loss Functions with Weights: %s", list(zip(self.loss_functions,self.loss_weights)))
 
         #### INSTANTIATE OPTIMIZER ####
         self.optimizer=hydra.utils.instantiate(self.config.optimizer,self.parameters())
@@ -87,7 +88,7 @@ class SegModel(LightningModule):
 
         ### (OPTIONAL) UPDATE TRAIN METRIC ###
         if hasattr(self, "metric_train"):
-            self.metric_train.update(y_gt, list(y_pred.values())[0])
+            self.metric_train.update(list(y_pred.values())[0],y_gt)
 
         return loss
 
@@ -102,7 +103,7 @@ class SegModel(LightningModule):
         self.log("Loss/validation_loss", val_loss, on_step=True, on_epoch=True, logger=True)#,prog_bar=True)
 
         ### UPDATE VALIDATION METRIC ###
-        self.metric_val.update(y_gt, list(y_pred.values())[0])
+        self.metric.update(list(y_pred.values())[0],y_gt)
 
         return val_loss
 
@@ -111,17 +112,25 @@ class SegModel(LightningModule):
         if not self.trainer.sanity_checking:
 
             log.info("EPOCH: %s", self.current_epoch)
-            ### (OPTIONAL) COMPUTE AND LOG THE TRAIN METRIC ###
+
+            ### COMPUTE, LOG AND RESET THE TRAINING METRICS IF USED ###
             if hasattr(self, "metric_train"):
-                self.log_metric(self.metric_train, "best_metric_train", "Train", "metric_train/")
-                ### RESET METRIC MANUALLY###
+
+                metrics_train = self.metric_train.compute()
+
+                self.log_metric(metrics_train, "best_metric_train", "Train", "metric_train/", False)
+
                 self.metric_train.reset()
 
-            ### COMPUTE AND LOG THE VALIDATION METRIC ###
-            self.log_metric(self.metric_val, "best_metric_val", "Validation", "metric/",True)
+
+            ### COMPUTE AND LOG THE VALIDATION METRICS ###
+            metrics=self.metric.compute()
+
+            self.log_metric(metrics, "best_metric_val", "Validation", "metric/", True)
 
         ### RESET METRIC MANUALLY###
-        self.metric_val.reset()
+        self.metric.reset()
+
 
     def test_step(self, batch, batch_idx):
 
@@ -160,12 +169,15 @@ class SegModel(LightningModule):
             else:
                 total_pred+=y_pred
         ### UPDATE THE METRIC WITH THE AGGREGATED PREDICTION ###
-        self.metric.update(y_gt, total_pred)
+        self.metric.update(total_pred,y_gt)
 
     def on_test_epoch_end(self):
         ### COMPUTE THE METRIC AND LOG THE METRIC ###
         log.info("TEST RESULTS")
-        self.log_metric(self.metric, None, "Test", "metric/", False)
+
+        metrics = self.metric.compute()
+
+        self.log_metric(metrics, "best_metric_val", "Test", "metric/", False)
 
 
 
@@ -178,45 +190,37 @@ class SegModel(LightningModule):
             loss = sum([F.cross_entropy(y, y_gt, ignore_index=self.config.DATASET.IGNORE_INDEX) * self.loss_weights[i] for i, y in enumerate(y_pred.values())])
         return loss
 
-    def log_metric(self,metric,best_metric=None,stage="Validation",log_group="metric/",save_best_metric=False):
-        stage=stage.ljust(10)
-        results = metric.compute()
+    def log_metric(self,metrics,best_metric=None,stage="Validation",log_group="metric/",save_best_metric=False):
 
-        ### compute and unpack the metrics results ###
-        if isinstance(results, tuple):
-            metric_score = results[0]  # METRIC TO OPTIMIZE
-            metrics_dict = results[1]  # ADDITIONAL METRICS TO LOG
-        else:
-            metric_score = results
-            metrics_dict = None
+        ### FIRST LOG TARGET METRIC   ###
+        target_metric_score = metrics.pop(self.metric_name)
+        ### LOGGING TO TENSORBOARD ###
+        self.log_dict({log_group + self.metric_name: target_metric_score,
+                       "step": torch.tensor(self.current_epoch, dtype=torch.float32)},
+                      logger=True, sync_dist=True)
 
-        if best_metric != None and metric_score > getattr(self,best_metric):
-                setattr(self,best_metric,metric_score)
-                if hasattr(metric, "save") and save_best_metric:
-                    metric.save(path=self.logger.log_dir)
+        ### UPDATA BEST METRIC ###
+        if target_metric_score > getattr(self,best_metric):
+            setattr(self,best_metric,target_metric_score)
+            if hasattr(self.metric[self.metric_name], "save") and save_best_metric and hasattr(self.logger, "log_dir"):
+                self.metric[self.metric_name].save(path=self.logger.log_dir)
+        self.log_dict({log_group +"best_"+ self.metric_name: target_metric_score,
+                       "step": torch.tensor(self.current_epoch, dtype=torch.float32)},
+                      logger=True, sync_dist=True)
 
-        self.log_dict(
-            {log_group + self.metric_name: metric_score, "step": torch.tensor(self.current_epoch, dtype=torch.float32)},
-            on_epoch=True, logger=True, sync_dist=True)
+        ### CONSOLE LOGGING ###
+        log.info(stage.ljust(10) + " - Best %s %.4f       %s: %.4f", self.metric_name, getattr(self, best_metric),
+                 self.metric_name, target_metric_score)
 
-        if best_metric == None:
-            log.info("%s %s: %.4f",stage.ljust(10), self.metric_name, metric_score)
-        else:
-            ### LOG BEST METRIC IF EXISTS ###
-            self.log_dict(
-                {log_group+"best_" + self.metric_name: getattr(self,best_metric),
-                 "step": torch.tensor(self.current_epoch, dtype=torch.float32)},
-                on_epoch=True, logger=True, sync_dist=True)
-            log.info(stage.ljust(10)+" - Best %s %.4f       %s: %.4f", self.metric_name, getattr(self,best_metric), self.metric_name, metric_score)
 
-        ### LOGGING ADDITIONAL METRICS WHICH ARE GIVEN AS DICT ###
-        if metrics_dict != None:
-            for key in metrics_dict.keys():
-                self.log_dict(
-                    {"metric_" + self.metric_name + "/" + key: metrics_dict[key].detach(),
-                     "step": torch.tensor(self.current_epoch, dtype=torch.float32)},
-                    on_epoch=True, logger=True, sync_dist=True)
-                log.info("%s: %.4f", self.metric_name + " " + key, metrics_dict[key].detach())
+        ### LOG THE REMAINING METRICS ###
+        for name,score in metrics.items():
+            ### LOGGING TO TENSORBOARD ###
+            self.log_dict({log_group + name: score,"step": torch.tensor(self.current_epoch, dtype=torch.float32)}, logger=True, sync_dist=True)
+            ### CONSOLE LOGGING ###
+            log.info('%s: %.4f',name,score)
+
+
 
 
 

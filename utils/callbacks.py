@@ -16,6 +16,8 @@ class customModelCheckpoint(ModelCheckpoint):
 ### small modification on the TQDMProgressBar class to get rid of the v_num entry and duple printing during validation###
 ### https://stackoverflow.com/questions/59455268/how-to-disable-progress-bar-in-pytorch-lightning/66731318#66731318
 ### https://github.com/PyTorchLightning/pytorch-lightning/issues/765
+### this is another solution to use the terminal as output console for Pycharm
+### https://stackoverflow.com/questions/59455268/how-to-disable-progress-bar-in-pytorch-lightning
 class customTQDMProgressBar(TQDMProgressBar):
     def __init__(self,*args,**kwargs):
         #super(customTQDMProgressBar,self).__init__(**kwargs)

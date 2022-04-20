@@ -74,6 +74,7 @@ class SegModel(LightningModule):
 
         return x
 
+
     def training_step(self, batch, batch_idx):
 
         ### PREDICT BATCH ###

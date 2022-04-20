@@ -1,12 +1,12 @@
 #@package _global_
 
-#DEFINING THE DEFAULT DATA AUGMENTATION FOR THIS DATASET
+#DEFINING WHICH DATA AUGMENTATIONS AND HYPERPARAMETERS ARE USED FOR THIS DATASET
 defaults:
   - override /data_augmentation: VOC2010_Context
   - override /hyperparameters: VOC2010_Context
 #SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
 dataset:
-    _target_: datasets.VOC2010_Context.VOC2010_Context_dataset
+    _target_: datasets.VOC2010_Context.VOC2010_Context.VOC2010_Context_dataset
     root: ${paths.VOC2010_Context}
     ignore_index: ${DATASET.IGNORE_INDEX}
     num_classes: ${DATASET.NUM_CLASSES}

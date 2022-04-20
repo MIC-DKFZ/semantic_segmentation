@@ -119,7 +119,7 @@ To avoid doing this conversion at each training step, it is done in a preprocess
 To do this preprocessing run the following code with adjusting the data_path to the location which contains the *leftImg8bit_trainvaltest* and *gtFine_trainvaltest* folders. 
 This will create a new mask for each data sample with the converted class labeling which will be merged into the folder/data structure of the cityscapes dataset.
 ````
-python datasets/utils/process_Cityscapes.py home/.../Datasets/cityscapes
+python datasets/Cityscapes/process_Cityscapes.py home/.../Datasets/cityscapes
 ````
 After downloading and setting up the data, the last step is to adjust the path in the configuration.
 Open the file of the environment you are using (by default *config/environment/local.yaml*) and adopt the cityscapes path to the location of the folder where your *gtFine_trainvaltest* and *leftImg8bit_trainvaltest* are.
@@ -160,7 +160,7 @@ cityscapes
 ````
 Afterwards process the cityscapes_coarse dataset in the same way as it was done for cityscapes by:
 ````shell
-python datasets/utils/process_Cityscapes_coarse.py home/.../Datasets/cityscapes
+python datasets/Cityscapes/process_Cityscapes_coarse.py home/.../Datasets/cityscapes
 ````
 
 </p>
@@ -189,7 +189,7 @@ Datasets
 Since the VOC2010 dataset contains a lot of unnecessary stuff (unnecessary for this repo), only the required data is extracted and merged with the transformed label data from *trainval/*.
 Run the following script which creates a new folder structure with only the relevant and transformed data.
 ````shell
-python datasets/utils/process_VOC2010_Context.py home/.../Datasets/
+python datasets/VOC2010_Context/process_VOC2010_Context.py home/.../Datasets/
 ````
 Afterwards a new dataset is created and the data from *trainval* and *VOCtrainval_03-May-2010*  is not further needed.
 The new dataset looks like this:

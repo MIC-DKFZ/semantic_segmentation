@@ -6,7 +6,7 @@ CALLBACKS:
     _target_: pytorch_lightning.callbacks.LearningRateMonitor
     logging_interval: 'step'
   tqdm_progressbar:
-  #  _target_: pytorch_lightning.callbacks.progress.TQDMProgressBar
+    #_target_: pytorch_lightning.callbacks.progress.TQDMProgressBar
     _target_: utils.callbacks.customTQDMProgressBar
     refresh_rate: 1
   model_summary:

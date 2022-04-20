@@ -7,7 +7,7 @@ defaults:
   - override /metric: binary_Dice
 #SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
 dataset:
-    _target_: datasets.EndoCV2022_extra.EndoCV2022_dataset
+    _target_: datasets.EndoCV2022.EndoCV2022_extra.EndoCV2022_dataset
     root: ${paths.EndoCV2022}
     fold: ${DATASET.FOLD}
 

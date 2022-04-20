@@ -122,26 +122,16 @@ if __name__ == "__main__":
     VOC2010_train = VOC2010_Context_dataset(Path, "train", transforms=transforms)
 
 
-    #for i in range(0,50):
     img, mask = VOC2010_train[465]
     print(np.unique(img))
     print(img[:,100,100])
     print(img[:,200,200])
     print(img[:,300,300])
-    #tensor([0, 0, 0], dtype=torch.uint8)
-    #tensor([166, 163, 146], dtype=torch.uint8)
-    #tensor([51, 33, 29], dtype=torch.uint8)
-    #print(img.shape)
-    #print(torch.unique(mask))
+
     out = show_data(img=img,mask=mask, alpha=0.5,black=[255],mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    #out1 = show_voc(mask=mask, alpha=1., mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+
     out.show()
 
-    #out.save("out.png")
-    #out1.save("out1.png")
-
-    # def collate_fn(batch):
-    #    return tuple(zip(*batch))
 
 
 

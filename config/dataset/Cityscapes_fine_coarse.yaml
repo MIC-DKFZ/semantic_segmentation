@@ -5,7 +5,7 @@ defaults:
   - override /hyperparameters: Cityscapes
 #SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
 dataset:
-    _target_: datasets.Cityscape_fine_coarse.Cityscape_fine_coarse_dataset
+    _target_: datasets.Cityscapes.Cityscape_fine_coarse.Cityscape_fine_coarse_dataset
     root: ${paths.cityscapes}
 
 DATASET:

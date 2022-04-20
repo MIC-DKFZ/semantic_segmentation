@@ -1,6 +1,6 @@
 #@package _global_
 model:
-  _target_: models.hrnet_old.get_seg_model
+  _target_: models.hrnet.get_seg_model
   cfg:
     MODEL: ${MODEL}
     DATASET:

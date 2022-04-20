@@ -17,15 +17,16 @@ class ConfusionMatrix(Metric):
         self.add_state("mat", default=torch.zeros((num_classes, num_classes), dtype=torch.int64), dist_reduce_fx="sum")
 
     def update(self, gt, pred):
-        gt=gt.flatten().detach().cpu()
-        pred=pred.argmax(1).flatten().detach().cpu()
+        gt=gt.flatten().detach()#.cpu()
+        pred=pred.argmax(1).flatten().detach()#.cpu()
 
         n = self.num_classes
 
         with torch.no_grad():
             k = (gt >= 0) & (gt < n)
             inds = n * gt[k].to(torch.int64) + pred[k]
-            self.mat += torch.bincount(inds, minlength=n ** 2).reshape(n, n).to(self.mat)
+            mat_step=torch.bincount(inds, minlength=n ** 2).reshape(n, n)
+            self.mat += mat_step#.to(self.mat)
 
     def save(self, path, name=None):
         if name != None:
@@ -43,17 +44,12 @@ class IoU(ConfusionMatrix):
 
     def compute(self):
 
-        mIoU,_= self.compute_IoU(self.mat)
-
-        return mIoU
-
-    def compute_IoU(self, mat):
-
-        IoU = mat.diag() / (mat.sum(1) + mat.sum(0) - mat.diag())
+        IoU = self.mat.diag() / (self.mat.sum(1) + self.mat.sum(0) - self.mat.diag())
         IoU[IoU.isnan()] = 0
 
         mIoU = IoU.mean()
-        return mIoU, IoU
+
+        return mIoU
 
 
 class IoU_Class(ConfusionMatrix):

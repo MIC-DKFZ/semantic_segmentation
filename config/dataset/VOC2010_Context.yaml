@@ -6,7 +6,7 @@ defaults:
   - override /hyperparameters: VOC2010_Context
 #SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
 dataset:
-    _target_: datasets.VOC2010_Context.VOC2010_Context_dataset
+    _target_: datasets.VOC2010_Context.VOC2010_Context.VOC2010_Context_dataset
     root: ${paths.VOC2010_Context}
     ignore_index: ${DATASET.IGNORE_INDEX}
     num_classes: ${DATASET.NUM_CLASSES}

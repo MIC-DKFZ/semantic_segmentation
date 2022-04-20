@@ -7,7 +7,7 @@ from albumentations.pytorch import ToTensorV2
 
 import torch
 
-from datasets.Cityscapes import Cityscapes_dataset, classes_19, classes_34
+from datasets.Cityscapes.Cityscapes import Cityscapes_dataset, classes_19, classes_34
 from utils.visualization import show_data
 from utils.utils import get_logger
 log = get_logger(__name__)

@@ -1,17 +1,13 @@
 import os
 import glob
-from collections import namedtuple
-import pandas as pd
 
 import torch
-import torchvision.utils
-
+import numpy as np
 import cv2
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-from PIL import Image
-import numpy as np
-from tqdm import tqdm
+import pandas as pd
+
 from utils.visualization import show_data
 from utils.utils import get_logger
 log = get_logger(__name__)
@@ -30,9 +26,13 @@ class EndoCV2022_dataset(torch.utils.data.Dataset):
 
         #data = pd.read_csv(os.path.join(root, "PoleGen2_4CV_2.csv"))
         data = pd.read_csv(os.path.join(root, "polypgen_cleaned_4CV.csv"))
-
-        if fold=="all":
+        if fold == "all":
             data=data
+        elif fold=="extra":
+            if split=="train":
+                data=pd.DataFrame()#None
+            if split=="val":
+                data=data
         elif split=="val":
             data = data[data.fold == fold]
         elif split=="train":
@@ -43,11 +43,20 @@ class EndoCV2022_dataset(torch.utils.data.Dataset):
         #folder=os.path.join( "EndoCV2022_ChallengeDataset","PolypGen2.0")
         folder="clean_PolypGen2.0"
         #
+        #if data != None
         for i, d in data.iterrows():
             self.imgs.append(os.path.join(root,folder, d.vid_folder, "images",
                                        d.image_id))
             self.masks.append(
                 os.path.join(root, folder, d.vid_folder, "masks", d.Mask_id))
+
+        if split=="train":
+            data_extra = pd.read_csv(os.path.join(root, "external_endocv2.csv"))
+
+            for i, d in data_extra.iterrows():
+                self.imgs.append(os.path.join(root,d.im_path))
+                self.masks.append(os.path.join(root, d.mask_path))
+
         self.transforms = transforms
         log.info("Dataset: EncoCV2022 %s - Fold %s - %s images - %s masks",split, fold,  len(self.imgs),len(self.masks))
 
@@ -71,8 +80,32 @@ class EndoCV2022_dataset(torch.utils.data.Dataset):
 
 
 
-if __name__ == "__main__":
+class EndoCV2022_dataset_Test(torch.utils.data.Dataset):
+    def __init__(self,root,transforms=None):
+        #print(len(data))
+        self.imgs = glob.glob(os.path.join(root,"*.jpg"))
 
+
+        self.transforms = transforms
+        log.info("Dataset: EncoCV2022 Test - %s images",len(self.imgs))
+
+
+    def __getitem__(self, idx):
+
+        img =cv2.imread(self.imgs[idx])
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+        transformed = self.transforms(image=img)
+        img= transformed['image']
+
+        return img,self.imgs[idx]
+
+    def __len__(self):
+        return len(self.imgs)
+
+
+
+if __name__ == "__main__":
     transforms = A.Compose([
         A.RandomScale(scale_limit=(-0.5, 0), always_apply=True, p=1.0),
         A.RGBShift( p=1,r_shift_limit= 10,g_shift_limit= 10,b_shift_limit= 10),
@@ -94,7 +127,6 @@ if __name__ == "__main__":
     img,mask=EndoCV[150]
     out = show_data(img,mask,alpha=0.5,color_mapping=[[0,0,0],[255,0,0]], mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     out.show()
-
 
 
 

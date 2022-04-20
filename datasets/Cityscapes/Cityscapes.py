@@ -2,7 +2,6 @@ import os
 import glob
 from collections import namedtuple
 
-
 import torch
 import torchvision.utils
 

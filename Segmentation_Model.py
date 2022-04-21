@@ -131,30 +131,40 @@ class SegModel(LightningModule):
         ### RESET METRIC MANUALLY###
         self.metric.reset()
 
+    def on_test_start(self):
+        self.test_scales = [1]
+        self.test_flip = False
+        if hasNotEmptyAttr(self.config,"TESTING"):
+            if hasNotEmptyAttr(self.config.TESTING,"SCALES"):
+                self.test_scales=self.config.TESTING.SCALES
+            if hasTrueAttr(self.config.TESTING, "FLIP"):
+                self.test_flip=True
+
+
 
     def test_step(self, batch, batch_idx):
-
+        #print(self.stage)
+        #self.validation_step(batch, batch_idx)
+        #return
         x, y_gt = batch
         x_size = x.size(2), x.size(3)
         total_pred = None
 
         ### SET THE DIFFERENT SCALES; IF NO MS TESTING IS USED ONLY SCALE 1 IS USED ###
-        if hasNotEmptyAttr(self.config.TESTING,"SCALES"):
-            scales=self.config.TESTING.SCALES
-        else:
-            scales=[1]
 
+        #print(scales,do_flip)
         ### ITERATE THROUGH THE SCALES AND SUM THE PREDICTIONS UP ###
-        for scale in scales:
+        for scale in self.test_scales:
             s_size=int(x_size[0]*scale),int(x_size[1]*scale)
             x_s=F.interpolate(x, s_size, mode='bilinear', align_corners=self.config.MODEL.ALIGN_CORNERS)
-
-            y_pred=self(x_s)["out"]
+            y_pred = self(x_s)["out"]
+            #y_pred=self(x_s)["out"]
             y_pred=F.interpolate(y_pred, x_size, mode='bilinear', align_corners=self.config.MODEL.ALIGN_CORNERS)
 
             ###IF FLIPPING IS USED THE AVERAGE OVER PREDICTION FROM THE FLIPPED AND NOT FLIPPEND IMAGE IS TAKEN ###
-            if hasTrueAttr(self.config.TESTING,"FLIP"):
-                x_flip=torch.flip(x_s, [3])
+            if self.test_flip:
+                print("flip")
+                x_flip=torch.flip(x_s, [3])#
 
                 y_flip = self(x_flip)["out"]
                 y_flip = torch.flip(y_flip, [3])
@@ -165,9 +175,9 @@ class SegModel(LightningModule):
 
             ### SUMMING THE PREDICTIONS UP ###
             if total_pred==None:
-                total_pred=y_pred
+                total_pred=y_pred#.detach()
             else:
-                total_pred+=y_pred
+                total_pred+=y_pred#.detach()
         ### UPDATE THE METRIC WITH THE AGGREGATED PREDICTION ###
         self.metric.update(total_pred,y_gt)
 
@@ -187,6 +197,7 @@ class SegModel(LightningModule):
         if self.training:
             loss = sum([self.loss_functions[i](y, y_gt) * self.loss_weights[i] for i, y in enumerate(y_pred.values())])
         else:
+            #loss = sum([F.cross_entropy(y, y_gt, ignore_index=self.config.DATASET.IGNORE_INDEX)for i, y in enumerate(y_pred.values())])
             loss = sum([F.cross_entropy(y, y_gt, ignore_index=self.config.DATASET.IGNORE_INDEX) * self.loss_weights[i] for i, y in enumerate(y_pred.values())])
         return loss
 

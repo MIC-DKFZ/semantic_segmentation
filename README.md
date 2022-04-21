@@ -69,10 +69,10 @@ Find a pytorch installation guide for your system [here](https://pytorch.org/get
 ````shell
 pip install -r requirements.txt
 ````
-To check if everything is working you can run a "unit test" using Pytorch Lightnings [fast_dev_run](https://pytorch-lightning.readthedocs.io/en/stable/common/debugging.html#fast-dev-run) by:
-``
+To check if the installation was successful, you can run a small "unit test" using Pytorch Lightnings [fast_dev_run](https://pytorch-lightning.readthedocs.io/en/stable/common/debugging.html#fast-dev-run) by:
+````
 python main.py +pl_trainer.fast_dev_run=True
-``
+````
 
 Among others, this repository is mainly built on the following packages.
 You may want to familiarize yourself with their basic use beforehand.

@@ -43,7 +43,7 @@ pl_trainer:                     # parameters for the pytorch lightning trainer
   enable_checkpointing: False   # Enable/Disable Checkpointing
 
   # Some usefull pl parameters for debugging
-  #limit_train_batches: 0.01
+  #limit_train_batches: 0.25
   #limit_val_batches: 0.25
   #limit_test_batches: 0.25
   #accumulate_grad_batches: 2

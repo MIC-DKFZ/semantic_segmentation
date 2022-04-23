@@ -17,6 +17,7 @@ MODEL:
     Paddle: HRNet_W48_C_ssld_pretrained.pth
     Mapillary: mapillary_ocrnet.HRNet_Mscale_fast-rattlesnake.pth
   ALIGN_CORNERS: False
+  INPUT_CHANNELS: 3
   EXTRA:
     FINAL_CONV_KERNEL: 1
     STAGE1:

@@ -12,7 +12,7 @@ from utils.utils import hasNotEmptyAttr,hasTrueAttr, hasNotEmptyAttr_rec
 from utils.utils import get_logger
 
 log = get_logger(__name__)
-
+#model=hrnet epochs=5 +pl_trainer.limit_train_batches=0.1 +pl_trainer.limit_val_batches=0.1 pl_trainer.enable_checkpointing=True
 class SegModel(LightningModule):
 
     def __init__(self, config):
@@ -23,16 +23,17 @@ class SegModel(LightningModule):
         self.model = hydra.utils.instantiate(self.config.model)
 
         ### INSTANTIATE MEDRIC FROM CONFIG AND METRIC RELATED PARAMETERS ###
+        #self.metric_name = "metric/"+config.METRIC.NAME
         self.metric_name = config.METRIC.NAME
         ### INSTANTIATE VALIDATION MEDRIC FROM CONFIG AND SAVE BEST METRIC PARAMETER ###
         self.metric=MetricModule(config.METRIC.METRICS)#,persistent=False)
+        self.metric_call=config.METRIC.METRIC_CALL
         self.register_buffer("best_metric_val", torch.as_tensor(0),persistent=False)
 
         ### (OPTIONAL) INSTANTIATE TRAINING MEDRIC FROM CONFIG AND SAVE BEST METRIC PARAMETER ###
         if hasTrueAttr(config.METRIC, "DURING_TRAIN"):
             self.metric_train=self.metric.clone()
             self.register_buffer("best_metric_train", torch.as_tensor(0),persistent=False)
-
 
     def configure_optimizers(self):
         ### INSTANTIATE LOSSFUNCTION AND LOSSWEIGHT FOR EACH ELEMENT IN LIST ###
@@ -88,7 +89,13 @@ class SegModel(LightningModule):
 
         ### (OPTIONAL) UPDATE TRAIN METRIC ###
         if hasattr(self, "metric_train"):
-            self.metric_train.update(list(y_pred.values())[0],y_gt)
+            if self.metric_call in ["stepwise"]:
+                ### UPDATE GLOBAL METRIC AND LOG STEPWISE METRIC ###
+                metric_step = self.metric_train(list(y_pred.values())[0], y_gt)
+                self.log_dict_epoch(metric_step,prefix="metric_train/",postfix="_stepwise", on_step=False,on_epoch=True)
+            else:
+                ### UPDATE ONLY GLOBAL METRIC ###
+                self.metric_train.update(list(y_pred.values())[0], y_gt)
 
         return loss
 
@@ -98,12 +105,18 @@ class SegModel(LightningModule):
         x, y_gt = batch
         y_pred = self(x)
 
-        ### COMPUTE AND LOG LOSS ###
+        ### COMPUTE AND LOG LOSS TO TENSORBOARD ###
         val_loss = self.get_loss(y_pred, y_gt)
         self.log("Loss/validation_loss", val_loss, on_step=True, on_epoch=True, logger=True)#,prog_bar=True)
 
         ### UPDATE VALIDATION METRIC ###
-        self.metric.update(list(y_pred.values())[0],y_gt)
+        if self.metric_call in ["stepwise"]:
+            ### UPDATE GLOBAL METRIC AND LOG STEPWISE METRIC TO TENSORBOARD###
+            metric_step = self.metric(list(y_pred.values())[0], y_gt)
+            self.log_dict_epoch(metric_step, prefix="metric/", postfix="_stepwise", on_step=False, on_epoch=True)
+        else:
+            ### UPDATE ONLY GLOBAL METRIC ###
+            self.metric.update(list(y_pred.values())[0], y_gt)
 
         return val_loss
 
@@ -113,25 +126,32 @@ class SegModel(LightningModule):
 
             log.info("EPOCH: %s", self.current_epoch)
 
-            ### COMPUTE, LOG AND RESET THE TRAINING METRICS IF USED ###
-            if hasattr(self, "metric_train"):
+            ### COMPUTE AND LOG GLOBAL VALIDATION METRIC TO TENSORBOARD ###
+            metric = self.metric.compute()
+            self.log_dict_epoch(metric, prefix="metric/", on_step=False, on_epoch=True)
 
-                metrics_train = self.metric_train.compute()
-
-                self.log_metric(metrics_train, "best_metric_train", "Train", "metric_train/", False)
-
-                self.metric_train.reset()
-
-
-            ### COMPUTE AND LOG THE VALIDATION METRICS ###
-            metrics=self.metric.compute()
-
-            self.log_metric(metrics, "best_metric_val", "Validation", "metric/", True)
+            ### LOG VALIDATION METRIC TO CONSOLE ###
+            self.metric_logger(metric_group="metric/",best_metric="best_metric_val",stage="Validation",save_best_metric=True)
 
         ### RESET METRIC MANUALLY###
         self.metric.reset()
 
+    def on_train_epoch_end(self):
+        ### (OPTIONAL) COMPUTE AND LOG GLOBAL VALIDATION METRIC TO TENSORBOARD ###
+        if hasattr(self, "metric_train"):
+            metric_train = self.metric_train.compute()
+            self.log_dict_epoch(metric_train, prefix="metric_train/", on_step=False, on_epoch=True)
+            ### RESET METRIC MANUALLY###
+            self.metric_train.reset()
+            ### (OPTIONAL) LOG TRAIN METRIC TO CONSOLE ###
+            self.metric_logger(metric_group="metric_train/", best_metric="best_metric_train", stage="Train",
+                               save_best_metric=False)
+
+
     def on_test_start(self):
+
+        ### SET THE DIFFERENT SCALES; IF NO MS TESTING IS USED ONLY SCALE 1 IS USED ###
+        ### IF NOT DEFINED ALSO NO FLIPPING IS DONE ###
         self.test_scales = [1]
         self.test_flip = False
         if hasNotEmptyAttr(self.config,"TESTING"):
@@ -140,26 +160,17 @@ class SegModel(LightningModule):
             if hasTrueAttr(self.config.TESTING, "FLIP"):
                 self.test_flip=True
 
-
-
     def test_step(self, batch, batch_idx):
-        #print(self.stage)
-        #self.validation_step(batch, batch_idx)
-        #return
         x, y_gt = batch
         x_size = x.size(2), x.size(3)
         total_pred = None
 
-        ### SET THE DIFFERENT SCALES; IF NO MS TESTING IS USED ONLY SCALE 1 IS USED ###
-
-        #print(scales,do_flip)
         ### ITERATE THROUGH THE SCALES AND SUM THE PREDICTIONS UP ###
         for scale in self.test_scales:
             s_size=int(x_size[0]*scale),int(x_size[1]*scale)
-            x_s=F.interpolate(x, s_size, mode='bilinear', align_corners=self.config.MODEL.ALIGN_CORNERS)
+            x_s=F.interpolate(x, s_size, mode='bilinear', align_corners=True)#self.config.MODEL.ALIGN_CORNERS)
             y_pred = self(x_s)["out"]
-            #y_pred=self(x_s)["out"]
-            y_pred=F.interpolate(y_pred, x_size, mode='bilinear', align_corners=self.config.MODEL.ALIGN_CORNERS)
+            y_pred=F.interpolate(y_pred, x_size, mode='bilinear', align_corners=True)#=self.config.MODEL.ALIGN_CORNERS)
 
             ###IF FLIPPING IS USED THE AVERAGE OVER PREDICTION FROM THE FLIPPED AND NOT FLIPPEND IMAGE IS TAKEN ###
             if self.test_flip:
@@ -168,8 +179,8 @@ class SegModel(LightningModule):
 
                 y_flip = self(x_flip)["out"]
                 y_flip = torch.flip(y_flip, [3])
-                y_flip = F.interpolate(y_flip, x_size, mode='bilinear',
-                                       align_corners=self.config.MODEL.ALIGN_CORNERS)
+                y_flip = F.interpolate(y_flip, x_size, mode='bilinear',align_corners=True)
+                #                       align_corners=self.config.MODEL.ALIGN_CORNERS)
                 y_pred+=y_flip
                 y_pred/=2
 
@@ -178,18 +189,60 @@ class SegModel(LightningModule):
                 total_pred=y_pred#.detach()
             else:
                 total_pred+=y_pred#.detach()
+
         ### UPDATE THE METRIC WITH THE AGGREGATED PREDICTION ###
-        self.metric.update(total_pred,y_gt)
+        if self.metric_call in ["stepwise"]:
+            ### UPDATE GLOBAL METRIC AND LOG STEPWISE METRIC TO TENSORBOARD###
+            metric_step = self.metric(y_pred, y_gt)
+            self.log_dict_epoch(metric_step, prefix="metric_test/", postfix="_stepwise", on_step=False, on_epoch=True)
+        else:
+            ### UPDATE ONLY GLOBAL METRIC ###
+            self.metric.update(y_pred, y_gt)
 
     def on_test_epoch_end(self):
         ### COMPUTE THE METRIC AND LOG THE METRIC ###
         log.info("TEST RESULTS")
 
-        metrics = self.metric.compute()
+        ### COMPUTE AND LOG GLOBAL VALIDATION METRIC TO TENSORBOARD ###
+        metric = self.metric.compute()
+        self.log_dict_epoch(metric, prefix="metric_test/", on_step=False, on_epoch=True)
 
-        self.log_metric(metrics, "best_metric_val", "Test", "metric/", False)
+        ### LOG VALIDATION METRIC TO CONSOLE ###
+        self.metric_logger(metric_group="metric_test/", best_metric="best_metric_val", stage="Test",
+                           save_best_metric=False)
+
+        ### RESET METRIC MANUALLY###
+        self.metric.reset()
 
 
+    def metric_logger(self,metric_group,best_metric=None,stage="Validation",save_best_metric=True):
+        logged_metrics = self.trainer.logged_metrics
+
+        metrics = {k.replace(metric_group, ""): v for k, v in logged_metrics.items() if metric_group in k}
+
+        ### UPDATE BEST TARGET METRIC ###
+        target_metric_score = metrics.pop(self.metric_name)
+        if target_metric_score > getattr(self, best_metric):
+            setattr(self, best_metric, target_metric_score)
+
+        ### LOG BEST METRIC TO TENSORBOARD ###
+        if "best_"+self.metric_name in metrics: metrics.pop("best_"+self.metric_name)
+        self.log_dict_epoch({self.metric_name: getattr(self, best_metric)},prefix=metric_group+"best_")
+        ### LOG TARGET METRIC AND BEST METRIC TO CONSOLE ###
+        log.info(stage.ljust(10) + " - Best %s %.4f       %s: %.4f", self.metric_name, getattr(self, best_metric),
+                 self.metric_name, target_metric_score)
+        ### REMOVE BEST METRIC FROM metrics since best metric is already logged to console ###
+        if "best_"+self.metric_name in metrics: metrics.pop("best_"+self.metric_name)
+
+        ### LOG REMAINING METRICS TO CONSOLE ###
+        for name,score in metrics.items():
+            log.info('%s: %.4f',name,score)
+
+    def log_dict_epoch(self,dic,prefix="",postfix="",**kwargs):
+        for name, score in dic.items():
+            self.log_dict({prefix+name+postfix: score,
+                                "step": torch.tensor(self.current_epoch, dtype=torch.float32)},
+                               logger=True, sync_dist=True,**kwargs)
 
     def get_loss(self, y_pred, y_gt):
         ### COMPUTING LOSS OF EVERY OUTPUT AND THE CORRESPONDING WEIGHT   ###
@@ -200,38 +253,6 @@ class SegModel(LightningModule):
             #loss = sum([F.cross_entropy(y, y_gt, ignore_index=self.config.DATASET.IGNORE_INDEX)for i, y in enumerate(y_pred.values())])
             loss = sum([F.cross_entropy(y, y_gt, ignore_index=self.config.DATASET.IGNORE_INDEX) * self.loss_weights[i] for i, y in enumerate(y_pred.values())])
         return loss
-
-    def log_metric(self,metrics,best_metric=None,stage="Validation",log_group="metric/",save_best_metric=False):
-
-        ### FIRST LOG TARGET METRIC   ###
-        target_metric_score = metrics.pop(self.metric_name)
-        ### LOGGING TO TENSORBOARD ###
-        self.log_dict({log_group + self.metric_name: target_metric_score,
-                       "step": torch.tensor(self.current_epoch, dtype=torch.float32)},
-                      logger=True, sync_dist=True)
-
-        ### UPDATA BEST METRIC ###
-        if target_metric_score > getattr(self,best_metric):
-            setattr(self,best_metric,target_metric_score)
-            if hasattr(self.metric[self.metric_name], "save") and save_best_metric and hasattr(self.logger, "log_dir"):
-                self.metric[self.metric_name].save(path=self.logger.log_dir)
-        self.log_dict({log_group +"best_"+ self.metric_name: target_metric_score,
-                       "step": torch.tensor(self.current_epoch, dtype=torch.float32)},
-                      logger=True, sync_dist=True)
-
-        ### CONSOLE LOGGING ###
-        log.info(stage.ljust(10) + " - Best %s %.4f       %s: %.4f", self.metric_name, getattr(self, best_metric),
-                 self.metric_name, target_metric_score)
-
-
-        ### LOG THE REMAINING METRICS ###
-        for name,score in metrics.items():
-            ### LOGGING TO TENSORBOARD ###
-            self.log_dict({log_group + name: score,"step": torch.tensor(self.current_epoch, dtype=torch.float32)}, logger=True, sync_dist=True)
-            ### CONSOLE LOGGING ###
-            log.info('%s: %.4f',name,score)
-
-
 
 
 

@@ -22,21 +22,26 @@ class MetricModule(MetricCollection):
         super().__init__(metrics,**kwargs)
 
 class ConfusionMatrix(Metric):
-    def __init__(self, num_classes,dist_sync_on_step=False):
-        super().__init__(dist_sync_on_step=dist_sync_on_step, compute_on_step=False)
+    def __init__(self, num_classes):
+        super().__init__(dist_sync_on_step=False, compute_on_step=False)
         self.num_classes = num_classes
         self.add_state("mat", default=torch.zeros((num_classes, num_classes), dtype=torch.int64), dist_reduce_fx="sum")
 
-    def update(self,pred, gt):
-        gt=gt.flatten().detach()#.cpu()
-        pred=pred.argmax(1).flatten().detach()#.cpu()
+    def get_confmat_for_sample(self,pred,gt):
+        gt = gt.flatten()#.detach()#.cpu()
+        pred = pred.argmax(1).flatten()#.detach()#.cpu()
         n = self.num_classes
 
         with torch.no_grad():
             k = (gt >= 0) & (gt < n)
             inds = n * gt[k].to(torch.int64) + pred[k]
-            mat_step=torch.bincount(inds, minlength=n ** 2).reshape(n, n)
-            self.mat += mat_step#.to(self.mat)
+            confmat = torch.bincount(inds, minlength=n ** 2).reshape(n, n)
+        return confmat
+
+    def update(self,pred, gt):
+        #with torch.no_grad():
+        confmat=self.get_confmat_for_sample(pred,gt)
+        self.mat += confmat#.to(self.mat)
 
     def save(self, path, name=None):
         if name != None:
@@ -46,54 +51,51 @@ class ConfusionMatrix(Metric):
         path = os.path.join(path, name)
         torch.save(self.mat.detach().cpu(), path)
 
-    #def reset(self):
-    #    if self.mat is not None:
-    #        self.mat.zero_()
-
 class IoU(ConfusionMatrix):
 
-    def compute(self):
+    def __init__(self, per_class=False,labels=None,ignore_class=None,**kwargs):
+        super().__init__(**kwargs)
+        self.per_class = per_class
+        self.ignore_class=ignore_class
 
-        IoU = self.mat.diag() / (self.mat.sum(1) + self.mat.sum(0) - self.mat.diag())
+        if self.per_class:
+            if labels is None:
+                labels=np.arange(self.num_classes).astype(str)
+            if ignore_class is not None:
+                labels = np.delete(labels, ignore_class)
+            self.labels = ["IoU_" + label for label in labels]
+
+
+    def get_IoU_from_mat(self,confmat):
+        if self.ignore_class is not None and 0 <= self.ignore_class < self.num_classes:
+            confmat[self.ignore_class]=0.0
+
+        IoU = confmat.diag() / (confmat.sum(1) + confmat.sum(0) - confmat.diag())
+
+        if self.ignore_class is not None and 0 <= self.ignore_class < self.num_classes:
+            IoU=torch.cat((IoU[0:self.ignore_class],IoU[self.ignore_class+1:]))
         IoU[IoU.isnan()] = 0
-
-        mIoU = IoU.mean()
-
-        return mIoU
-
-
-class IoU_Class(ConfusionMatrix):
-    def __init__(self, num_classes,labels=None,dist_sync_on_step=False):
-        super().__init__( num_classes,dist_sync_on_step)
-        self.labels=labels
+        return IoU
 
     def compute(self):
-
-        mIoU,IoU_class= self.compute_IoU(self.mat)
-
-        dic_score = {}
-        dic_score["IoU"]=mIoU
-        if self.labels!=None:
-            for i,l in zip(IoU_class,self.labels):
-                dic_score["IoU_"+l]= i
+        IoU=self.get_IoU_from_mat(self.mat)
+        mIoU = IoU.mean()
+        if self.per_class:
+            IoU = {self.labels[i]: IoU[i] for i in range(len(IoU))}
+            IoU["mIoU"]=mIoU
+            return IoU
         else:
-            for i,l in zip(IoU_class,range(0,len(IoU_class))):
-                dic_score["IoU_"+str(l)]=i
+            return mIoU
 
-        #return mIoU,dic_score
-        return dic_score
+#######################################################################################################
+#######################################################################################################
+#######################################################################################################
+#######################################################################################################
 
-    def compute_IoU(self, mat):
-
-        IoU = mat.diag() / (mat.sum(1) + mat.sum(0) - mat.diag())
-        IoU[IoU.isnan()] = 0
-
-        mIoU = IoU.mean()
-        return mIoU, IoU
 
 class binary_per_image_Dice(Metric):
     def __init__(self, num_classes, dist_sync_on_step=False):
-        super().__init__(dist_sync_on_step=dist_sync_on_step, compute_on_step=False)
+        super(IoU,self).__init__(dist_sync_on_step=dist_sync_on_step, compute_on_step=False)
         self.num_classes = num_classes
         self.add_state("per_image", default=[], dist_reduce_fx="cat")
 

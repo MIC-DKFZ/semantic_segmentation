@@ -854,7 +854,7 @@ Change the config there to meet your desires.
 <p>
 
 If you have trained a model and want to test it with other settings or other data you can use the validation.py file.
-The function expects a *--valdir* arguments which is the path to the experiment you want to test (dir to the folder which contains *checkpoints/*, *hydra/* etc.).
+The function expects a *--ckpt_dir* arguments which is the path to the experiment you want to test (dir to the folder which contains *checkpoints/*, *hydra/* etc.).
 The config from this experiment is loaded and merged with *config/baseline.yaml* to define the testing configuration.
 You can also use Hydras commandline syntax to change the config to your needs.
 consider that if your config contains a TESTING (see *-Testing directly after Training-* above) entry the content of this is also merged into the config.
@@ -862,11 +862,11 @@ Multiscale testing and flipping are supported and you can use it in the followin
 
 `````shell
 # pass a path and some arguments you want to change
-python validation.py --valdir=<somepath>  arg_to_overrice=new_value ...
+python validation.py --ckpt_dir=<somepath>  arg_to_overrice=new_value ...
 # how to use multiscale testing
-python validation.py --valdir=<somepath> TESTING.SCALES=[0.5, ..., 2.0]  TESTING.FLIP=True
+python validation.py --ckpt_dir=<somepath> TESTING.SCALES=[0.5, ..., 2.0]  TESTING.FLIP=True
 # example
-python validation.py --valdir="/home/.../PASCALContext/hrnet/data_augmentations=PASCALContext_epochs=200/2022-01-18_16-05-09" environment=local TESTING.SCALES=[0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]  TESTING.FLIP=True
+python validation.py --ckpt_dir="/home/.../PASCALContext/hrnet/data_augmentations=PASCALContext_epochs=200/2022-01-18_16-05-09" environment=local TESTING.SCALES=[0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]  TESTING.FLIP=True
 `````
 
 </p>

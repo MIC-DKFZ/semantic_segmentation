@@ -18,6 +18,7 @@ MODEL:
     Mapillary: mapillary_ocrnet.HRNet_Mscale_fast-rattlesnake.pth
   ALIGN_CORNERS: True
   ASPP_BOT_CH: 256
+  INPUT_CHANNELS: 3
   OCR:
     MID_CHANNELS: 512
     KEY_CHANNELS: 256

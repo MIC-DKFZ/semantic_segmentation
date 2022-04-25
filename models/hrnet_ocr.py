@@ -431,7 +431,7 @@ class OCRNet(nn.Module):
         ALIGN_CORNERS = config.MODEL.ALIGN_CORNERS
 
         # stem net
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=2, padding=1,
+        self.conv1 = nn.Conv2d(config.MODEL.INPUT_CHANNELS, 64, kernel_size=3, stride=2, padding=1,
                                bias=False)
         self.bn1 = BatchNorm2d(64, momentum=BN_MOMENTUM)
         self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1,
@@ -671,27 +671,34 @@ class OCRNet(nn.Module):
 
     def load_weights(self, pretrained):
         if os.path.isfile(pretrained):
-            #pretrained_dict = torch.load(pretrained)
-            pretrained_dict = torch.load(pretrained,
-                                         map_location={'cuda:0': 'cpu'})
-            log.info('=> loading pretrained model {}'.format(pretrained))
-            if "state_dict" in pretrained_dict.keys():
-                pretrained_dict=pretrained_dict["state_dict"]
-            pretrained_dict = {k.replace('model.', '').replace('module.', '').replace('backbone.', '').replace('ocr.', ''): v for k, v in pretrained_dict.items()}
-            log.info('=> loading pretrained model {}'.format(pretrained))
-            model_dict = self.state_dict()
-            #print(model_dict.keys())
-            #print(pretrained_dict.keys())
-            #pretrained_dict = {k: v for k, v in pretrained_dict.items()
-            #                   if k in model_dict.keys()}
-            pretrained_dict = {k: v for k, v in pretrained_dict.items() if
-                               k in model_dict.keys() and "cls_head" not in k and "aux_head" not in k}
-            #print(set(model_dict) - set(pretrained_dict))
-            #print(set(pretrained_dict) - set(model_dict))
 
+            pretrained_dict = torch.load(pretrained, map_location={'cuda:0': 'cpu'})
+            log.info('Loading pretrained weights {}'.format(pretrained))
+
+            ### SOME PREPROCESSING
+            if "state_dict" in pretrained_dict.keys():
+                pretrained_dict = pretrained_dict["state_dict"]
+            pretrained_dict = {k.replace('model.', '').replace('module.', '').replace('backbone.', ''): v for k, v in
+                               pretrained_dict.items()}
+
+            model_dict = self.state_dict()
+
+            ### FOUND WEIGHTS WHICH MATCH TO THE MODEL ###
+            pretrained_dict = {k: v for k, v in pretrained_dict.items()
+                               if k in model_dict.keys()}
+            no_match = set(model_dict) - set(pretrained_dict)
+            log.info("No Weights found for: {}".format(no_match))
+
+            ### CHECK IF SIZE OF PRETRAINED WEIGHTS MATCH TO THE MODEL ###
+            pretrained_dict = {k: v for k, v in pretrained_dict.items() if v.shape == model_dict[k].shape}
+            shape_mismatch = (set(model_dict) - set(pretrained_dict)) - no_match
+            log.info("Shape Mismatch for: {}".format(shape_mismatch))
+
+            ### LOAD WEIGHTS ###
             model_dict.update(pretrained_dict)
             self.load_state_dict(model_dict)
-            del model_dict,pretrained_dict
+            del model_dict, pretrained_dict
+            log.info("Weights successfully loaded")
 
 
 def get_seg_model(cfg):

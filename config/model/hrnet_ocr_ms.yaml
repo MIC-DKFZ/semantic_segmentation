@@ -16,7 +16,8 @@ TESTING:
   TEST_AFTERWARDS: True
   OVERRIDES:
     MODEL.MSCALE_INFERENCE: True
-    val_batch_size: 1
+    val_batch_size: 2
+    pl_trainer.benchmark: False
 
 MODEL:
   NAME: hrnet_ocr_ms
@@ -35,6 +36,7 @@ MODEL:
   N_SCALES: [0.5,1.0,2.0]
   MSCALE_DROPOUT: False
   MSCALE_INNER_3x3: True
+  INPUT_CHANNELS: 3
   OCR:
     MID_CHANNELS: 512
     KEY_CHANNELS: 256

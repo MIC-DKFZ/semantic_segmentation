@@ -1,7 +1,7 @@
 #@package _global_
 METRIC:
   NAME: mIoU_stepwise
-  DURING_TRAIN: True
+  DURING_TRAIN: False
   METRIC_CALL: stepwise
   METRICS:
     mIoU:
@@ -10,6 +10,12 @@ METRIC:
       per_class: True
       ignore_class: 0
       labels: ${DATASET.LABELS}
+    #Dice:
+    #  _target_: utils.metric.Dice
+    #  num_classes: ${DATASET.NUM_CLASSES}
+    #  per_class: True
+    #  ignore_class: 0
+    #  labels: ${DATASET.LABELS}
 
 
 

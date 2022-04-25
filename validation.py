@@ -102,5 +102,4 @@ if __name__ == "__main__":
     #F:\Desktop\Target_Folder\Cityscapes\hrnet_ocr_ms\baseline__MODEL.MSCALE_TRAINING_False__epochs_65__lr_0.001\2022-01-25_11-18-48
     parser.add_argument('--ckpt_dir', type=str, default="")
     args, hydra_args = parser.parse_known_args()
-
     validation(args.ckpt_dir,hydra_args)

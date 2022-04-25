@@ -2,6 +2,7 @@
 METRIC:
   NAME: mIoU
   DURING_TRAIN: False
+  #METRIC_CALL: global
   METRICS:
     mIoU:
       _target_: utils.metric.IoU

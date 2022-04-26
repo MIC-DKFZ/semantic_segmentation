@@ -742,11 +742,6 @@ class CustomMetric(Metric):
         return metric_to_optimize               # return the metric which should be optimized
         #return metric_to_optimize, {"metric1":value,"metric2":value,...}    #if you want additional metrics to be logged return them 
                                                                              # in dict format as a second arguments
-    
-    #Optional if you want to save somethink (e.g. a confmat) 
-    #If you dont want to save something you dont need this function
-    def save(self, path, name=None):            #called if the current epoch gives the best results and during testing
-        ...                             
 ````
 
 After implementing the metric you have to set up the config of the metric.

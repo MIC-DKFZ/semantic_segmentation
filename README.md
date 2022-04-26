@@ -86,6 +86,8 @@ Lightning also makes code scalable to any hardware(CPU, GPU, TPU) without changi
 It provides the ability to dynamically create a hierarchical configuration by composition and override it through config files and the command line.
 - **[Albumentations](https://albumentations.ai):** Package for fast and flexible data augmentation in Semantic Segmentation (Albumentations is not limited to segmentation, but only that is used in this repository). 
 Albumentations provides a lot of augmentations that can be used. Also random operations (e.g. random cropping) can be applied directly to images and masks.
+- **[Torchmetrics](https://torchmetrics.readthedocs.io/en/stable/)**: Collection of multiple PyTorch metrics and with a good integrity in Pytorch Lightning. 
+Using torchmetrics makes it possible to use custom or predefined metrics and synchronization these between multiple devices.
 
 ## Setting up the Data
 
@@ -322,10 +324,20 @@ LOGDIR                                      # logs/ by default
                   ├── checkpoints/          # if checkpointing is enabled this contains the best and the last epochs checkpoint
                   ├── hydra/                # contains hydra files
                   ├── validation/           # optional (only when model is validated) - contains testing results
-                  ├── ConfusionMatrix.pt    # Confusion Matrix of best epoch, for the case that other metrics are needed later
                   ├── event.out...          # Tensorboard log
                   ├── main.log              # logging
                   └── hparams.yaml          # resolved config
+````
+
+Since [Tensorboard](https://pytorch.org/tutorials/recipes/recipes/tensorboard_with_pytorch.html#run-tensorboard) is used for logging, you can view the logged results by the following command.
+Tensorboard will include all logs (*.tfevents.* files) found in any subdirectory of *--logdir*.
+This means by the level of the selected *--logdir* you can define which experiments (runs) should be included into the tensorboard session.
+````shell
+tensorboard --logdir=<some.dir>
+# example for viewing a single experiment
+tensorboard --logdir=/home/.../logs/Cityscapes/hrnet/baseline/2022-04-21_10-25-30
+# example for viewing all runs in .../baseline
+tensorboard --logdir=/home/.../logs/Cityscapes/hrnet/baseline
 ````
 
 ### Run Validation/Testing

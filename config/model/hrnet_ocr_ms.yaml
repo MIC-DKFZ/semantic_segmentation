@@ -16,8 +16,8 @@ TESTING:
   TEST_AFTERWARDS: True
   OVERRIDES:
     MODEL.MSCALE_INFERENCE: True
-    val_batch_size: 2
-    pl_trainer.benchmark: False
+    #val_batch_size: 2
+    #pl_trainer.benchmark: False
 
 MODEL:
   NAME: hrnet_ocr_ms

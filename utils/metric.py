@@ -22,9 +22,14 @@ class MetricModule(MetricCollection):
 
         super().__init__(metrics, **kwargs)
 
+    # def save(self,logger):
+    #    for name,met in self.items():
+    #        if hasattr(met,"save"):
+    #            met.save(logger)
+
 
 class ConfusionMatrix(Metric):
-    def __init__(self, num_classes):
+    def __init__(self, num_classes: int) -> None:
         super().__init__(dist_sync_on_step=False, compute_on_step=False)
         self.num_classes = num_classes
         self.add_state(
@@ -32,8 +37,9 @@ class ConfusionMatrix(Metric):
             default=torch.zeros((num_classes, num_classes), dtype=torch.int64),
             dist_reduce_fx="sum",
         )
+        self.c = 0
 
-    def get_confmat_for_sample(self, pred, gt):
+    def get_confmat_for_sample(self, pred: torch.Tensor, gt: torch.Tensor) -> torch.Tensor:
         gt = gt.flatten()  # .detach()#.cpu()
         pred = pred.argmax(1).flatten()  # .detach()#.cpu()
         n = self.num_classes
@@ -44,18 +50,20 @@ class ConfusionMatrix(Metric):
             confmat = torch.bincount(inds, minlength=n**2).reshape(n, n)
         return confmat
 
-    def update(self, pred, gt):
+    def update(self, pred: torch.Tensor, gt: torch.Tensor) -> None:
         # with torch.no_grad():
         confmat = self.get_confmat_for_sample(pred, gt)
         self.mat += confmat  # .to(self.mat)
 
-    def save(self, path, name=None):
-        if name != None:
-            name = "ConfusionMatrix_" + name + ".pt"
-        else:
-            name = "ConfusionMatrix.pt"
-        path = os.path.join(path, name)
-        torch.save(self.mat.detach().cpu(), path)
+    def save(self, logger):  # , path, name=None):
+        logger.experiment.add_image("ConfMat", self.mat, dataformats="HW", global_step=self.c)
+        self.c += 1
+        # if name != None:
+        #    name = "ConfusionMatrix_" + name + ".pt"
+        # else:
+        #    name = "ConfusionMatrix.pt"
+        # path = os.path.join(path, name)
+        # torch.save(self.mat.detach().cpu(), path)
 
 
 class IoU(ConfusionMatrix):
@@ -73,8 +81,8 @@ class IoU(ConfusionMatrix):
 
     def get_iou_from_mat(self, confmat: torch.Tensor) -> torch.Tensor:
 
-        if self.ignore_class is not None and 0 <= self.ignore_class < self.num_classes:
-            confmat[self.ignore_class] = 0.0
+        # if self.ignore_class is not None and 0 <= self.ignore_class < self.num_classes:
+        #    confmat[self.ignore_class] = 0.0
 
         intersection = confmat.diag()
         IoU = intersection / (confmat.sum(1) + confmat.sum(0) - intersection)
@@ -94,17 +102,32 @@ class IoU(ConfusionMatrix):
         else:
             return mIoU
 
+
 class Dice(F1Score):
-    def __init__(self,num_classes,per_class=False,labels=None,mdmc_average="global", multiclass=True,ignore_index=None,**kwargs):
-        #self.per_class=per_class
-        #if self.per_class:
+    def __init__(
+        self,
+        num_classes,
+        per_class=False,
+        labels=None,
+        mdmc_average="global",
+        multiclass=True,
+        ignore_index=None,
+        **kwargs
+    ):
+        # self.per_class=per_class
+        # if self.per_class:
         self.per_class = per_class
         self.ignore_class = ignore_index
 
         if self.per_class:
-            kwargs["average"]=None
-        super().__init__(num_classes=num_classes, mdmc_average=mdmc_average, multiclass=multiclass, ignore_index=ignore_index,**kwargs)
-
+            kwargs["average"] = None
+        super().__init__(
+            num_classes=num_classes,
+            mdmc_average=mdmc_average,
+            multiclass=multiclass,
+            ignore_index=ignore_index,
+            **kwargs
+        )
 
         if self.per_class:
             if labels is None:
@@ -122,15 +145,17 @@ class Dice(F1Score):
         return super().update(preds, target)
 
     def compute(self):
-        Dice=super().compute()
+        Dice = super().compute()
         if self.per_class:
             Dice[Dice.isnan()] = 0.0
-            mDice=Dice.mean()
+            mDice = Dice.mean()
             Dice = {self.labels[i]: Dice[i] for i in range(len(Dice))}
             Dice["mDice"] = mDice
             return Dice
         else:
             return Dice
+
+
 #######################################################################################################
 #######################################################################################################
 #######################################################################################################
@@ -154,8 +179,8 @@ class Dice_(ConfusionMatrix):
         if self.ignore_class is not None and 0 <= self.ignore_class < self.num_classes:
             confmat[self.ignore_class] = 0.0
         intersection = confmat.diag()
-        sum=confmat.sum(1) + confmat.sum(0)
-        dice=2*intersection/sum
+        sum = confmat.sum(1) + confmat.sum(0)
+        dice = 2 * intersection / sum
 
         if self.ignore_class is not None and 0 <= self.ignore_class < self.num_classes:
             dice = torch.cat((dice[: self.ignore_class], dice[self.ignore_class + 1 :]))
@@ -164,23 +189,24 @@ class Dice_(ConfusionMatrix):
         return dice
 
     def compute(self):
-        #dice = self.get_dice_from_mat(self.mat.clone())
-        #mdice = dice.mean()
+        # dice = self.get_dice_from_mat(self.mat.clone())
+        # mdice = dice.mean()
         dice = self.get_dice_from_mat(self.mat.clone())
         mdice = dice.mean()
         if self.per_class:
-            #print(dice)
+            # print(dice)
             dice = {self.labels[i]: dice[i] for i in range(len(dice))}
             dice["mDice"] = mdice
             return dice
         else:
             return mdice
-        #if self.per_class:
+        # if self.per_class:
         #    IoU = {self.labels[i]: IoU[i] for i in range(len(IoU))}
         #    IoU["mIoU"] = mIoU
         #    return IoU
-        #else:
+        # else:
         #    return mIoU
+
 
 class binary_per_image_Dice(Metric):
     def __init__(self, num_classes, dist_sync_on_step=False):
@@ -188,9 +214,9 @@ class binary_per_image_Dice(Metric):
         self.num_classes = num_classes
         self.add_state("per_image", default=[], dist_reduce_fx="cat")
 
-    def update(self, pred,gt):
-        #print(gt.shape, pred.shape)
-        #print(gt.shape, pred.argmax(1).shape)
+    def update(self, pred, gt):
+        # print(gt.shape, pred.shape)
+        # print(gt.shape, pred.argmax(1).shape)
         gt = gt.flatten()  # .detach().cpu()
         pred = pred.argmax(1).flatten()  # .detach().cpu()
 
@@ -203,7 +229,7 @@ class binary_per_image_Dice(Metric):
                 dice = torch.tensor(0, device=pred.device)
                 self.per_image.append(dice)
             else:
-                #print(gt.shape,pred.shape)
+                # print(gt.shape,pred.shape)
                 dice = (2 * (gt * pred).sum() + 1e-15) / (gt_s + pred_s + 1e-15)
                 self.per_image.append(dice)
 
@@ -211,11 +237,10 @@ class binary_per_image_Dice(Metric):
 
         self.per_image = dim_zero_cat(self.per_image)
 
-        #log.info("Not None samples %s", len(self.per_image))
+        # log.info("Not None samples %s", len(self.per_image))
         mDice = self.per_image.clone().detach().mean()
 
-        return mDice,
-
+        return (mDice,)
 
 
 #### Only Testing - no working code ####

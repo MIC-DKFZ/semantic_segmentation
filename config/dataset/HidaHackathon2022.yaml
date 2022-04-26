@@ -22,10 +22,11 @@ DATASET:
   NAME: "HidaHackathon2022"
   FOLD: 0
   NUM_CLASSES: 3
-  IGNORE_INDEX: 0
+  IGNORE_INDEX: 255
   LABELS:
     - background
     - terrace
     - wall
+  CLASS_WEIGHTS: [0.0395, 0.9754, 0.9851]
   # OPTIONAK FOR LOGGING
 

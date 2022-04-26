@@ -1,9 +1,9 @@
-'''
+"""
 ------------------------------------------------------------------------------
 Code slightly adapted and mainly from:
 https://github.com/BloodAxe/pytorch-toolbelt/blob/ae796bb09cce0698258875ed56d82cde131431e4/pytorch_toolbelt/losses/functional.py#L181def
 ------------------------------------------------------------------------------
-'''
+"""
 
 from torch.nn.modules.loss import _Loss
 from typing import List
@@ -12,7 +12,7 @@ import torch.nn.functional as F
 import torch
 
 
-def soft_dice_score(output, target, smooth = 0.0, eps = 1e-7, dims=None):
+def soft_dice_score(output, target, smooth=0.0, eps=1e-7, dims=None):
     """
     :param output:
     :param target:
@@ -36,10 +36,10 @@ def soft_dice_score(output, target, smooth = 0.0, eps = 1e-7, dims=None):
     return dice_score
 
 
-
 BINARY_MODE = "binary"
 MULTICLASS_MODE = "multiclass"
 MULTILABEL_MODE = "multilabel"
+
 
 class DiceLoss(_Loss):
     # https://github.com/BloodAxe/pytorch-toolbelt/blob/develop/pytorch_toolbelt/losses/dice.py
@@ -135,15 +135,17 @@ class DiceLoss(_Loss):
                 y_pred = y_pred * mask
                 y_true = y_true * mask
 
-        scores = soft_dice_score(y_pred, y_true.type_as(y_pred), smooth=self.smooth, eps=self.eps, dims=dims)
+        scores = soft_dice_score(
+            y_pred, y_true.type_as(y_pred), smooth=self.smooth, eps=self.eps, dims=dims
+        )
 
         if self.log_loss:
-            #Log Cosh Dice Loss
-            #loss = -torch.log(scores.clamp_min(self.eps))
+            # Log Cosh Dice Loss
+            # loss = -torch.log(scores.clamp_min(self.eps))
             loss = 1.0 - scores
-            loss=torch.log(torch.cosh(loss))
+            loss = torch.log(torch.cosh(loss))
         else:
-            #Dice Loss
+            # Dice Loss
             loss = 1.0 - scores
 
         # Dice loss is undefined for non-empty classes

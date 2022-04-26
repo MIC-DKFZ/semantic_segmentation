@@ -68,6 +68,7 @@ hydra:
           - dataset         # already used in the path
           - environment     # no needed information for the experiments
           - finetune_from   # to long
+          - continue_from   # to long
           - experiment      # already used in the path
           - LOGDIR          # no needed information for the experiments
 

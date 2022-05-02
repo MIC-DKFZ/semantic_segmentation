@@ -2,8 +2,10 @@
 METRIC:
   NAME: mIoU
   DURING_TRAIN: False
+  METRIC_CALL: global
   METRICS:
     mIoU:
-      _target_: utils.metric.IoU_Class
+      _target_: utils.metric.IoU
       num_classes: ${DATASET.NUM_CLASSES}
+      per_class: True
       labels: ${DATASET.CLASS_LABELS}

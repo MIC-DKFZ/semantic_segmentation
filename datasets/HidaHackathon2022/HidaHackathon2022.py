@@ -10,6 +10,7 @@ import pandas as pd
 import pickle
 from utils.visualization import show_data
 from utils.utils import get_logger
+from tqdm import tqdm
 
 log = get_logger(__name__)
 
@@ -19,7 +20,19 @@ PALETTE = [[0, 0, 0], [255, 0, 0], [0, 255, 0]]
 
 
 class HidaHackathon2022_dataset(torch.utils.data.Dataset):
-    def __init__(self, root, fold, split="train", transforms=None):
+    def __init__(self, root, fold, transforms, split="train"):
+        """
+        Parameters
+        ----------
+        root : str
+            path to Data Folder
+        fold : int
+            which fold to use, between 0 and 4
+        transforms : albumentations.core.composition.Compose
+            Composition of albumantations transforms to apply on the data
+        split : str, optional
+            which split to use, one of "train","test","val
+        """
         self.root = root
         with open(os.path.join(root, "splits_final.pkl"), "rb") as file:
             splits = pickle.load(file)[fold]
@@ -111,36 +124,39 @@ if __name__ == "__main__":
     # with open(os.path.join(root_path,"splits_final.pkl"),"rb") as file:
     #    splits=pickle.load(file)
     # print(len(splits[0]["train"]))
+    print(type(transforms))
     Arch = HidaHackathon2022_dataset(root=root_path, fold=1, split="train", transforms=transforms)
     Arch_val = HidaHackathon2022_dataset(root=root_path, fold=1, split="val", transforms=transforms)
-    img, mask = Arch[0]
-    print(img.shape, mask.shape)
-    print(torch.min(img), torch.max(img))
-    means = torch.zeros(11)
-    stds = torch.zeros(11)
-    count = torch.zeros(3)
-    for i in range(len(Arch)):
-        img, mask = Arch[i]
-        val, cou = torch.unique(mask, return_counts=True)
-        for v, c in zip(val, cou):
 
-            count[v] += c
-            # means[i]+=img[i,:,:].mean()
-            # stds[i]+=img[i,:,:].std()
-        # break
-    print("Var")
-    for i in range(len(Arch_val)):
-        img, mask = Arch_val[i]
-        val, cou = torch.unique(mask, return_counts=True)
-        for v, c in zip(val, cou):
-            count[v] += c
-        for i in range(0, 11):
-            a = 0
-            # means[i]+=img[i,:,:].mean()
-            # stds[i]+=img[i,:,:].std()
-    print(count)
-    c = 1 - (count / (512 * 512 * 500))
-    print(c)
+    # get_dataset_stats([Arch, Arch_val], 3, 11)
+    # img, mask = Arch[0]
+    # print(img.shape, mask.shape)
+    # print(torch.min(img), torch.max(img))
+    # means = torch.zeros(11)
+    # stds = torch.zeros(11)
+    # count = torch.zeros(3)
+    # for i in range(len(Arch)):
+    #    img, mask = Arch[i]
+    #    val, cou = torch.unique(mask, return_counts=True)
+    #    for v, c in zip(val, cou):
+
+    #        count[v] += c
+    # means[i]+=img[i,:,:].mean()
+    # stds[i]+=img[i,:,:].std()
+    # break
+    # print("Var")
+    # for i in range(len(Arch_val)):
+    #    img, mask = Arch_val[i]
+    #    val, cou = torch.unique(mask, return_counts=True)
+    #    for v, c in zip(val, cou):
+    #        count[v] += c
+    #    for i in range(0, 11):
+    #        a = 0
+    #        # means[i]+=img[i,:,:].mean()
+    #        # stds[i]+=img[i,:,:].std()
+    # print(count)
+    # c = 1 - (count / (512 * 512 * 500))
+    # print(c)
 
     # means/=500
     # stds/=500

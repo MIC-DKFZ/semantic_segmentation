@@ -226,18 +226,12 @@ python main.py model=hrnet_ocr_aspp
 python main.py model=hrnet_ocr_ms
 python main.py model=hrnet_ocr_ms MODEL.MSCALE_INFERENCE=True MODEL.N_SCALES=[0.75, 1., 1.25]
 ```
-Besides the selection of the models other parameters are provided and can be enabled/disabled as shown below.
-- **MODEL.PRETRAINED**: Indicate if pretrained weights  should be used (True by default).
-- **MODEL.INIT_WEIGHTS**: Indicate if weights should be Initialized from a normal distribution. (False by default).
-
-````shell 
-python main.py MODEL.PRETRAINED=False MODEL.INIT_WEIGHTS=True
-````
-There is also the possibility to select between different **pretrained weights**.
+Besides, the **MODEL.PRETRAINED** parameter can be used to indicate if pretrained weights should be used (True by default).
+If enabled (*MODEL.PRETRAINED=True*) the possibility to select between different **pretrained weights**.
 ImageNet, PaddleClass and Mapillary pretrained weights are provided.
-Consider that *MODEL.PRETRAINED* need to be True.
-By default, ImageNet weights are used and they can be changed by:
+By default, ImageNet weights are used:
 ````shell 
+python main.py MODEL.PRETRAINED=False
 python main.py MODEL.pretrained_on=ImageNet
 python main.py MODEL.pretrained_on=Paddle
 python main.py MODEL.pretrained_on=Mapillary
@@ -705,17 +699,24 @@ TRAIN:
 <details><summary>Configure</summary>
 <p>
 
-Currently mean Intersection over Union (mean_IoU) is the default metric. 
+The metric used in this repository is the mean of Intersection over Union (*mean_IoU*)(class wise). 
 This metric updates a confusion matrix and outputs a mean IoU (mIoU) at the end of each epoch.
-If you additionally want to log the results for each class you can use mean_IoU_Class.
-A binary Dice score is also provided.
+If you additionally want to log the results for each class you can use *mean_IoU_Class*.
+Some additional configurations are provided, adopt them in the config files or override them from commandline:
+- **METRIC.METRIC_CALL**: Defines when the metric should be computed and should be one of ["global", "stepwise", "global_and_stepwise"]. 
+For *global* the metric is updated in each step and computed once at the end of each epoch.
+For *stepwise* the metric is computed in each step and averaged at the end of each epoch.
+For *global_and_stepwise* both is done separately.
+If *stepwise* is used the name of the logged metric will have a "_stepwise" postfix.
+A short example when using the IoU: With using *METRIC.METRIC_CALL=global* the confusionmatrix is updated in each step and the IoU is computed once at the end of the epoch.
+With using *METRIC.METRIC_CALL=stepwise* the IoU is computed for each sample and these IoUs are averaged at the end of the epoch.
+- **METRIC.DURING_TRAIN**: True or False, provides the possibility to have a separate metric during training.
 
 ````shell
 python main.py metric=mean_IoU                  # mean intersection over union
 python main.py metric=mean_IoU_Class            # mean intersection over union with logging IoU of each class
-python main.py metric=binary_Dice               # binary Dice score
+python main.py METRIC.METRIC_CALL=global_and_stepwise METRIC.DURING_TRAIN=True       # change metric settings
 ````
-
 </p>
  </details>
 
@@ -723,40 +724,51 @@ python main.py metric=binary_Dice               # binary Dice score
 <p>
 
 For defining a new metric use the [torchmetric](https://torchmetrics.readthedocs.io/en/stable/pages/implement.html) package.
-This makes the metric usable for multi-GPU training, a python dummy for such a metric can be seen below.
-Thereby the *compute()* methode should return a tensor. 
-If you want to log additional metrics you can return them as a dict as shown in the dummy
+This makes the metric usable for multi-GPU training, a python dummy for such a metric can be found below.
+More information on how to define a torchmetrics can be found [here](https://torchmetrics.readthedocs.io/en/stable/pages/implement.html)
+As a restriction in this repository, the *compute()* method must return either a single tensor or a dict. 
+A dict should be used when multiple metrics are returned, e.g. the IoU for each class separately.  
+If a dict is used the metric is logged named by the corresponding key, if a single tensor is returned it will be named by name of the metric defined in the config.
+
 ````py
 from torchmetrics import Metric
 
 class CustomMetric(Metric):
     def __init__(self,...):
         ...
+        #define state variables like this to make your metric multi gpu usable
+        self.add_state("variable",default=XXX, dist_reduce_fx="sum",)
+        ...
 
-    def update(self, gt, pred):                 #get the ground truth(gt) and the models prediction of each batch
-        ...                                     #gt.shape= [batch_size, height, width]
-                                                #pred.shape= [batch_size, num_classes, height, width]
-
+    def update(self, pred, gt):                  # get the ground truth(gt) and the models prediction of each batch
+        ...                                     # pred.shape= [batch_size, num_classes, height, width]
+                                                # gt.shape= [batch_size, height, width]
     def compute(self):
         ...                                     # do your computations
-        return metric_to_optimize               # return the metric which should be optimized
-        #return metric_to_optimize, {"metric1":value,"metric2":value,...}    #if you want additional metrics to be logged return them 
+        return metric                           # return the metric which should be optimized
+        #return {"metric1":value,"metric2":value,...}    # if you want additional metrics to be logged return them 
                                                                              # in dict format as a second arguments
 ````
 
 After implementing the metric you have to set up the config of the metric.
-Therefore create a *my_metric.yaml* in *config/metric/* and use the following dummy to define the metric
+Therefore create a *my_metric.yaml* in *config/metric/* and use the following dummy to define the metric.
+*METRIC.NAME* should be the name of your target metric which should be one of the metrics defined in METRIC.METRICS.
+The remaining Parameters should be set as described in the *Configure* section above
 
 `````yaml
 config/metric/my_metric.yaml
 ─────────────────────────────
 #@package _global_
-metric:
-  _target_: utils.metric.my_metric          #lead to your metric
-  num_classes: ${DATASET.NUM_CLASSES}       #give your arguments for initialization e.g. number of classes 
-  args1: ...
 METRIC:
-  NAME: someName                            # Name of your metric for logginf, if not given the name will be set to "metric"
+  NAME: mymetric_name              # Name of the target metric should be on of the names defined in METRIC.METRICS
+  #NAME: mymetric_name_stepwise    # if a stepwise metric is used add a _stepwise postfix
+  DURING_TRAIN: False
+  METRIC_CALL: global # on of ["global", "stepwise", "global_and_stepwise"]. Defines if the metric is computed stepwise o
+  METRICS:
+    mymetric_name:                # define teh name of the metric, needed for logging and to find the target metric (see METRIC.NAME)
+      _target_: utils.metric.myMetricClass    # path to the metric Class
+      ...
+      #num_classes: ${DATASET.NUM_CLASSES}    # list of arguments for initialization, e.g. number of classes
 `````
 ````shell
 python main.py metric=my_metric
@@ -853,7 +865,7 @@ The function expects a *--ckpt_dir* arguments which is the path to the experimen
 The config from this experiment is loaded and merged with *config/baseline.yaml* to define the testing configuration.
 You can also use Hydras commandline syntax to change the config to your needs.
 consider that if your config contains a TESTING (see *-Testing directly after Training-* above) entry the content of this is also merged into the config.
-Multiscale testing and flipping are supported and you can use it in the following way from the commandline, or include it into your config file (see *-Testing directly after Training-* above).
+Multiscale testing and flipping are supported, and you can use it in the following way from the commandline, or include it into your config file (see *-Testing directly after Training-* above).
 
 `````shell
 # pass a path and some arguments you want to change

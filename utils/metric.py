@@ -1,12 +1,15 @@
 import os
 import numpy as np
 import hydra
-
 import torch
 from torchmetrics import Metric, MetricCollection, F1Score
 from torchmetrics.utilities.data import dim_zero_cat
-from utils.utils import hasNotEmptyAttr
 from utils.utils import get_logger
+
+# import pandas as pd
+# import seaborn as sns
+# import matplotlib.pyplot as plt
+# from sklearn.metrics import ConfusionMatrixDisplay
 
 log = get_logger(__name__)
 
@@ -22,10 +25,10 @@ class MetricModule(MetricCollection):
 
         super().__init__(metrics, **kwargs)
 
-    # def save(self,logger):
-    #    for name,met in self.items():
-    #        if hasattr(met,"save"):
-    #            met.save(logger)
+    def save_state_variable(self, logger, epoch):
+        for name, met in self.items():
+            if hasattr(met, "save_state_variable"):
+                met.save_state_variable(logger, epoch)
 
 
 class ConfusionMatrix(Metric):
@@ -55,15 +58,41 @@ class ConfusionMatrix(Metric):
         confmat = self.get_confmat_for_sample(pred, gt)
         self.mat += confmat  # .to(self.mat)
 
-    def save(self, logger):  # , path, name=None):
-        logger.experiment.add_image("ConfMat", self.mat, dataformats="HW", global_step=self.c)
-        self.c += 1
-        # if name != None:
-        #    name = "ConfusionMatrix_" + name + ".pt"
-        # else:
-        #    name = "ConfusionMatrix.pt"
-        # path = os.path.join(path, name)
-        # torch.save(self.mat.detach().cpu(), path)
+    # def save_state_variable(self, logger, epoch):
+    #    df_cm = pd.DataFrame(
+    #        self.mat.detach().cpu().numpy() / self.mat.detach().cpu().numpy().sum(),
+    #        index=range(self.num_classes),
+    #        columns=range(self.num_classes),
+    #    )
+    #    plt.figure(figsize=(10, 7))
+    #    # fig_ = sns.heatmap(df_cm, annot=True, cmap="Spectral").get_figure()
+    #    fig_ = sns.heatmap(df_cm, annot=True, cmap="Spectral").get_figure()
+    #    plt.close(fig_)#
+
+    #    logger.experiment.add_figure(
+    #        "ConfusionMatrix/confmat",
+    #        fig_,
+    #        epoch,
+    #    )
+    #    logger.experiment.add_image(
+    #        tag="ConfusionMatrix/raw_confmat",
+    #        img_tensor=self.mat,
+    #        dataformats="HW",
+    #        global_step=epoch,
+    #    )
+    # return {"tag": "ConfMat", "img_tensor": self.mat, "dataformats": "HW"}
+    # return {"tag": "ConfMat", "text_string": self.mat.item()}
+    # return {"tag": "ConfMat", "mat": self.mat}  # , "dataformats": "HW"}
+
+    # def save(self, logger):  # , path, name=None):
+    #    logger.experiment.add_image("ConfMat", self.mat, dataformats="HW")  # , global_step=self.c)
+    #    self.c += 1
+    #    # if name != None:
+    #    #    name = "ConfusionMatrix_" + name + ".pt"
+    #    # else:
+    #    #    name = "ConfusionMatrix.pt"
+    #    # path = os.path.join(path, name)
+    #    # torch.save(self.mat.detach().cpu(), path)
 
 
 class IoU(ConfusionMatrix):
@@ -103,6 +132,7 @@ class IoU(ConfusionMatrix):
             return mIoU
 
 
+# TestWise
 class Dice(F1Score):
     def __init__(
         self,

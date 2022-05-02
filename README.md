@@ -307,14 +307,23 @@ python main.py lossfunction=wRMI                # using weighted RMI Loss
 python main.py lossfunction=[wRMI,wCE]          # can be arbitrarily combined for multiple outputs
 python main.py lossfunction=[CE,CE,CE,CE] lossweight=[1.0,0.4,0.05,0.05]    # default settings
 ````
-### Logging
+### Logging and Checkpointing
 
 The logging structure of the code is depicted below.
 The ``LOGDIR=<some.folder.dir>`` argument defines the logging folder (*"logs/"* by default).
-Checkpointing can be disabled/enabled by ``pl_trainer.enable_checkpointing= <True or False>``.
-To resume or finetune from a checkpoint use the finetune_from argument(`` python main.py +finetune_from=<path.to.ckpt>``).
 For a better overview, experiments can also be named by ``experiment="my_experiment"`` ("baseline" by default).
-
+Checkpointing can be disabled/enabled by ``pl_trainer.enable_checkpointing= <True or False>``.
+To resume training from a checkpoint use the *continue_from* argument.
+If you want to finetune from a checkpoint (only load the weights) use the *finetune_from* argument.
+Both should lead to a model checkpoint, which is a *.ckpt file.
+````shell
+#Continue from Checkpoint + Example
+python main.py +continue_from=<path.to.ckpt>
+python main.py +continue_from=logs/.../checkpoints/last_epoch_74.ckpt
+#Finetune from Checkpoint + Example
+python main.py +finetune_from=<path.to.ckpt>
+python main.py +finetune_from=logs/.../checkpoints/last_epoch_74.ckpt
+````
 ````
 LOGDIR                                      # logs/ by default
     └── Dataset                             # Name of the used Dataset

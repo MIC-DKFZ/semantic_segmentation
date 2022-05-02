@@ -1,4 +1,5 @@
 import hydra
+from omegaconf import DictConfig
 
 import torch
 import torch.nn.functional as F
@@ -6,14 +7,22 @@ from pytorch_lightning import LightningModule
 
 from utils.metric import MetricModule
 from utils.loss_function import get_loss_function_from_cfg
-from utils.utils import hasNotEmptyAttr, hasTrueAttr
+from utils.utils import has_not_empty_attr, has_true_attr
 from utils.utils import get_logger
 
 log = get_logger(__name__)
 
 
 class SegModel(LightningModule):
-    def __init__(self, config):
+    def __init__(self, config: DictConfig) -> None:
+        """
+        __init__ the LightningModule
+        instantiate the model and the metric(s)
+
+        Parameters
+        ----------
+        config : omegaconf.DictConfig
+        """
         super().__init__()
         self.config = config
 
@@ -28,7 +37,9 @@ class SegModel(LightningModule):
 
         # define when metric should be called
         self.metric_call = (
-            config.METRIC.METRIC_CALL if hasNotEmptyAttr(config.METRIC, "METRIC_CALL") else "global"
+            config.METRIC.METRIC_CALL
+            if has_not_empty_attr(config.METRIC, "METRIC_CALL")
+            else "global"
         )
         if not self.metric_call in ["global", "stepwise", "global_and_stepwise"]:
             log.warning(
@@ -38,11 +49,22 @@ class SegModel(LightningModule):
             self.metric_call = "global"
 
         # (optional) instantiate training metric from config and save best_metric parameter
-        if hasTrueAttr(config.METRIC, "DURING_TRAIN"):
+        if has_true_attr(config.METRIC, "DURING_TRAIN"):
             self.metric_train = self.metric.clone()
             self.register_buffer("best_metric_train", torch.as_tensor(0), persistent=False)
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> dict:
+        """
+        Instantiate the lossfunction + lossweights from the config
+        Instantiate the optimizer from the config
+        Instantiate the lr scheduler form the config
+
+        Returns
+        -------
+        dict :
+            contains the optimizer and the scheduler + config
+
+        """
         # instantiate lossfunction and lossweight for each element in list
         if isinstance(self.config.lossfunction, str):
             self.loss_functions = [
@@ -78,8 +100,21 @@ class SegModel(LightningModule):
 
         return {"optimizer": self.optimizer, "lr_scheduler": lr_scheduler_config}
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> dict:
+        """
+        forward the input to the model
+        if model prediction is not a dict covert the output into a dict
 
+        Parameters
+        ----------
+        x : torch.Tensor
+            input to predict
+
+        Returns
+        -------
+        dict of {str:torch.Tensor} :
+            prediction of the model which a separate key for each model output
+        """
         x = self.model(x)
 
         # covert output to dict if output is list, tuple or tensor
@@ -92,7 +127,23 @@ class SegModel(LightningModule):
 
         return x
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch: list, batch_idx: int) -> torch.Tensor:
+        """
+        Forward the image through the model and compute the loss
+        (optional) update the metric stepwise of global (defined by metric_call parameter)
+
+        Parameters
+        ----------
+        batch : list of torch.Tensor
+            contains img (shape==[batch_size,num_classes,w,h]) and mask (shape==[batch_size,w,h])
+        batch_idx : int
+            index of the batch
+
+        Returns
+        -------
+        torch.Tensor :
+            training loss
+        """
         # predict batch
         x, y_gt = batch
         y_pred = self(x)
@@ -119,8 +170,23 @@ class SegModel(LightningModule):
 
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: list, batch_idx: int) -> torch.Tensor:
+        """
+        Forward the image through the model and compute the loss
+        update the metric stepwise of global (defined by metric_call parameter)
 
+        Parameters
+        ----------
+        batch : list of torch.Tensor
+            contains img (shape==[batch_size,num_classes,w,h]) and mask (shape==[batch_size,w,h])
+        batch_idx : int
+            index of the batch
+
+        Returns
+        -------
+        torch.Tensor :
+            validation loss
+        """
         # predict batch
         x, y_gt = batch
         y_pred = self(x)
@@ -148,8 +214,11 @@ class SegModel(LightningModule):
 
         return val_loss
 
-    def on_validation_epoch_end(self):
-
+    def on_validation_epoch_end(self) -> None:
+        """
+        Log the validation metric to logger and console
+        Reset the validation metric
+        """
         if not self.trainer.sanity_checking:
 
             log.info("EPOCH: %s", self.current_epoch)
@@ -163,13 +232,17 @@ class SegModel(LightningModule):
                 metric_group="metric/",
                 best_metric="best_metric_val",
                 stage="Validation",
+                save_matric_state=True,
             )
 
         # reset metric manually
         self.metric.reset()
 
-    def on_train_epoch_end(self):
-
+    def on_train_epoch_end(self) -> None:
+        """
+        (optional) Log the training metric to logger and console
+        (optional) Reset the training metric
+        """
         # (optional) compute and log global validation metric to tensorboard
         if hasattr(self, "metric_train"):
             metric_train = self.metric_train.compute()
@@ -186,19 +259,41 @@ class SegModel(LightningModule):
                 stage="Train",
             )
 
-    def on_test_start(self):
-
-        # set the different scales; if no ms testing is used only scale 1 is used
-        # if not defined also no flipping is done
+    def on_test_start(self) -> None:
+        """
+        Set the different scales, if no ms testing is used only scale 1 is used
+        if not defined also no flipping is done
+        """
         self.test_scales = [1]
         self.test_flip = False
-        if hasNotEmptyAttr(self.config, "TESTING"):
-            if hasNotEmptyAttr(self.config.TESTING, "SCALES"):
+        if has_not_empty_attr(self.config, "TESTING"):
+            if has_not_empty_attr(self.config.TESTING, "SCALES"):
                 self.test_scales = self.config.TESTING.SCALES
-            if hasTrueAttr(self.config.TESTING, "FLIP"):
+            if has_true_attr(self.config.TESTING, "FLIP"):
                 self.test_flip = True
 
-    def test_step(self, batch, batch_idx):
+    def test_step(self, batch: list, batch_idx: int) -> torch.Tensor:
+        """
+        For each scale used during testing:
+            resize the image to the desired scale
+            forward it to the model
+            resize to original size
+            (optional) flip the the input image and repeat the above steps
+            summing up the prediction
+        update the metric stepwise of global (defined by metric_call parameter)
+
+        Parameters
+        ----------
+        batch : list of torch.Tensor
+            contains img (shape==[batch_size,num_classes,w,h]) and mask (shape==[batch_size,w,h])
+        batch_idx : int
+            index of the batch
+
+        Returns
+        -------
+        torch.Tensor :
+            validation loss
+        """
         x, y_gt = batch
         x_size = x.size(2), x.size(3)
         total_pred = None
@@ -235,7 +330,7 @@ class SegModel(LightningModule):
         # update the metric with the aggregated prediction
         if self.metric_call in ["stepwise", "global_and_stepwise"]:
             # update global metric and log stepwise metric to tensorboard
-            metric_step = self.metric(y_pred, y_gt)
+            metric_step = self.metric(total_pred, y_gt)
             self.log_dict_epoch(
                 metric_step,
                 prefix="metric_test/",
@@ -245,9 +340,15 @@ class SegModel(LightningModule):
             )
         elif self.metric_call in ["global"]:
             # update only global metric
-            self.metric.update(y_pred, y_gt)
+            self.metric.update(total_pred, y_gt)
 
-    def on_test_epoch_end(self):
+        # compute and return loss of final prediction
+        test_loss = F.cross_entropy(total_pred, y_gt, ignore_index=self.config.DATASET.IGNORE_INDEX)
+        self.log("Loss/Test_loss", test_loss, on_step=True, on_epoch=True, logger=True)
+
+        return test_loss
+
+    def on_test_epoch_end(self) -> None:
         # compute the metric and log the metric
         log.info("TEST RESULTS")
 
@@ -265,7 +366,26 @@ class SegModel(LightningModule):
         # reset metric manually
         self.metric.reset()
 
-    def metric_logger(self, metric_group, best_metric=None, stage="Validation"):
+    def metric_logger(self, metric_group, best_metric, stage="Validation", save_matric_state=False):
+        """
+        logging the metric by:
+        update the best metric
+        (optional) save state dict variables if provided by the metrics (currently not used)
+        log best metric to tensorboard
+        log target metric and best metric to console
+        log remaining metrics to console
+
+        Parameters
+        ----------
+        metric_group : str
+            enables to group parameters in tensorboard, e.g. into metric/
+        best_metric : str
+            name of the best metric which corresponds to the target metric
+        stage : str, optional
+            Current stage, needed for nicer logging
+        save_matric_state : bool, optional
+            if the metric_state should be saved, currently not used
+        """
         logged_metrics = self.trainer.logged_metrics
 
         metrics = {
@@ -276,6 +396,15 @@ class SegModel(LightningModule):
         target_metric_score = metrics.pop(self.metric_name)
         if target_metric_score > getattr(self, best_metric):
             setattr(self, best_metric, target_metric_score)
+
+        # save state dict variables if provided by the metrics
+        if save_matric_state:
+            self.metric.save_state_variable(self.logger, self.current_epoch)
+        # for name, met in self.metric.items():
+        #    if hasattr(met, "add_image"):
+        #        self.logger.experiment.add_image(**met.add_image(), global_step=self.current_epoch)
+        #        # self.logger.experiment.add_image(**met.add_image(), global_step=self.current_epoch)
+        #        #self.logger.experiment.add_text(**met.add_image(), global_step=self.current_epoch)
 
         # log best metric to tensorboard
         if "best_" + self.metric_name in metrics:
@@ -300,7 +429,22 @@ class SegModel(LightningModule):
         for name, score in metrics.items():
             log.info("%s: %.4f", name, score)
 
-    def log_dict_epoch(self, dic, prefix="", postfix="", **kwargs):
+    def log_dict_epoch(self, dic: dict, prefix: str = "", postfix: str = "", **kwargs) -> None:
+        """
+        Logging a dict to Tensorboard logger but instead of the current step use the current epoch
+        on the x-axis of the graphs
+
+        Parameters
+        ----------
+        dic : dict of {str, torch.Tensor}
+            each item contains the name and the scalar for the parameter to log
+        prefix : str, optional
+            prefix which is added to the name of all logged parameters
+        postfix: str, optional
+            postfix which is added to the name of all logged parameters
+        kwargs: optional
+            Parameters to pass to self.log_dict
+        """
         for name, score in dic.items():
             self.log_dict(
                 {
@@ -312,9 +456,28 @@ class SegModel(LightningModule):
                 **kwargs
             )
 
-    def get_loss(self, y_pred, y_gt):
-        # computing loss of every output and the corresponding weight
-        # during validation only ce loss is used for runtime reduction
+    def get_loss(self, y_pred: dict, y_gt: torch.Tensor) -> torch.Tensor:
+        """
+        Compute Loss of each Output and Lossfunction pair (defined by order in Output dict and
+        loss_function list), weight them afterward by the corresponding loss_weight and sum the up
+        During Validation only use CE loss for runtime reduction
+
+        Parameters
+        ----------
+        y_pred : dict of {str: torch.Tensor}
+            Output prediction of the network as a dict, where the order inside the dict has to
+            match the order of the lossfunction defined in the config
+            Shape of each tensor: [batch_size, num_classes, w, h]
+        y_gt : torch.Tensor
+            The ground truth segmentation mask
+            with shape: [batch_size, w, h]
+
+        Returns
+        -------
+        torch.Tenor
+            weighted sum of the losses of the individual model outputs
+        """
+
         if self.training:
             loss = sum(
                 [
@@ -330,4 +493,5 @@ class SegModel(LightningModule):
                     for i, y in enumerate(y_pred.values())
                 ]
             )
+
         return loss

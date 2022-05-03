@@ -355,12 +355,20 @@ Therefore, the following command must be executed beforehand.
 Consider that checkpointing hast to be enabled when training (``python main.py .... pl_trainer.enable_checkpointing=True`` or set to True in 'baseline.yaml') to validate/test afterwards.
 MS OCR and VOC2010_Context use a predefined validation setting. However, this setting can be changed [here](/config#testing).
 ````shell
-python validation.py --ckpt_dir=<path.to.the.outputdir.of.training>
-# eg python validation.py --ckpt_dir="/../Semantic_Segmentation/logs/VOC2010_Context/hrnet/baseline__/2022-02-15_13-51-42"
+python validation.py ckpt_dir=<path.to.the.outputdir.of.training>
+# eg python validation.py ckpt_dir="/../Semantic_Segmentation/logs/VOC2010_Context/hrnet/baseline__/2022-02-15_13-51-42"
 ````
 Node: For validation the same config is reconstructed which was used during training. 
-This means if you train and test on different devices you have to adapt the environment parameter(``python validation.py --ckpt_dir=<some.dir> environment=some_env``)
+This means if you train and test on different devices you have to adapt the environment parameter(``python validation.py ckpt_dir=<some.dir> environment=some_env``)
 
+# Acknowledgements
+
+<p align="left">
+  <img src="imgs/Logos/HI_Logo.png" width="150"> &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="imgs/Logos/DKFZ_Logo.png" width="500"> 
+</p>
+
+This Repository is developed and maintained by the Applied Computer Vision Lab (ACVL) of [Helmholtz Imaging](https://www.helmholtz-imaging.de/).
 
 # Experiments
 
@@ -821,8 +829,8 @@ python main.py model=hrnet dataset=VOC2010 MODEL.pretrained_on=Paddle           
 python main.py model=hrnet dataset=VOC2010 MODEL.pretrained_on=Paddle lossfunction=RMI                   # using PaddleClas + RMI
 ### Since some pseudo validation is used for runtime reduction during training, the models have to be validated seperatly ###
 ###<path.to.output.dir> would look similar to this: /home/.../VOC2010/hrnet/baseline_.../2022-01-18_16-05-09
-python validation.py --ckpt_dir==<path.to.output.dir> TESTING.SCALES=[1.0]  TESTING.FLIP=False  # testing without Multiscale
-python validation.py --ckpt_dir==<path.to.output.dir>                                           # testing with Multiscale
+python validation.py ckpt_dir==<path.to.output.dir> TESTING.SCALES=[1.0]  TESTING.FLIP=False  # testing without Multiscale
+python validation.py ckpt_dir==<path.to.output.dir>                                           # testing with Multiscale
 
 #OCR
 python main.py model=hrnet_ocr dataset=VOC2010                                                          # Baseline
@@ -830,8 +838,8 @@ python main.py model=hrnet_ocr dataset=VOC2010 MODEL.pretrained_on=Paddle       
 python main.py model=hrnet_ocr dataset=VOC2010 MODEL.pretrained_on=Paddle lossfunction=[RMI,CE]         # using PaddleClas + RMI
 ### Since some pseudo validation is used for runtime reduction during training, the models have to be validated seperatly ###
 ###<path.to.output.dir> would look similar to this: /home/.../VOC2010/hrnet_ocr/baseline_.../2022-01-18_16-05-09
-python validation.py --ckpt_dir==<path.to.output.dir> TESTING.SCALES=[1.0]  TESTING.FLIP=False  # testing without Multiscale
-python validation.py --ckpt_dir==<path.to.output.dir>                                           # testing with Multiscale
+python validation.py ckpt_dir==<path.to.output.dir> TESTING.SCALES=[1.0]  TESTING.FLIP=False  # testing without Multiscale
+python validation.py ckpt_dir==<path.to.output.dir>                                           # testing with Multiscale
 
 #MS OCR
 python main.py model=hrnet_ocr_ms dataset=VOC2010                                                       # Baseline
@@ -840,11 +848,11 @@ python main.py model=hrnet_ocr_ms dataset=VOC2010 MODEL.pretrained_on=Paddle los
 ### Since some pseudo validation is used for runtime reduction during training, the models have to be validated seperatly ###
 ###<path.to.output.dir> would look similar to this: /home/.../VOC2010/hrnet_ocr_ms/baseline_.../2022-01-18_16-05-09
 #MS OCR[0.5,1]
-python validation.py --ckpt_dir==<path.to.output.dir> MODEL.MSCALE_INFERENCE=False TESTING.SCALES=[1.0]  TESTING.FLIP=False  # testing without Multiscale
-python validation.py --ckpt_dir==<path.to.output.dir> MODEL.MSCALE_INFERENCE=False              # testing with Multiscale
+python validation.py ckpt_dir==<path.to.output.dir> MODEL.MSCALE_INFERENCE=False TESTING.SCALES=[1.0]  TESTING.FLIP=False  # testing without Multiscale
+python validation.py ckpt_dir==<path.to.output.dir> MODEL.MSCALE_INFERENCE=False              # testing with Multiscale
 #MS OCR[0.5,1,2]
-python validation.py --ckpt_dir==<path.to.output.dir> TESTING.SCALES=[1.0]  TESTING.FLIP=False  # testing without Multiscale
-python validation.py --ckpt_dir==<path.to.output.dir>                                           # testing with Multiscale 
+python validation.py ckpt_dir==<path.to.output.dir> TESTING.SCALES=[1.0]  TESTING.FLIP=False  # testing without Multiscale
+python validation.py ckpt_dir==<path.to.output.dir>                                           # testing with Multiscale 
 ````
 </p>
 </details>

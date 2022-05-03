@@ -32,12 +32,15 @@ def validation(cfg: DictConfig) -> None:
     ----------
     cfg : DictConfig
     """
-    # save overrides from current run
+    # save overrides from the commandline for the current run
     overrides_cl = hydra.core.hydra_config.HydraConfig.get().overrides.task
     # load overrides from the experiment in the checkpoint dir
     overrides_ckpt = OmegaConf.load(os.path.join("hydra", "overrides.yaml"))
     # compose config by override with overrides_ckpt, afterwards override with overrides_cl
     cfg = hydra.compose(config_name="testing", overrides=overrides_ckpt + overrides_cl)
+
+    # cfg_testing = cfg.TESTING...
+    # cfg overwrite cfg_testing_config_cl
 
     # load the best checkpoint and load the model
     ckpt_file = glob.glob(os.path.join("checkpoints", "best_*"))[0]

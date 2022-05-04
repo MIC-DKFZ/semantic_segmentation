@@ -7,6 +7,6 @@ METRIC:
     mIoU:
       _target_: utils.metric.IoU
       num_classes: ${DATASET.NUM_CLASSES}
-
+      labels: ${DATASET.CLASS_LABELS}
 
 

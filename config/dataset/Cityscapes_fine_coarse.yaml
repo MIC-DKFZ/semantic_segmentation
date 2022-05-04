@@ -5,22 +5,22 @@ defaults:
   - override /hyperparameters: Cityscapes
 #SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
 dataset:
-    _target_: datasets.Cityscapes.Cityscape_fine_coarse.Cityscape_fine_coarse_dataset
-    root: ${paths.cityscapes}
+  _target_: datasets.Cityscapes.Cityscape_fine_coarse.Cityscape_fine_coarse_dataset
+  root:     ${paths.cityscapes}
 
 DATASET:
-  NAME: "Cityscapes_fine_coarse"
-  NUM_CLASSES: 19
+  NAME:         "Cityscapes_fine_coarse"
+  NUM_CLASSES:  19
   IGNORE_INDEX: 255
   #NEEDED IF WEIGHTED LOSSFUNCTIONS ARE USED
-  CLASS_WEIGHTS: [0.8373, 0.918, 0.866, 1.0345,1.0166,
-                  0.9969, 0.9754, 1.0489, 0.8786, 1.0023,
-                  0.9539, 0.9843,1.1116, 0.9037, 1.0865,
-                  1.0955, 1.0865, 1.1529, 1.0507]
+  CLASS_WEIGHTS: [ 0.8373, 0.918, 0.866, 1.0345,1.0166,
+                   0.9969, 0.9754, 1.0489, 0.8786, 1.0023,
+                   0.9539, 0.9843,1.1116, 0.9037, 1.0865,
+                   1.0955, 1.0865, 1.1529, 1.0507 ]
   #INFORMATION ABOUT DS, NOT NEEDED
   SIZE:
     TRAIN: 22972
-    VAL: 500
+    VAL:   500
   #OPTIONAL - JUST IF CLASS LOGGING RESULTS ARE WANTED
   CLASS_LABELS:
     - road

@@ -23,6 +23,7 @@ import torch._utils
 import torch.nn.functional as F
 
 from utils.utils import get_logger
+
 log = get_logger(__name__)
 
 BatchNorm2d = BatchNorm2d_class = nn.BatchNorm2d
@@ -752,8 +753,6 @@ class OCRNet(nn.Module):
 
 def get_seg_model(cfg):
     model = OCRNet(cfg)
-    if cfg.MODEL.INIT_WEIGHTS:
-        model.init_weights()
     if cfg.MODEL.PRETRAINED:
         model.load_weights(cfg.MODEL.PRETRAINED_WEIGHTS)
 

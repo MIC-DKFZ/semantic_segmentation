@@ -46,6 +46,7 @@ import torch.nn.functional as F
 
 from models.backbones.hrnet_backbone import get_backbone_model
 from utils.utils import get_logger
+
 log = get_logger(__name__)
 
 INIT_DECODER = False
@@ -573,9 +574,6 @@ class MscaleOCR(nn.Module):
 def get_seg_model(cfg):
 
     model = MscaleOCR(cfg)
-    # for name, param in model.named_parameters():
-    #    if param.requires_grad:
-    #        print(name)#, param.data)
     if cfg.MODEL.PRETRAINED:
         model.load_weights(cfg.MODEL.PRETRAINED_WEIGHTS)
 

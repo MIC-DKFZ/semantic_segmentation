@@ -9,8 +9,6 @@ import torch
 from pytorch_lightning.utilities import rank_zero_only
 import pytorch_lightning as pl
 
-logging.basicConfig(level=logging.INFO)
-
 
 def get_logger(name: str = __name__) -> logging.Logger:
     """
@@ -46,9 +44,7 @@ def get_logger(name: str = __name__) -> logging.Logger:
 
 @rank_zero_only
 def log_hyperparameters(
-    config: DictConfig,
-    model: pl.LightningModule,
-    trainer: pl.Trainer,
+    config: DictConfig, model: pl.LightningModule, trainer: pl.Trainer,
 ) -> None:
     """
     Controls which config parts are saved by Lightning loggers, additionally update hparams.yaml
@@ -181,7 +177,7 @@ def get_dataset_stats(datasets: list, num_classes: int, input_channels: int = 3)
         List of torch Datasets over which the stats are computed
     num_classes : int
         number of classes in the dataset
-    input_channels : int,optional
+    input_channels : int, optional
         number of input channels in the dataset
     """
     means = torch.zeros(input_channels)

@@ -44,6 +44,7 @@ import os
 from models.backbones.hrnet_backbone import get_backbone_model
 
 from utils.utils import get_logger
+
 log = get_logger(__name__)
 
 ALIGN_CORNERS = None
@@ -476,11 +477,3 @@ def get_seg_model(cfg):
     if cfg.MODEL.PRETRAINED:
         model.load_weights(cfg.MODEL.PRETRAINED_WEIGHTS)
     return model
-
-
-# def HRNet(num_classes, criterion):
-#    return OCRNet(num_classes, trunk='hrnetv2', criterion=criterion)
-
-
-# def HRNet_Mscale(num_classes, criterion):
-#    return MscaleOCR(num_classes, trunk='hrnetv2', criterion=criterion)

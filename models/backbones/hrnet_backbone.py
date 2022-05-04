@@ -26,6 +26,7 @@ import torch._utils
 import torch.nn.functional as F
 
 from utils.utils import get_logger
+
 log = get_logger(__name__)
 
 Norm2d = nn.BatchNorm2d
@@ -478,7 +479,7 @@ class HighResolutionNet(nn.Module):
         if os.path.isfile(pretrained):
 
             pretrained_dict = torch.load(pretrained, map_location={"cuda:0": "cpu"})
-            log.info("Loading pretrained weights {}".format(pretrained))
+            log.info("Backbone: Loading pretrained weights {}".format(pretrained))
 
             ### SOME PREPROCESSING
             if "state_dict" in pretrained_dict.keys():
@@ -501,30 +502,28 @@ class HighResolutionNet(nn.Module):
             shape_mismatch = (set(model_dict) - set(pretrained_dict)) - no_match
 
             ### WARNING IF SOME
-            no_match=list(no_match)
-            shape_mismatch=list(shape_mismatch)
+            no_match = list(no_match)
+            shape_mismatch = list(shape_mismatch)
             if len(no_match) >= 5:
                 no_match = no_match[:5]
                 no_match.append("...")
-            log.info("No Weights found for: {}".format(no_match))
+            log.info("Backbone: No Weights found for: {}".format(no_match))
             if len(shape_mismatch) >= 5:
                 shape_mismatch = shape_mismatch[:5]
                 shape_mismatch.append("...")
-            log.info("Shape Mismatch for: {}".format(shape_mismatch))
+            log.info("Backbone: Shape Mismatch for: {}".format(shape_mismatch))
 
             ### LOAD WEIGHTS ###
             model_dict.update(pretrained_dict)
             self.load_state_dict(model_dict)
             del model_dict, pretrained_dict
-            log.info("Weights successfully loaded")
+            log.info("Backbone: Weights successfully loaded")
 
 
 def get_backbone_model(cfg):
     global ALIGN_CORNERS
     ALIGN_CORNERS = cfg.MODEL.ALIGN_CORNERS
     model = HighResolutionNet(cfg)
-    if cfg.MODEL.INIT_WEIGHTS:
-        model.init_weights()
     if cfg.MODEL.PRETRAINED:
         model.load_weights(cfg.MODEL.PRETRAINED_WEIGHTS)
 

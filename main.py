@@ -1,6 +1,7 @@
 import logging
 
 logging.basicConfig(level=logging.INFO)
+
 import os
 import hydra
 
@@ -9,11 +10,15 @@ from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.plugins import DDPPlugin
 
-from utils.utils import has_true_attr, has_not_empty_attr, get_logger, num_gpus, log_hyperparameters
+from utils.utils import (
+    has_true_attr,
+    has_not_empty_attr,
+    get_logger,
+    num_gpus,
+    log_hyperparameters,
+)
 from omegaconf import DictConfig, OmegaConf
 from Segmentation_Model import SegModel
-
-# from validation import validation
 
 log = get_logger(__name__)
 
@@ -23,6 +28,10 @@ OmegaConf.register_new_resolver(
     "path_formatter",
     lambda s: s.replace("[", "")
     .replace("]", "")
+    .replace("}", "")
+    .replace("{", "")
+    .replace(")", "")
+    .replace("(", "")
     .replace(",", "_")
     .replace("=", "_")
     .replace("/", ".")
@@ -32,6 +41,17 @@ OmegaConf.register_new_resolver(
 
 @hydra.main(config_path="config", config_name="baseline")
 def training_loop(cfg: DictConfig):
+    """
+    Running Training
+    import Callbacks and initialize Logger
+    Load Model, Datamodule and Trainer
+    Train the model
+
+    Parameters
+    ----------
+    cfg :
+        cfg given by hydra - build from config/baseline.yaml + commandline argumentss
+    """
     log.info("Output Directory: %s", os.getcwd())
     # seeding if given by config
     if has_not_empty_attr(cfg, "seed"):
@@ -89,20 +109,8 @@ def training_loop(cfg: DictConfig):
 
     # start training
     trainer.fit(
-        model, dataModule, ckpt_path=cfg.continue_from if hasattr(cfg, "continue_from") else None
+        model, dataModule, ckpt_path=cfg.continue_from if hasattr(cfg, "continue_from") else None,
     )
-
-    ### OPTIONAL TESTING, USED WHEN MODEL IS TESTED UNDER DIFFERENT CONDITIONS THAN TRAINING ###
-    ### Currently this doesnt work for multi gpu training - some kind of cuda error - ddp environment block
-    # if hasattr(cfg, "TESTING"):
-    #    if has_true_attr(cfg.TESTING,"TEST_AFTERWARDS") and number_gpus<=1:
-    #        torch.cuda.empty_cache()
-    #        # Hydra environment has to be cleared since a seperate one is creted during validation
-    #        hydra.core.global_hydra.GlobalHydra.instance().clear()
-    #        validation(os.getcwd(),[],False)
-    #    elif has_true_attr(cfg.TESTING, "TEST_AFTERWARDS") and number_gpus > 1:
-    #        log.info("TEST_AFTERWARDS doesnt work for multi gpu training - some kind of cuda error caused by lightnings ddp environment")
-    #        log.info("instead use: python validation.py --valdir=<path.to.checkpoint>")
 
 
 if __name__ == "__main__":

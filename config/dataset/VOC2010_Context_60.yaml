@@ -6,27 +6,27 @@ defaults:
   - override /hyperparameters: VOC2010_Context
 #SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
 dataset:
-    _target_: datasets.VOC2010_Context.VOC2010_Context.VOC2010_Context_dataset
-    root: ${paths.VOC2010_Context}
-    ignore_index: ${DATASET.IGNORE_INDEX}
-    num_classes: ${DATASET.NUM_CLASSES}
+  _target_:     datasets.VOC2010_Context.VOC2010_Context.VOC2010_Context_dataset
+  root:         ${paths.VOC2010_Context}
+  ignore_index: ${DATASET.IGNORE_INDEX}
+  num_classes:  ${DATASET.NUM_CLASSES}
 
 TESTING:
-  TEST_AFTERWARDS: True
-  SCALES: [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
+  SCALES: [ 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0 ]
   FLIP: True
   OVERRIDES:
-    val_batch_size: 1
+    - val_batch_size=1
+
 
 DATASET:
-  NAME: "VOC2010_Context_60"
-  NUM_CLASSES: 60
+  NAME:         "VOC2010_Context_60"
+  NUM_CLASSES:  60
   IGNORE_INDEX: 255
   #INFORMATION ABOUT DS, NOT NEEDED
   SIZE:
     TRAIN: 4998
-    VAL: 5103
-    TEST: 0
+    VAL:   5103
+    TEST:  0
   #OPTIONAL - JUST IF CLASS LOGGING RESULTS ARE WANTED
   CLASS_LABELS:
     - background

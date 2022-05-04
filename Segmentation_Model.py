@@ -4,6 +4,8 @@ from omegaconf import DictConfig
 import torch
 import torch.nn.functional as F
 from pytorch_lightning import LightningModule
+from matplotlib import cm
+import numpy as np
 
 from utils.metric import MetricModule
 from utils.loss_function import get_loss_function_from_cfg
@@ -53,6 +55,11 @@ class SegModel(LightningModule):
             self.metric_train = self.metric.clone()
             self.register_buffer("best_metric_train", torch.as_tensor(0), persistent=False)
 
+        # create colormap for visualizing the example predictions
+        self.cmap = torch.tensor(
+            cm.get_cmap("viridis", self.config.DATASET.NUM_CLASSES).colors * 255, dtype=torch.uint8
+        )[:, 0:3]
+
     def configure_optimizers(self) -> dict:
         """
         Instantiate the lossfunction + lossweights from the config
@@ -81,8 +88,7 @@ class SegModel(LightningModule):
             self.loss_weights = [1] * len(self.loss_functions)
 
         log.info(
-            "Loss Functions with Weights: %s",
-            list(zip(self.loss_functions, self.loss_weights)),
+            "Loss Functions with Weights: %s", list(zip(self.loss_functions, self.loss_weights)),
         )
 
         # instantiate optimizer
@@ -93,9 +99,7 @@ class SegModel(LightningModule):
 
         lr_scheduler_config = dict(self.config.lr_scheduler)
         lr_scheduler_config["scheduler"] = hydra.utils.instantiate(
-            self.config.lr_scheduler.scheduler,
-            optimizer=self.optimizer,
-            max_steps=max_steps,
+            self.config.lr_scheduler.scheduler, optimizer=self.optimizer, max_steps=max_steps,
         )
 
         return {"optimizer": self.optimizer, "lr_scheduler": lr_scheduler_config}
@@ -202,16 +206,19 @@ class SegModel(LightningModule):
             # update global metric and log stepwise metric to tensorboard
             metric_step = self.metric(list(y_pred.values())[0], y_gt)
             self.log_dict_epoch(
-                metric_step,
-                prefix="metric/",
-                postfix="_stepwise",
-                on_step=False,
-                on_epoch=True,
+                metric_step, prefix="metric/", postfix="_stepwise", on_step=False, on_epoch=True,
             )
         elif self.metric_call in ["global"]:
             # update only global metric
             self.metric.update(list(y_pred.values())[0], y_gt)
 
+        # log some example predictions to tensorboard
+        if (
+            int(5 / y_gt.shape[0]) > batch_idx
+            and self.global_rank == 0
+            and not self.trainer.sanity_checking
+        ):
+            self.log_batch_prediction(y_pred["out"], y_gt, batch_idx)
         return val_loss
 
     def on_validation_epoch_end(self) -> None:
@@ -232,7 +239,7 @@ class SegModel(LightningModule):
                 metric_group="metric/",
                 best_metric="best_metric_val",
                 stage="Validation",
-                save_matric_state=True,
+                save_metric_state=True,
             )
 
         # reset metric manually
@@ -257,6 +264,7 @@ class SegModel(LightningModule):
                 metric_group="metric_train/",
                 best_metric="best_metric_train",
                 stage="Train",
+                save_metric_state=False,
             )
 
     def on_test_start(self) -> None:
@@ -346,6 +354,11 @@ class SegModel(LightningModule):
         test_loss = F.cross_entropy(total_pred, y_gt, ignore_index=self.config.DATASET.IGNORE_INDEX)
         self.log("Loss/Test_loss", test_loss, on_step=True, on_epoch=True, logger=True)
 
+        # log some example predictions to tensorboard
+
+        if int(5 / y_gt.shape[0]) > batch_idx and self.global_rank == 0:
+            self.log_batch_prediction(total_pred, y_gt, batch_idx)
+
         return test_loss
 
     def on_test_epoch_end(self) -> None:
@@ -361,12 +374,53 @@ class SegModel(LightningModule):
             metric_group="metric_test/",
             best_metric="best_metric_val",
             stage="Test",
+            save_metric_state=True,
         )
 
         # reset metric manually
         self.metric.reset()
 
-    def metric_logger(self, metric_group, best_metric, stage="Validation", save_matric_state=False):
+    def get_loss(self, y_pred: dict, y_gt: torch.Tensor) -> torch.Tensor:
+        """
+        Compute Loss of each Output and Lossfunction pair (defined by order in Output dict and
+        loss_function list), weight them afterward by the corresponding loss_weight and sum the up
+        During Validation only use CE loss for runtime reduction
+
+        Parameters
+        ----------
+        y_pred : dict of {str: torch.Tensor}
+            Output prediction of the network as a dict, where the order inside the dict has to
+            match the order of the lossfunction defined in the config
+            Shape of each tensor: [batch_size, num_classes, w, h]
+        y_gt : torch.Tensor
+            The ground truth segmentation mask
+            with shape: [batch_size, w, h]
+
+        Returns
+        -------
+        torch.Tenor
+            weighted sum of the losses of the individual model outputs
+        """
+
+        if self.training:
+            loss = sum(
+                [
+                    self.loss_functions[i](y, y_gt) * self.loss_weights[i]
+                    for i, y in enumerate(y_pred.values())
+                ]
+            )
+        else:
+            loss = sum(
+                [
+                    F.cross_entropy(y, y_gt, ignore_index=self.config.DATASET.IGNORE_INDEX)
+                    * self.loss_weights[i]
+                    for i, y in enumerate(y_pred.values())
+                ]
+            )
+
+        return loss
+
+    def metric_logger(self, metric_group, best_metric, stage="Validation", save_metric_state=False):
         """
         logging the metric by:
         update the best metric
@@ -397,21 +451,17 @@ class SegModel(LightningModule):
         if target_metric_score > getattr(self, best_metric):
             setattr(self, best_metric, target_metric_score)
 
-        # save state dict variables if provided by the metrics
-        if save_matric_state:
-            self.metric.save_state_variable(self.logger, self.current_epoch)
-        # for name, met in self.metric.items():
-        #    if hasattr(met, "add_image"):
-        #        self.logger.experiment.add_image(**met.add_image(), global_step=self.current_epoch)
-        #        # self.logger.experiment.add_image(**met.add_image(), global_step=self.current_epoch)
-        #        #self.logger.experiment.add_text(**met.add_image(), global_step=self.current_epoch)
+        # (optional) save state of metrics if wanted and provided by the metric, only on rank 0
+        if save_metric_state and self.global_rank == 0:
+            for name, met in self.metric.items():
+                if hasattr(met, "save_state"):
+                    met.save_state(self.trainer)
 
         # log best metric to tensorboard
         if "best_" + self.metric_name in metrics:
             metrics.pop("best_" + self.metric_name)
         self.log_dict_epoch(
-            {self.metric_name: getattr(self, best_metric)},
-            prefix=metric_group + "best_",
+            {self.metric_name: getattr(self, best_metric)}, prefix=metric_group + "best_",
         )
         # log target metric and best metric to console
         log.info(
@@ -456,42 +506,60 @@ class SegModel(LightningModule):
                 **kwargs
             )
 
-    def get_loss(self, y_pred: dict, y_gt: torch.Tensor) -> torch.Tensor:
+    def log_batch_prediction(
+        self, pred: torch.Tensor, gt: torch.Tensor, batch_idx=0, max_number: int = 4
+    ) -> None:
         """
-        Compute Loss of each Output and Lossfunction pair (defined by order in Output dict and
-        loss_function list), weight them afterward by the corresponding loss_weight and sum the up
-        During Validation only use CE loss for runtime reduction
+        logging example prediction and gt to tensorboard
 
         Parameters
         ----------
-        y_pred : dict of {str: torch.Tensor}
-            Output prediction of the network as a dict, where the order inside the dict has to
-            match the order of the lossfunction defined in the config
-            Shape of each tensor: [batch_size, num_classes, w, h]
-        y_gt : torch.Tensor
-            The ground truth segmentation mask
-            with shape: [batch_size, w, h]
-
-        Returns
-        -------
-        torch.Tenor
-            weighted sum of the losses of the individual model outputs
+        pred : torch.Tensor
+        gt : torch.Tensor
+        max_number : int, optional
+            maximal number of example predictions, 5 examples by default
         """
+        pred = pred.argmax(1).detach().cpu()
+        gt = gt.detach().cpu()
 
-        if self.training:
-            loss = sum(
-                [
-                    self.loss_functions[i](y, y_gt) * self.loss_weights[i]
-                    for i, y in enumerate(y_pred.values())
-                ]
-            )
-        else:
-            loss = sum(
-                [
-                    F.cross_entropy(y, y_gt, ignore_index=self.config.DATASET.IGNORE_INDEX)
-                    * self.loss_weights[i]
-                    for i, y in enumerate(y_pred.values())
-                ]
-            )
+        # go to each batch in sample but max max_number times
+        batche_size, w, h = gt.shape
+        # limit the max size of an image to keep file size small
+        max_size = 1024
+        if max(w, h) > max_size:
+            s = max_size / max(w, h)
+            w_s, h_s = int(w * s), int(h * s)
 
-        return loss
+            gt = (
+                F.interpolate(gt.unsqueeze(1).float(), size=(w_s, h_s), mode="nearest")
+                .squeeze(1)
+                .long()
+            )
+            pred = (
+                F.interpolate(pred.unsqueeze(1).float(), size=(w_s, h_s), mode="nearest")
+                .squeeze(1)
+                .long()
+            )
+        for i in range(min(batche_size, max_number)):
+            p = pred[i, :, :]
+            g = gt[i, :, :]
+
+            # concat pred and gt for better visualization
+            p = torch.cat((p, g), 1)
+
+            # colormap class labels
+            w, h = p.shape
+            fig = torch.zeros((w, h, 3), dtype=torch.uint8)
+            for class_id in torch.unique(p):
+                x, y = torch.where(p == class_id)
+                if class_id > len(self.cmap):
+                    fig[x, y] = torch.tensor([0, 0, 0], dtype=torch.uint8)
+                else:
+                    fig[x, y, :] = self.cmap[class_id]
+
+            self.trainer.logger.experiment.add_image(
+                "Example_Prediction/prediction_gt__sample_" + str(batch_idx + i),
+                fig,
+                self.current_epoch,
+                dataformats="HWC",
+            )

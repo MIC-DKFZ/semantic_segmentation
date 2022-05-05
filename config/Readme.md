@@ -200,7 +200,7 @@ model/a_model.yaml
   ─────────────────────────────
   #@package _global_
 ...
-num_output_classes: ${dataset.number_classes}      #num_output_classes will have the value 24 at runtime
+num_output_classes: ${dataset.number_classes} # num_output_classes will have the value 24 at runtime
 ````
 
 </p>
@@ -223,15 +223,17 @@ Some  **Basic Assignments** are shown here:
 example.yaml
   ─────────────────────────────
 #Comments in yaml
-number:                10                   # Simple value, works for int and float.
-string:                Text|"Text"          # Strings, Quotation marks are not necessarily required.
-empty:                 None| |Empty|Null
+number: 10                   # Simple value, works for int and float.
+string: Text|"Text"          # Strings, Quotation marks are not necessarily required.
+empty: None| |Empty|Null
 explicit_Type: !!float 1     # Explicitly defined type. works as well for other types like str etc.
-missing_vale:          ???            # Missing required value. The  has to be given e.g. from the commandline.
-optional opt_value:          # Optional Value. Can be empty or ???, and will only be considered if it has a value.
-value2:                ${number}            # Value interpolation (takes the value of attribute number, in this case 10). $ indicates reference and {} is required.
-value3:                "myvalue ${number}"  # String interpolation, same as value interpolation just with string output.
-booleans:              on|off|yes|no|true|false|True|False|TRUE|FALSE    #multiple possibilities to define boolean values.
+missing_vale: ???            # Missing required value. The  has to be given e.g. from the commandline.
+optional opt_value:          # Optional Value. Can be empty or ???, and will only be considered if 
+# it has a value.
+value2: ${number}            # Value interpolation (takes the value of attribute number, in this 
+                             # case 10). $ indicates reference and {} is required.
+value3: "myvalue ${number}"  # String interpolation, same as value interpolation just with string output.
+booleans: on|off|yes|no|true|false|True|False|TRUE|FALSE    #multiple possibilities to define boolean values.
 ````
 
 **List** are defined in the following way:
@@ -344,17 +346,18 @@ afterwards setting up its config file.
 ### _target_: should point to your model class or a getter function which returns your model
 ### afterwards you can handle your custom input arguments which are used to initialize the model
 model:
-   _target_: models.my_model.get_model     #if you want to use a getter function to load weights or initialize you model
-   #_target_: models.my_model.Model        #if you want to load the Model directly
-   num_classes:  ${DATASET.NUM_CLASSES}    # Example arguments, for example the number of classes
+   _target_: models.my_model.get_model     # if you want to use a getter function to load weights 
+                                           # or initialize you model
+   #_target_: models.my_model.Model        # if you want to load the Model directly
+   num_classes:  ${DATASET.NUM_CLASSES}    # example arguments, for example the number of classes
    pretrained: ${MODEL.PRETRAINED}         # of if pretrained weights should be used
    arg1: ...
 ### MODEL IS USED TO STORE INFORMATION WHICH ARE NEEDED FOR YOUR MODEL
 MODEL:
   #REQUIRED MODEL ARGUMENTS
-  NAME: MyModel            #Name of the model is needed for logging
+  NAME: MyModel            # Name of the model is needed for logging
   #YOUR ARGUMENTS, FOR EXAMPLE SOMETHINNK LIKE THAT
-  PRETRAINED: True         # you could want a parameter to indicate if pretrained weights should be used or not 
+  PRETRAINED: True         # e.g. a parameter to indicate if pretrained weights should be used 
   PRETRAINED_WEIGHTS: /pretrained/weights.pth  # give the path to the weights      
 ````
 
@@ -467,11 +470,12 @@ afterwards setting up its config file.
    ### DATASET is used to store information about the dataset which are needed during training
    DATASET:
      ## REQUIRED DATASER ARGUMENTS
-     NAME:            #Used for the logging directory
-     NUM_CLASSES:     #Needed for defining the model and the metrics
-     IGNORE_INDEX:    #Needed for the loss function, if no ignore indes set to 255 or another number which do no occur in your dataset 
+     NAME:            # Used for the logging directory
+     NUM_CLASSES:     # Needed for defining the model and the metrics
+     IGNORE_INDEX:    # Needed for the loss function, if no ignore indes set to 255 or another number
+                      # which do no occur in your dataset 
      ## OPTIONAL, BUT NEEDED IF WEIGHTED LOSSFUNCTIONS ARE USED
-     CLASS_WEIGHTS: [ 0.9, 1.1, ...]                #should be standardized for using wRMI (mean=1)
+     CLASS_WEIGHTS: [ 0.9, 1.1, ...]                
      ##OPTIONAL, CAN BE USED FOR NICER FOR LOGGING 
      CLASS_LABELS:
         - class1
@@ -560,14 +564,14 @@ A dummy and how this can be used it shown below:
 config/hyperparameters/my_hparams.yaml
   ─────────────────────────────
 # @package _global_
-batch_size:     6
+batch_size: 6
 val_batch_size: 4
-epochs:         175
-lossfunction:   RMI
+epochs: 175
+lossfunction: RMI
 ...
 #Also fo Pytorch Lightning Trainer Arguments
 pl_trainer:
-  precision:      32
+  precision: 32
   sync_batchnorm: False
   ...               
 ````
@@ -614,9 +618,9 @@ the model parameters in the following way:
 config/optimizer/my_optimizer.yaml
   ─────────────────────────────
 _target_: path.to.my.optimizer.class      #for example torch.optim.SGD
-lr:       ${lr}
-arg1:     custom_args
-arg2:     ...
+lr: ${lr}
+arg1: custom_args
+arg2: ...
 `````
 
 ````shell
@@ -663,13 +667,13 @@ Even if you do not want to use this information make sure to catch the input arg
 `````yaml
 config/lr_scheduler/my_scheduler.yaml
   ─────────────────────────────
-interval:  step #or epoch    # when the scheduler should be called, at each step of each epoch
+interval: step #or epoch    # when the scheduler should be called, at each step of each epoch
 frequency: 1                # how often should it be called, in most cases this should be 1
-monitor:   metric_to_track    # parameter for pytorch lightning to log the lr
-scheduler: #defining the actuel scheduler class
+monitor: metric_to_track    # parameter for pytorch lightning to log the lr
+scheduler:                  # defining the actuel scheduler class
   _target_: path.to.my.scheduler.class    # path to your scheduler
-  arg1:     custom_args       # arguments for the scheduler
-  arg2:     ...           
+  arg1: custom_args        # arguments for the scheduler
+  arg2: ...           
 `````
 
 ````shell
@@ -718,7 +722,7 @@ shown below:
 
 ```shell
 python main.py lossfunction=wCE lossweight=1                    #For one output like for HRNet
-python main.py lossfunction=[RMI, CE] lossweight=[1,0.4]          #Two outputs like OCR and OCR+ASPP
+python main.py lossfunction=[RMI, CE] lossweight=[1,0.4]        #Two outputs like OCR and OCR+ASPP
 python main.py lossfunction=[wRMI, wCE, wCE, wCE] lossweight=[1, 0.5, 0.1, 0.05]  #Four outputs like OCR+MS
 ```
 
@@ -815,21 +819,21 @@ AUGMENTATIONS:
               mean: [ 0.485, 0.456, 0.406 ]
               std: [ 0.229, 0.224, 0.225 ]
           - ToTensorV2:
-  TEST: ${AUGMENTATIONS.VALIDATION}  #WHEN SAME AUGMENTATIONS ARE USED FOR TESTING AND VALIDATION
-  #OTHERWISE DEFINE THEM LIKE VALIDATION AND TRAIN
+  TEST: ${AUGMENTATIONS.VALIDATION}  # when same augmentations are used for testing and validation
+                                     # otherwise define them like validation and train
   TRAIN:
     - Compose:
         transforms:
-          # Dummy structure
+          # dummy structure
           - Albumentations_transformation:
               parameter1: ...
               parameter2: ...
               ...
-          #some example transformations
+          # some example transformations
           - RandomCrop:
               height: 512
               width:  1024
-          #Nested Transformation
+          # nested transformation
           - OneOf:
               transforms:
                 - HorizontalFlip:
@@ -881,9 +885,9 @@ commandline:
   training.
 
 ````shell
-python main.py metric=mean_IoU                  # mean intersection over union
-python main.py metric=mean_IoU_Class            # mean intersection over union with logging IoU of each class
-python main.py METRIC.METRIC_CALL=global_and_stepwise METRIC.DURING_TRAIN=True       # change metric settings
+python main.py metric=mean_IoU         # mean intersection over union
+python main.py metric=mean_IoU_Class   # mean intersection over union with logging IoU of each class
+python main.py METRIC.METRIC_CALL=global_and_stepwise METRIC.DURING_TRAIN=True # change metric settings
 ````
 
 </p>
@@ -915,15 +919,25 @@ class CustomMetric(Metric):
         self.add_state("variable", default=XXX, dist_reduce_fx="sum", )
         ...
 
-    def update(self, pred, gt):  # get the ground truth(gt) and the models prediction of each batch
-        ...  # pred.shape= [batch_size, num_classes, height, width]
-        # gt.shape= [batch_size, height, width]
+    def update(self, pred: torch.Tensor, gt: torch.Tensor):  
+        # input is the bacth-wise ground truth (gt) and models prediction (pred)
+        ...     # pred.shape= [batch_size, num_classes, height, width]
+                # gt.shape= [batch_size, height, width]
 
     def compute(self):
         ...  # do your computations
         return metric  # return the metric which should be optimized
-        #return {"metric1":value,"metric2":value,...}    # if you want additional metrics to be logged return them 
-        # in dict format as a second arguments
+        # or
+        return {"metric1":value,"metric2":value,...} # if you want additional metrics to be logged 
+                                                     # return them in dict format as a second arguments
+    
+    # (Optional) This function can be used to save metric states, e.g. a confusion matrix.
+    # If the metric has a save_state function, the function is called in validation_epoch_end
+    # If you dont need this functionality you don't need to define this function
+    def save_state(self, trainer: pl.Trainer):
+        # Save whatever you want to save
+        ...
+        
 ````
 
 After implementing the metric you have to set up the config of the metric.
@@ -938,15 +952,16 @@ config/metric/my_metric.yaml
   ─────────────────────────────
 #@package _global_
 METRIC:
-  NAME:         mymetric_name              # Name of the target metric should be on of the names defined in METRIC.METRICS
-  #NAME: mymetric_name_stepwise    # if a stepwise metric is used add a _stepwise postfix
+  NAME: mymetric_name # Name of the target metric should be on of the names defined in METRIC.METRICS
+  #NAME: mymetric_name_stepwise   # if a stepwise metric is used add a _stepwise postfix
   DURING_TRAIN: False
-  METRIC_CALL:  global # on of ["global", "stepwise", "global_and_stepwise"]. Defines if the metric is computed stepwise o
+  METRIC_CALL: global             # one of ["global", "stepwise", "global_and_stepwise"]. 
+                                  # Defines if the metric is computed stepwise o
   METRICS:
-    mymetric_name: # define teh name of the metric, needed for logging and to find the target metric (see METRIC.NAME)
-      _target_: utils.metric.myMetricClass    # path to the metric Class
+    mymetric_name: # define the name of the metric, needed for logging and to find the target metric
+      _target_: utils.metric.myMetricClass  # path to the metric Class
       ...
-      #num_classes: ${DATASET.NUM_CLASSES}    # list of arguments for initialization, e.g. number of classes
+      #num_classes: ${DATASET.NUM_CLASSES}  # list of arguments for initialization, e.g. number of classes
 `````
 
 ````shell
@@ -992,14 +1007,14 @@ config/envrironment/custom_env.yaml
 #@package _global_
 
 #Output directory for logs and checkpoints
-LOGDIR:         logs/
+LOGDIR: logs/
 #Paths to datasets
 paths:
-  cityscapes:      /home/.../Datasets/cityscapes
+  cityscapes: /home/.../Datasets/cityscapes
   VOC2010_Context: /home/.../Datasets/VOC2010_Context
-  other_datasets:  ...
+  other_datasets: ...
 #Whatever you need
-CUSTOM_PATH:    ...
+CUSTOM_PATH: ...
 Some_Parameter: ...
 ...
 ````
@@ -1039,10 +1054,10 @@ training is also used for testing.
 config/somewhere/xxx.yaml
   ─────────────────────────────
 TESTING:
-  SCALES: [ 0.5, 1.0, 1.5, 2.0 ]    #scales for multiscale testing, if not wanted delete the line of leave empty
-  FLIP:   True                  # if flipping should be used during testing, delete or set the line to false if not wanted
-  OVERRIDES:                    # List of arguments which should be overwritten in the config for testing
-    - val_batch_size=1          # For example set the batch size to 1 during training (you have to use the syntax a=x here)
+  SCALES: [ 0.5, 1.0, 1.5, 2.0 ] # scales for multiscale testing, if not wanted delete the line of leave empty
+  FLIP: True # if flipping should be used during testing, delete or set the line to false if not wanted
+  OVERRIDES: # List of arguments which should be overwritten in the config for testing
+    - val_batch_size=1 # For example set the batch size to 1 during training (you have to use the syntax a=x here)
     - ...
 ````
 `````shell

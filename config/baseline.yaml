@@ -19,12 +19,15 @@ defaults:
   - override hydra/job_logging: colorlog
 
 
-# DEFAULT HYPERPARAMETERS
+# Logging Related Parameters
 ORG_CWD: ${hydra:runtime.cwd}   # Saving the original working dir
 experiment: "baseline"          # possibility for naming the experiment
 LOGDIR: logs/                   # Default logging directory
-# FOR CITYSCAPES AND VOC2010_CONTEXT THE HYPERPARAMETERS in config/hyperparameters/*.yaml are used
-# SO EDDIT THEM THERE IF YOU ARE USING THESE DATASETS
+num_example_preds: 5            # Save some example predictions during validation/testing
+                                # Just for visualization/inspection, set to 0 if not wanted
+
+# Basic hyperparameters for training. For some experiments (Cityscapes, VOC2010_Context they are
+# overwritten in config/hyperparameters/*.yaml, so edit the parameters there if using these datasets
 num_workers: 10                 # number of workers for dataloader
 batch_size: 6                   # batch size per gpu for training
 val_batch_size: ${batch_size}   # batch size per gpu for validation
@@ -75,11 +78,12 @@ hydra:
 #DEFINING THE DATAMODULE
 datamodule:
   _target_: datasets.DataModules.BaseDataModule   #Base Data Module
-  num_workers: ${num_workers}             # Parsing all needed hyperparameters
+  num_workers: ${num_workers}      # Parsing all needed hyperparameters
   batch_size: ${batch_size}
   val_batch_size: ${val_batch_size}
-  augmentations: ${AUGMENTATIONS}
-  dataset: ${dataset}
+  augmentations: ${AUGMENTATIONS} # parsing the Data augmentation, defined in the augmentation config
+  dataset: ${dataset}             # Parsing the Dataset defined in the dataset conifg
+
 #DEFINING THE SAVING BEHAVIOR, ONLY USED WHEN CHECKPOINTING IS ENABLED
 ModelCheckpoint:
   _target_: utils.callbacks.customModelCheckpoint   #cusotom checkpointing

@@ -55,10 +55,12 @@ class SegModel(LightningModule):
             self.metric_train = self.metric.clone()
             self.register_buffer("best_metric_train", torch.as_tensor(0), persistent=False)
 
-        # create colormap for visualizing the example predictions
+        # create colormap for visualizing the example predictions and also define number of example
+        # predictions
         self.cmap = torch.tensor(
             cm.get_cmap("viridis", self.config.DATASET.NUM_CLASSES).colors * 255, dtype=torch.uint8
         )[:, 0:3]
+        self.num_example_preds = config.num_example_preds
 
     def configure_optimizers(self) -> dict:
         """
@@ -88,7 +90,8 @@ class SegModel(LightningModule):
             self.loss_weights = [1] * len(self.loss_functions)
 
         log.info(
-            "Loss Functions with Weights: %s", list(zip(self.loss_functions, self.loss_weights)),
+            "Loss Functions with Weights: %s",
+            list(zip(self.loss_functions, self.loss_weights)),
         )
 
         # instantiate optimizer
@@ -99,7 +102,9 @@ class SegModel(LightningModule):
 
         lr_scheduler_config = dict(self.config.lr_scheduler)
         lr_scheduler_config["scheduler"] = hydra.utils.instantiate(
-            self.config.lr_scheduler.scheduler, optimizer=self.optimizer, max_steps=max_steps,
+            self.config.lr_scheduler.scheduler,
+            optimizer=self.optimizer,
+            max_steps=max_steps,
         )
 
         return {"optimizer": self.optimizer, "lr_scheduler": lr_scheduler_config}
@@ -206,20 +211,27 @@ class SegModel(LightningModule):
             # update global metric and log stepwise metric to tensorboard
             metric_step = self.metric(list(y_pred.values())[0], y_gt)
             self.log_dict_epoch(
-                metric_step, prefix="metric/", postfix="_stepwise", on_step=False, on_epoch=True,
+                metric_step,
+                prefix="metric/",
+                postfix="_stepwise",
+                on_step=False,
+                on_epoch=True,
             )
         elif self.metric_call in ["global"]:
             # update only global metric
             self.metric.update(list(y_pred.values())[0], y_gt)
 
         # log some example predictions to tensorboard
+        # ensure that exactly self.num_example_preds examples are taken
+        batch_size = y_gt.shape[0]
         if (
-            int(5 / y_gt.shape[0]) > batch_idx
+            (batch_size * batch_idx) < self.num_example_preds
             and self.global_rank == 0
             and not self.trainer.sanity_checking
         ):
-            self.log_batch_prediction(y_pred["out"], y_gt, batch_idx)
-        return val_loss
+            self.log_batch_prediction(
+                y_pred["out"], y_gt, batch_idx, self.num_example_preds - (batch_size * batch_idx)
+            )
 
     def on_validation_epoch_end(self) -> None:
         """
@@ -355,9 +367,12 @@ class SegModel(LightningModule):
         self.log("Loss/Test_loss", test_loss, on_step=True, on_epoch=True, logger=True)
 
         # log some example predictions to tensorboard
-
-        if int(5 / y_gt.shape[0]) > batch_idx and self.global_rank == 0:
-            self.log_batch_prediction(total_pred, y_gt, batch_idx)
+        # ensure that exactly self.num_example_preds examples are taken
+        batch_size = y_gt.shape[0]
+        if (batch_size * batch_idx) < self.num_example_preds and self.global_rank == 0:
+            self.log_batch_prediction(
+                total_pred, y_gt, batch_idx, self.num_example_preds - (batch_size * batch_idx)
+            )
 
         return test_loss
 
@@ -461,7 +476,8 @@ class SegModel(LightningModule):
         if "best_" + self.metric_name in metrics:
             metrics.pop("best_" + self.metric_name)
         self.log_dict_epoch(
-            {self.metric_name: getattr(self, best_metric)}, prefix=metric_group + "best_",
+            {self.metric_name: getattr(self, best_metric)},
+            prefix=metric_group + "best_",
         )
         # log target metric and best metric to console
         log.info(
@@ -507,7 +523,7 @@ class SegModel(LightningModule):
             )
 
     def log_batch_prediction(
-        self, pred: torch.Tensor, gt: torch.Tensor, batch_idx=0, max_number: int = 4
+        self, pred: torch.Tensor, gt: torch.Tensor, batch_idx: int = 0, max_number: int = 5
     ) -> None:
         """
         logging example prediction and gt to tensorboard
@@ -516,8 +532,10 @@ class SegModel(LightningModule):
         ----------
         pred : torch.Tensor
         gt : torch.Tensor
+        batch_idx: int, optional
+            idx of the current batch, needed for naming of the predictions
         max_number : int, optional
-            maximal number of example predictions, 5 examples by default
+            number of example predictions
         """
         pred = pred.argmax(1).detach().cpu()
         gt = gt.detach().cpu()
@@ -540,6 +558,7 @@ class SegModel(LightningModule):
                 .squeeze(1)
                 .long()
             )
+
         for i in range(min(batche_size, max_number)):
             p = pred[i, :, :]
             g = gt[i, :, :]
@@ -558,7 +577,7 @@ class SegModel(LightningModule):
                     fig[x, y, :] = self.cmap[class_id]
 
             self.trainer.logger.experiment.add_image(
-                "Example_Prediction/prediction_gt__sample_" + str(batch_idx + i),
+                "Example_Prediction/prediction_gt__sample_" + str(batch_idx * batche_size + i),
                 fig,
                 self.current_epoch,
                 dataformats="HWC",

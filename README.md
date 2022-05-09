@@ -487,6 +487,16 @@ Node: For validation the same config is reconstructed which was used during trai
 This means if you train and test on different devices you have to adapt the environment
 parameter(``python testing.py ckpt_dir=<some.dir> environment=some_env``)
 
+### Additional Tools
+
+The ``tools/`` folder contains some other useful tools for developing and experimenting.
+
+````shell
+pyhton tools/show_data.py
+
+python tools/show_prediction.py
+````
+
 # Acknowledgements
 
 <p align="left">

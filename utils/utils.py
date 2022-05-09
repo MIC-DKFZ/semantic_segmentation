@@ -44,7 +44,9 @@ def get_logger(name: str = __name__) -> logging.Logger:
 
 @rank_zero_only
 def log_hyperparameters(
-    config: DictConfig, model: pl.LightningModule, trainer: pl.Trainer,
+    config: DictConfig,
+    model: pl.LightningModule,
+    trainer: pl.Trainer,
 ) -> None:
     """
     Controls which config parts are saved by Lightning loggers, additionally update hparams.yaml
@@ -124,7 +126,7 @@ def num_gpus(avail_GPUS: int, selected_GPUS: Any) -> int:
     elif isinstance(selected_GPUS, list):
         num_gpus = len(selected_GPUS)
     elif isinstance(selected_GPUS, str):
-        num_gpus = len(selected_GPUS.split((",")))
+        num_gpus = len(selected_GPUS.split(","))
     return num_gpus
 
 
@@ -180,31 +182,36 @@ def get_dataset_stats(datasets: list, num_classes: int, input_channels: int = 3)
     input_channels : int, optional
         number of input channels in the dataset
     """
-    means = torch.zeros(input_channels)
-    stds = torch.zeros(input_channels)
-    count = torch.zeros(num_classes)
-    pixels = 0
+    # means = torch.zeros(input_channels)
+    # stds = torch.zeros(input_channels)
+    # count = torch.zeros(num_classes)
+    summ = 0
+    elements = None
     for dataset in datasets:
+
         for idx in tqdm(range(len(dataset))):
+            # print(idx)
             img, mask = dataset[idx]
-            for i in range(input_channels):
-                means[i] += img[i, :, :].mean()
-                stds[i] += img[i, :, :].std()
+            summ += img[0, :, :].sum()
+            img = img.flatten(start_dim=1)
 
-            val, cou = torch.unique(mask, return_counts=True)
-            pixels += sum(cou)
-            for v, c in zip(val, cou):
-                count[v] += c
+            if elements == None:
+                elements = img
+            else:
+                elements = torch.cat((elements, img), dim=1)
 
-    num = sum([len(dataset) for dataset in datasets])
+    print(elements.shape)
+    print(elements[0].mean(), elements[0].std())
+    print(elements)
+    mean = elements.mean(1)
+    std = elements.std(1)
 
-    means /= num
-    stds /= num
-    print("Mean per Channel:", means)
-    print("STD per Channel:", stds)
+    print("Mean per Channel:", mean.tolist())
+    print("STD per Channel:", std.tolist())
+    print(summ / 104857600)
 
-    print("Count per Class", count)
-    print("Weight per Class", 1 - (count / pixels))
+    # print("Count per Class", count)
+    # print("Weight per Class", 1 - (count / pixels))
 
 
 """

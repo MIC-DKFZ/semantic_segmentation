@@ -8,7 +8,7 @@ from albumentations.pytorch import ToTensorV2
 import torch
 
 from datasets.Cityscapes.Cityscapes import Cityscapes_dataset, classes_19, classes_34
-from utils.visualization import show_data
+from utils.visualization_utils import show_data
 from utils.utils import get_logger
 
 log = get_logger(__name__)
@@ -97,7 +97,8 @@ class Cityscape_fine_coarse_dataset(Cityscapes_dataset):
             self.imgs = imgs_fine + imgs_coarse
 
             log.info(
-                "Dataset: Cityscape %s (Coarse+Fine) | Total: %s images - %s masks | Fine: %s images - %s masks | Fine: %s images - %s masks",
+                "Dataset: Cityscape %s (Coarse+Fine) | Total: %s images - %s masks | Fine: %s"
+                " images - %s masks | Fine: %s images - %s masks",
                 split,
                 len(self.imgs),
                 len(self.masks),

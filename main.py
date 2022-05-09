@@ -109,7 +109,9 @@ def training_loop(cfg: DictConfig):
 
     # start training
     trainer.fit(
-        model, dataModule, ckpt_path=cfg.continue_from if hasattr(cfg, "continue_from") else None,
+        model,
+        dataModule,
+        ckpt_path=cfg.continue_from if hasattr(cfg, "continue_from") else None,
     )
 
 

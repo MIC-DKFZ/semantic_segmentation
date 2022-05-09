@@ -45,7 +45,8 @@ class SegModel(LightningModule):
         )
         if not self.metric_call in ["global", "stepwise", "global_and_stepwise"]:
             log.warning(
-                "Metric Call %s is not in [global,stepwise,global_and_stepwise]: Metric Call will be set to global",
+                "Metric Call %s is not in [global,stepwise,global_and_stepwise]: Metric Call will"
+                " be set to global",
                 self.metric_call,
             )
             self.metric_call = "global"
@@ -60,7 +61,9 @@ class SegModel(LightningModule):
         self.cmap = torch.tensor(
             cm.get_cmap("viridis", self.config.DATASET.NUM_CLASSES).colors * 255, dtype=torch.uint8
         )[:, 0:3]
-        self.num_example_preds = config.num_example_preds
+        self.num_example_preds = (
+            config.num_example_preds if has_not_empty_attr(config, "num_example_preds") else 0
+        )
 
     def configure_optimizers(self) -> dict:
         """
@@ -90,8 +93,7 @@ class SegModel(LightningModule):
             self.loss_weights = [1] * len(self.loss_functions)
 
         log.info(
-            "Loss Functions with Weights: %s",
-            list(zip(self.loss_functions, self.loss_weights)),
+            "Loss Functions with Weights: %s", list(zip(self.loss_functions, self.loss_weights))
         )
 
         # instantiate optimizer
@@ -102,9 +104,7 @@ class SegModel(LightningModule):
 
         lr_scheduler_config = dict(self.config.lr_scheduler)
         lr_scheduler_config["scheduler"] = hydra.utils.instantiate(
-            self.config.lr_scheduler.scheduler,
-            optimizer=self.optimizer,
-            max_steps=max_steps,
+            self.config.lr_scheduler.scheduler, optimizer=self.optimizer, max_steps=max_steps
         )
 
         return {"optimizer": self.optimizer, "lr_scheduler": lr_scheduler_config}
@@ -211,11 +211,7 @@ class SegModel(LightningModule):
             # update global metric and log stepwise metric to tensorboard
             metric_step = self.metric(list(y_pred.values())[0], y_gt)
             self.log_dict_epoch(
-                metric_step,
-                prefix="metric/",
-                postfix="_stepwise",
-                on_step=False,
-                on_epoch=True,
+                metric_step, prefix="metric/", postfix="_stepwise", on_step=False, on_epoch=True
             )
         elif self.metric_call in ["global"]:
             # update only global metric
@@ -324,7 +320,8 @@ class SegModel(LightningModule):
             x_s = F.interpolate(
                 x, s_size, mode="bilinear", align_corners=True
             )  # self.config.MODEL.ALIGN_CORNERS)
-            y_pred = self(x_s)["out"]
+            y_pred = self(x_s)  # ["out"]
+            y_pred = list(y_pred.values())[0]
             y_pred = F.interpolate(
                 y_pred, x_size, mode="bilinear", align_corners=True
             )  # =self.config.MODEL.ALIGN_CORNERS)
@@ -334,7 +331,8 @@ class SegModel(LightningModule):
                 print("flip")
                 x_flip = torch.flip(x_s, [3])  #
 
-                y_flip = self(x_flip)["out"]
+                y_flip = self(x_flip)  # ["out"]
+                y_pred = list(y_pred.values())[0]
                 y_flip = torch.flip(y_flip, [3])
                 y_flip = F.interpolate(y_flip, x_size, mode="bilinear", align_corners=True)
                 # align_corners=self.config.MODEL.ALIGN_CORNERS)
@@ -476,8 +474,7 @@ class SegModel(LightningModule):
         if "best_" + self.metric_name in metrics:
             metrics.pop("best_" + self.metric_name)
         self.log_dict_epoch(
-            {self.metric_name: getattr(self, best_metric)},
-            prefix=metric_group + "best_",
+            {self.metric_name: getattr(self, best_metric)}, prefix=metric_group + "best_"
         )
         # log target metric and best metric to console
         log.info(

@@ -8,7 +8,7 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import pandas as pd
 
-from utils.visualization import show_data
+from utils.visualization_utils import show_data
 from utils.utils import get_logger
 
 log = get_logger(__name__)

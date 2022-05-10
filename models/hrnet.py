@@ -480,9 +480,7 @@ class HighResolutionNet(nn.Module):
 
         # Upsampling
         x0_h, x0_w = x[0].size(2), x[0].size(3)
-        # print("X",x[1].shape)
         x1 = F.interpolate(x[1], size=(x0_h, x0_w), mode="bilinear", align_corners=ALIGN_CORNERS)
-        # print("X", x1.shape)
         x2 = F.interpolate(x[2], size=(x0_h, x0_w), mode="bilinear", align_corners=ALIGN_CORNERS)
         x3 = F.interpolate(x[3], size=(x0_h, x0_w), mode="bilinear", align_corners=ALIGN_CORNERS)
 
@@ -504,6 +502,7 @@ class HighResolutionNet(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def load_weights(self, pretrained):
+        self.init_weights()
         if os.path.isfile(pretrained):
 
             pretrained_dict = torch.load(pretrained, map_location={"cuda:0": "cpu"})

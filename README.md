@@ -480,7 +480,7 @@ changed [here](/config#testing).
 
 ````shell
 python testing.py ckpt_dir=<path.to.the.outputdir.of.training>
-# eg python testing.py ckpt_dir="/../Semantic_Segmentation/logs/VOC2010_Context/hrnet/baseline__/2022-02-15_13-51-42"
+# eg python testing.py ckpt_dir="/../Semantic_Segmentation/logs/VOC2010_Context/hrnet/baseline_/2022-02-15_13-51-42"
 ````
 
 Node: For validation the same config is reconstructed which was used during training.
@@ -489,12 +489,27 @@ parameter(``python testing.py ckpt_dir=<some.dir> environment=some_env``)
 
 ### Additional Tools
 
-The ``tools/`` folder contains some other useful tools for developing and experimenting.
-
+The ``tools/`` folder contains some other useful tools for developing and experimenting. 
+It is not guaranteed that they will work for all data, so for special cases may need to make slight changes.
+- **show_data.py**: Load and Visualize the pytorch dataset which is defined in the dataset config.
+  - dataset: Name of the dataset config (see [here](#selecting-a-dataset))
+- **show_prediction.py**: Show the predictions of a trained model. Basically has the same syntax 
+as the [validation/testing](#run-validationtesting), but visualizes the result instead of calculating 
+metrics. The Test Dataset is used for predicting together with the train data-augmentations. For a 
+nicer appearance the normalization operation is inverted during visualization (not for prediction). 
+(Note, depending on the size of the input, the inference time of the model and the available hardware, 
+there might be a delay when changing the image.)
+  - ckpt_dir: path to the checkpoint which should be used
 ````shell
-pyhton tools/show_data.py
+# Show the Data
+pyhton tools/show_data.py dataset=<dataset.name>
+# Example
+pyhton tools/show_data.py dataset=Cityscapes
 
-python tools/show_prediction.py
+# Show Model Predictions
+python tools/show_prediction.py ckpt_dir=<path>
+# Example
+python tools/show_prediction.py ckpt_dir=ckpt_dir="/../Semantic_Segmentation/logs/VOC2010_Context/hrnet/baseline_/2022-02-15_13-51-42"
 ````
 
 # Acknowledgements

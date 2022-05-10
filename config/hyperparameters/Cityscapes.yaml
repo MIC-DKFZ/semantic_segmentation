@@ -1,7 +1,7 @@
 # @package _global_
 
 #Hyperparameters for Cityscapes Dataset
-num_workers: 10                 # number of workers for dataloader
+num_workers: 8                  # number of workers for dataloader
 batch_size: 6                   # batch size per gpu for training
 val_batch_size: ${batch_size}   # batch size per gpu for validation
 epochs: 400                     # number of eposchs
@@ -16,4 +16,3 @@ pl_trainer:                     # parameters for the pytorch lightning trainer
   precision: 16                 # using Mixed Precision
   sync_batchnorm: True          # using synchronized batch normalization for multi gpu training
   benchmark: True               # using benchmark for faster training
-  #enable_checkpointing: True    # Enable/Disable Checkpointing

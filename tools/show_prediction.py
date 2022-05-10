@@ -13,24 +13,64 @@ import torch
 import numpy as np
 import albumentations as A
 import cv2
+from matplotlib import cm
+
+from pytorch_lightning import LightningModule
+from torch.utils.data import Dataset
 
 from Segmentation_Model import SegModel
+
 from utils.utils import has_not_empty_attr, get_logger
 from datasets.DataModules import get_augmentations_from_config
-from matplotlib import cm
 
 log = get_logger(__name__)
 
 
 class Visualizer:
-    def __init__(self, model, dataset, cmap, mean=None, std=None):
+    def __init__(
+        self,
+        dataset: Dataset,
+        cmap: np.ndarray,
+        model: LightningModule = None,
+        mean: list = None,
+        std: list = None,
+    ) -> None:
+        """
+        Visualizing a Dataset
+        If a model if Given also the prediction is of the model on the dataset is shown
+
+        Parameters
+        ----------
+        dataset: Dataset
+            dataset which should be visualized
+        cmap: np.ndarray
+            colormap to color the singel classes, list of RGB values
+        model: LightningModule, optional
+            if given the model is used to generate predictions for images in dataset
+        mean: list, optional
+            if given the normalization is inverted during visualization --> nicer image
+        std: list, optional
+            if given the normalization is inverted during visualization --> nicer image
+        """
         self.model = model
         self.dataset = dataset
         self.cmap = cmap
         self.mean = mean
         self.std = std
 
-    def color_mask(self, mask_np):
+    def color_mask(self, mask_np: np.ndarray) -> np.ndarray:
+        """
+        Color encode mask with color ids into RGB
+
+        Parameters
+        ----------
+        mask_np
+            array of shape [w,h], with class ids for each pixel
+        Returns
+        -------
+        np.ndarray :
+            array of shape [w,h,3] with color encoding of each class (in RGB format)
+        """
         w, h = mask_np.shape
         fig = np.zeros((w, h, 3), dtype=np.uint8)
         for class_id in np.unique(mask_np):
@@ -41,7 +81,22 @@ class Visualizer:
                 fig[x, y, :] = self.cmap[class_id]
         return fig
 
-    def transform_img(self, img):
+    def transform_img(self, img: torch.Tensor) -> np.ndarray:
+        """
+        Transform input tensor to numpy array
+        If single channel image convert to three channels (GRAY to RGB)
+        Move axis from [3,w,h] to [w,h,3]
+        Correct mean and std if given
+
+        Parameters
+        ----------
+        img: torch.Tensor
+            input Tensor with one or three channels
+        Returns
+        -------
+        np.ndarray :
+            numpy array in RGB format and shape [w,h,3]
+        """
         img_np = np.array(img)
 
         if len(img_np.shape) == 2:
@@ -54,26 +109,35 @@ class Visualizer:
 
         return img_np.astype(np.uint8)
 
-    def update_window(self, *arg, **kwargs):
+    def update_window(self, *arg, **kwargs) -> None:
+        """
+        Update the opencv Window when another image should be displayed (another img_id)
+        Load Image and Mask and transform them into the correct format (opencv conform)
+        (Optional) if a model is given also predict the image and colorize prediction
+        """
         img_id = cv2.getTrackbarPos("Image ID", "Window")
 
-        # Load Image and Mask
+        # Load Image and Mask, transform image and colorize the mask
         img, mask = self.dataset[img_id]
-
-        # Predict the Image
-        pred = self.model(img.unsqueeze(0).cuda())
-        pred = torch.argmax(list(pred.values())[0].squeeze(), dim=0).detach().cpu()
-
-        # Transform the Image and apply colormap to prediction and mask
         self.img_np = self.transform_img(img)
-        self.fig = self.color_mask(np.array(mask))
-        self.pred = self.color_mask(np.array(pred))
+        self.mask_np = self.color_mask(np.array(mask))
+
+        # Predict the Image and colorize the prediction
+        if self.model is not None:
+            pred = self.model(img.unsqueeze(0).cuda())
+            pred = torch.argmax(list(pred.values())[0].squeeze(), dim=0).detach().cpu()
+            self.pred = self.color_mask(np.array(pred))
 
         # update the the channel and alpha parameter and show the window
         self.update_channel_and_alpha()
         # self.update_alpha()
 
-    def update_channel_and_alpha(self, *arg, **kwargs):
+    def update_channel_and_alpha(self, *arg, **kwargs) -> None:
+        """
+        Select the correct Channel
+        if -1 the channels 0:3 are used
+        otherwise a single channel is used in grayscale on 3 channels
+        """
         if hasattr(self, "img_np"):
             channel_id = cv2.getTrackbarPos("Channel", "Window")
 
@@ -88,15 +152,22 @@ class Visualizer:
             # Update Alpha and udate Window
             self.update_alpha()
 
-    def update_alpha(self, *arg, **kwargs):
+    def update_alpha(self, *arg, **kwargs) -> None:
+        """
+        Display the image blended with the mask or prediction on the left, on the right the gt mask
+        Alpha defines the weight of the blending
+        Afterwards update the opencv image
+        """
         if hasattr(self, "img_np_chan"):
             alpha = cv2.getTrackbarPos("alpha", "Window") / 100
 
             # Blend the image with prediction
-            img_np = cv2.addWeighted(self.img_np_chan, 1 - alpha, self.pred, alpha, 0.0)
-
+            if hasattr(self, "pred"):
+                img_np = cv2.addWeighted(self.img_np_chan, 1 - alpha, self.pred, alpha, 0.0)
+            else:
+                img_np = cv2.addWeighted(self.img_np_chan, 1 - alpha, self.mask_np, alpha, 0.0)
             # concat blended image and mask
-            fig = np.concatenate((img_np, self.fig), 1)
+            fig = np.concatenate((img_np, self.mask_np), 1)
             # transform from RGB to BGR to match the cv2 order
             fig = cv2.cvtColor(fig, cv2.COLOR_RGB2BGR)
             # show image
@@ -176,7 +247,7 @@ def show_prediction(overrides_cl: list) -> None:
     ]
 
     # init visualizer
-    visualizer = Visualizer(model, dataset, cmap, mean, std)
+    visualizer = Visualizer(dataset, cmap, model, mean, std)
 
     # create window
     cv2.namedWindow("Window", cv2.WINDOW_NORMAL)
@@ -215,4 +286,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     args, overrides = parser.parse_known_args()
+
     show_prediction(overrides)

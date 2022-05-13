@@ -6,7 +6,6 @@ import numpy as np
 import cv2
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-import pandas as pd
 import pickle
 from utils.visualization_utils import show_data
 from utils.utils import get_logger
@@ -63,6 +62,7 @@ class HidaHackathon2022_dataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         # print(self.imgs + str(idx + 1) + ".png")
+        idx = self.data[idx]
         img = cv2.imread(os.path.join(self.root, self.imgs + str(idx + 1) + ".png"))
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
@@ -99,7 +99,7 @@ if __name__ == "__main__":
             # A.HorizontalFlip(p=0.25),
             # A.VerticalFlip(p=0.25),
             A.Normalize(
-                # mean=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], std=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+                mean=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], std=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
             ),
             ToTensorV2(),
         ]
@@ -112,67 +112,6 @@ if __name__ == "__main__":
     #    splits=pickle.load(file)
     # print(len(splits[0]["train"]))
     # print(type(transforms))
-    Arch = HidaHackathon2022_dataset(root=root_path, fold=4, split="train", transforms=transforms)
-    # Arch_val = HidaHackathon2022_dataset(root=root_path, fold=1, split="val", transforms=transforms)
-    from utils.utils import get_dataset_stats
-
-    get_dataset_stats([Arch], 4, 11)
-    """
-    Mean per Channel: tensor([0.4652, 0.4555, 0.4404, 0.2010, 0.5055, 0.5022, 0.4311, 0.3757, 0.3562,
-        0.3601, 0.3465])
-    STD per Channel: tensor([0.0915, 0.0910, 0.0886, 0.1219, 0.0141, 0.0121, 0.2969, 0.1671, 0.2199,
-        0.0291, 0.0911])
-    Count per Class tensor([1.0070e+08, 2.5885e+06, 1.5688e+06])
-    Weight per Class tensor([0.0396, 0.9753, 0.9850])
-    
-    tensor([[0.4078, 0.4078, 0.3922,  ..., 0.4157, 0.3412, 0.4157],
-        [0.3961, 0.3922, 0.3843,  ..., 0.3922, 0.3255, 0.4157],
-        [0.3843, 0.3765, 0.3608,  ..., 0.4078, 0.3451, 0.3922],
-        ...,
-        [0.0000, 0.0000, 0.0000,  ..., 0.7529, 0.7529, 0.7490],
-        [1.0000, 1.0000, 1.0000,  ..., 0.9843, 0.9843, 0.9843],
-        [0.3412, 0.4000, 0.4941,  ..., 0.2275, 0.2588, 0.2784]]
-    
-    """
-    # get_dataset_stats([Arch, Arch_val], 3, 11)
-    # img, mask = Arch[0]
-    # print(img.shape, mask.shape)
-    # print(torch.min(img), torch.max(img))
-    # means = torch.zeros(11)
-    # stds = torch.zeros(11)
-    # count = torch.zeros(3)
-    # for i in range(len(Arch)):
-    #    img, mask = Arch[i]
-    #    val, cou = torch.unique(mask, return_counts=True)
-    #    for v, c in zip(val, cou):
-
-    #        count[v] += c
-    # means[i]+=img[i,:,:].mean()
-    # stds[i]+=img[i,:,:].std()
-    # break
-    # print("Var")
-    # for i in range(len(Arch_val)):
-    #    img, mask = Arch_val[i]
-    #    val, cou = torch.unique(mask, return_counts=True)
-    #    for v, c in zip(val, cou):
-    #        count[v] += c
-    #    for i in range(0, 11):
-    #        a = 0
-    #        # means[i]+=img[i,:,:].mean()
-    #        # stds[i]+=img[i,:,:].std()
-    # print(count)
-    # c = 1 - (count / (512 * 512 * 500))
-    # print(c)
-
-    # means/=500
-    # stds/=500
-    # print(means)
-    # print(stds)
-    # print(img.mean(dim=0).shape,img.mean(dim=1).shape,img.mean(dim=2).shape,img.std())
-    # print(len(EndoCV))
-    # EndoCV=EndoCV2022_dataset(root=root_path,fold=1,split="val",transforms=transforms)
-    # print(len(EndoCV))
-
-    # img,mask=EndoCV[150]
-    # out = show_data(img,mask,alpha=0.5,color_mapping=[[0,0,0],[255,0,0]], mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    # out.show()
+    dataset = HidaHackathon2022_dataset(
+        root=root_path, fold=0, split="train", transforms=transforms
+    )

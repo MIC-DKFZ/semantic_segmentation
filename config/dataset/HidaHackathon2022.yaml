@@ -21,6 +21,7 @@ DATASET:
     - background
     - terrace
     - wall
-  CLASS_WEIGHTS: [ 0.0395, 0.9754, 0.9851 ]
+  #CLASS_WEIGHTS: [ 0.0395, 0.9754, 0.9851 ]
+  CLASS_WEIGHTS: [ 0.3475, 13.7498, 20.1881]
 
 

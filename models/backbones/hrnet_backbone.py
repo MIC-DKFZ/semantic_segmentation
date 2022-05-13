@@ -490,6 +490,16 @@ class HighResolutionNet(nn.Module):
             }
 
             model_dict = self.state_dict()
+            #################
+            # dim = pretrained_dict["conv1.weight"].shape[0]
+            # print(pretrained_dict["conv1.weight"].shape)
+
+            # layer_mean = model_dict["conv1.weight"].mean(dim=0).mean(0)
+            # print(layer_mean.shape)
+            # layer_mean = layer_mean.repeat(dim, 11, 1, 1)
+
+            # print(layer_mean.shape)
+            # pretrained_dict["conv1.weight"] = layer_mean
 
             ### FOUND WEIGHTS WHICH MATCH TO THE MODEL ###
             pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict.keys()}

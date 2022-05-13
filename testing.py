@@ -5,7 +5,7 @@ logging.basicConfig(level=logging.INFO)
 import os
 import glob
 import hydra
-from omegaconf import OmegaConf, DictConfig
+from omegaconf import OmegaConf, DictConfig, ListConfig
 
 from pytorch_lightning import Trainer
 from pytorch_lightning import loggers as pl_loggers
@@ -38,6 +38,13 @@ def testing(cfg: DictConfig) -> None:
     overrides_cl = hydra.core.hydra_config.HydraConfig.get().overrides.task
     # load overrides from the experiment in the checkpoint dir
     overrides_ckpt = OmegaConf.load(os.path.join("hydra", "overrides.yaml"))
+
+    # overrides_ckpt = ListConfig(
+    #    ["++" + override for override in overrides_ckpt if override.split("=")[0]]
+    # )
+    # print(type(overrides_ckpt))
+    # print(overrides_ckpt)
+    # quit(())
     # compose config by override with overrides_ckpt, afterwards override with overrides_cl
     cfg = hydra.compose(config_name="testing", overrides=overrides_ckpt + overrides_cl)
 
@@ -51,8 +58,10 @@ def testing(cfg: DictConfig) -> None:
             )
 
     # load the best checkpoint and load the model
+    log.info("Working Directory: %s", os.getcwd())
     ckpt_file = glob.glob(os.path.join("checkpoints", "best_*"))[0]
     log.info("Checkpoint Directory: %s", ckpt_file)
+
     model = SegModel.load_from_checkpoint(ckpt_file, config=cfg, strict=False)
 
     # load the datamodule
@@ -66,7 +75,10 @@ def testing(cfg: DictConfig) -> None:
             callbacks.append(cb)
 
     tb_logger = pl_loggers.TensorBoardLogger(
-        save_dir="validation", name="", version="", default_hp_metric=False,
+        save_dir="validation",
+        name="",
+        version="",
+        default_hp_metric=False,
     )
 
     # parsing the pl_trainer args and instantiate the trainer
@@ -74,7 +86,7 @@ def testing(cfg: DictConfig) -> None:
     trainer = Trainer(callbacks=callbacks, logger=tb_logger, **trainer_args)
 
     # log hyperparameters
-    log_hyperparameters(cfg, model, trainer)
+    # log_hyperparameters(cfg, model, trainer)
 
     # run testing/validation
     trainer.test(model, dataModule)

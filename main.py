@@ -91,7 +91,7 @@ def training_loop(cfg: DictConfig):
         model = SegModel.load_from_checkpoint(cfg.finetune_from, strict=False, config=cfg)
     else:
         model = SegModel(config=cfg)
-
+    # quit()
     # initialiazing trainer
     trainer_args = getattr(cfg, "pl_trainer") if has_not_empty_attr(cfg, "pl_trainer") else {}
 

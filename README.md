@@ -1,6 +1,7 @@
 <div align="center">
-
-# Semantic Segmentation Framework using Pytorch Lightning
+<p align="left">
+  <img src="imgs/Logos/HI_Titel.png" >
+</p>
 
 <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/-Python 3.9-3776AB?&logo=python&logoColor=white"></a>
 <a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/-PyTorch 1.10-EE4C2C?logo=pytorch&logoColor=white"></a>
@@ -8,6 +9,8 @@
 <a href="https://albumentations.ai/"><img alt="Albumentations" src="https://img.shields.io/badge/Albumentations 1.10 -cc0000"></a>
 <a href="https://hydra.cc/"><img alt="Hydra" src="https://img.shields.io/badge/Hydra 1.1-89b8cd"></a>
 </div>
+
+*TODO @Karol: Helmholz -> Helmholtz + Correcting white corner in logo*
 
 This repository contains an easy-to-use and flexibly customizable framework for training semantic
 segmentation models.
@@ -476,21 +479,25 @@ Consider that checkpointing hast to be enabled when
 training (``python main.py .... pl_trainer.enable_checkpointing=True`` or set to True in '
 baseline.yaml') to validate/test afterwards.
 MS OCR and VOC2010_Context use a predefined validation setting. However, this setting can be
-changed [here](/config#testing).
+changed [here](/config#testing). Since the configuration is composed of different configs, it can 
+happen that hydra raises error because some attributes from the commandline didn't exist at the 
+current config.  If this happens add a "++" in front of the argument (e.g. `` ... ++example=True``)
 
-````shell
+````shellS
 python testing.py ckpt_dir=<path.to.the.outputdir.of.training>
 # eg python testing.py ckpt_dir="/../Semantic_Segmentation/logs/VOC2010_Context/hrnet/baseline_/2022-02-15_13-51-42"
 ````
 
 Node: For validation the same config is reconstructed which was used during training.
 This means if you train and test on different devices you have to adapt the environment
-parameter(``python testing.py ckpt_dir=<some.dir> environment=some_env``)
+parameter(``python testing.py ckpt_dir=<some.dir> environment=some_env``). 
+
 
 ### Additional Tools
 
 The ``tools/`` folder contains some other useful tools for developing and experimenting. 
-It is not guaranteed that they will work for all data, so for special cases may need to make slight changes.
+It is not guaranteed that these tools will work for all kind of datasets and datatypes but even then
+they can be used as a starting point and adapted with a few changes.
 - **show_data.py**: Load and Visualize the pytorch dataset which is defined in the dataset config.
   - dataset: Name of the dataset config (see [here](#selecting-a-dataset))
 - **show_prediction.py**: Show the predictions of a trained model. Basically has the same syntax 
@@ -500,6 +507,9 @@ nicer appearance the normalization operation is inverted during visualization (n
 (Note, depending on the size of the input, the inference time of the model and the available hardware, 
 there might be a delay when changing the image.)
   - ckpt_dir: path to the checkpoint which should be used
+- **dataset_stats**: Getting some basic stats about the dataset like: mean and std for each channel, ratio
+of classes. 
+  - dataset: Name of the dataset config (see [here](#selecting-a-dataset))
 ````shell
 # Show the Data
 pyhton tools/show_data.py dataset=<dataset.name>
@@ -510,17 +520,12 @@ pyhton tools/show_data.py dataset=Cityscapes
 python tools/show_prediction.py ckpt_dir=<path>
 # Example
 python tools/show_prediction.py ckpt_dir=ckpt_dir="/../Semantic_Segmentation/logs/VOC2010_Context/hrnet/baseline_/2022-02-15_13-51-42"
+
+# Get some Stats about the Dataset
+python tools/dataset_stats.py dataset=<dataset.name>
+# Example
+pyhton tools/dataset_stats.py dataset=Cityscapes
 ````
-
-# Acknowledgements
-
-<p align="left">
-  <img src="imgs/Logos/HI_Logo.png" width="150"> &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="imgs/Logos/DKFZ_Logo.png" width="500"> 
-</p>
-
-This Repository is developed and maintained by the Applied Computer Vision Lab (ACVL)
-of [Helmholtz Imaging](https://www.helmholtz-imaging.de/).
 
 # Experiments
 
@@ -1071,3 +1076,14 @@ python testing.py ckpt_dir==<path.to.output.dir>                                
 
 </p>
 </details>
+
+
+# Acknowledgements
+
+<p align="left">
+  <img src="imgs/Logos/HI_Logo.png" width="150"> &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="imgs/Logos/DKFZ_Logo.png" width="500"> 
+</p>
+
+This Repository is developed and maintained by the Applied Computer Vision Lab (ACVL)
+of [Helmholtz Imaging](https://www.helmholtz-imaging.de/).

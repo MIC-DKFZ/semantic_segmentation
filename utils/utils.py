@@ -168,52 +168,6 @@ def has_not_empty_attr(obj: Any, attr: str) -> bool:
     return False
 
 
-def get_dataset_stats(datasets: list, num_classes: int, input_channels: int = 3) -> None:
-    """
-    Computing the mean and std of each channel over all images inside the datasets
-    Computing weights for each Class in the Dataset
-
-    Parameters
-    ----------
-    datasets : list
-        List of torch Datasets over which the stats are computed
-    num_classes : int
-        number of classes in the dataset
-    input_channels : int, optional
-        number of input channels in the dataset
-    """
-    # means = torch.zeros(input_channels)
-    # stds = torch.zeros(input_channels)
-    # count = torch.zeros(num_classes)
-    summ = 0
-    elements = None
-    for dataset in datasets:
-
-        for idx in tqdm(range(len(dataset))):
-            # print(idx)
-            img, mask = dataset[idx]
-            summ += img[0, :, :].sum()
-            img = img.flatten(start_dim=1)
-
-            if elements == None:
-                elements = img
-            else:
-                elements = torch.cat((elements, img), dim=1)
-
-    print(elements.shape)
-    print(elements[0].mean(), elements[0].std())
-    print(elements)
-    mean = elements.mean(1)
-    std = elements.std(1)
-
-    print("Mean per Channel:", mean.tolist())
-    print("STD per Channel:", std.tolist())
-    print(summ / 104857600)
-
-    # print("Count per Class", count)
-    # print("Weight per Class", 1 - (count / pixels))
-
-
 """
 def has_not_empty_attr_rec(obj: Any, attr: str) -> bool:
     # checking if the config contains a attribute and if this attribute is not empty

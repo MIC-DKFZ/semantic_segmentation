@@ -4,7 +4,7 @@
 # defines which modules from which parameter group are used by default and in which order they are composed
 defaults:
   - _self_
-  - hyperparameters: #default
+  - hyperparameters: default
   - callbacks: default
   - data_augmentation: default
   - metric: mean_IoU
@@ -18,8 +18,9 @@ defaults:
 
 ckpt_dir: ???
 ORG_CWD: ${hydra:runtime.cwd}
-num_example_preds: 5            # Save some example predictions during validation/testing
+num_example_preds: 0            # Save some example predictions during validation/testing
                                 # Just for visualization/inspection, set to 0 if not wanted
+experiment:
 #SOME CUSTOMIZATIONS OF HYDRA
 hydra:
   output_subdir: validation/hydra

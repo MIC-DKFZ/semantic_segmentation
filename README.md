@@ -467,6 +467,8 @@ tensorboard --logdir=/home/.../logs/Cityscapes/hrnet/baseline/2022-04-21_10-25-3
 # example for viewing all runs in .../baseline
 tensorboard --logdir=/home/.../logs/Cityscapes/hrnet/baseline
 ````
+Node: Tensorboard does not show all saved imaged (example predictions, condusion matrix) by default.
+To see all images use``tensorboard --logdir=<some.dir> --samples_per_plugin images=<num_epochs>``
 
 ### Run Validation/Testing
 

@@ -61,8 +61,10 @@ class SegModel(LightningModule):
         self.cmap = torch.tensor(
             cm.get_cmap("viridis", self.config.DATASET.NUM_CLASSES).colors * 255, dtype=torch.uint8
         )[:, 0:3]
-        self.num_example_preds = (
-            config.num_example_preds if has_not_empty_attr(config, "num_example_preds") else 0
+        self.num_example_predictions = (
+            config.num_example_predictions
+            if has_not_empty_attr(config, "num_example_predictions")
+            else 0
         )
 
     def configure_optimizers(self) -> dict:
@@ -229,15 +231,18 @@ class SegModel(LightningModule):
             self.metric.update(list(y_pred.values())[0], y_gt)
 
         # log some example predictions to tensorboard
-        # ensure that exactly self.num_example_preds examples are taken
+        # ensure that exactly self.num_example_predictions examples are taken
         batch_size = y_gt.shape[0]
         if (
-            (batch_size * batch_idx) < self.num_example_preds
+            (batch_size * batch_idx) < self.num_example_predictions
             and self.global_rank == 0
             and not self.trainer.sanity_checking
         ):
             self.log_batch_prediction(
-                y_pred["out"], y_gt, batch_idx, self.num_example_preds - (batch_size * batch_idx)
+                y_pred["out"],
+                y_gt,
+                batch_idx,
+                self.num_example_predictions - (batch_size * batch_idx),
             )
 
     def on_validation_epoch_end(self) -> None:
@@ -383,11 +388,11 @@ class SegModel(LightningModule):
         )
 
         # log some example predictions to tensorboard
-        # ensure that exactly self.num_example_preds examples are taken
+        # ensure that exactly self.num_example_predictions examples are taken
         batch_size = y_gt.shape[0]
-        if (batch_size * batch_idx) < self.num_example_preds and self.global_rank == 0:
+        if (batch_size * batch_idx) < self.num_example_predictions and self.global_rank == 0:
             self.log_batch_prediction(
-                total_pred, y_gt, batch_idx, self.num_example_preds - (batch_size * batch_idx)
+                total_pred, y_gt, batch_idx, self.num_example_predictions - (batch_size * batch_idx)
             )
 
         return test_loss
@@ -502,7 +507,7 @@ class SegModel(LightningModule):
             self.metric_name,
             target_metric_score,
         )
-        # remove best metric from metrics since best metric is already logged to console
+        # remove best_metric from metrics since best metric is already logged to console
         if "best_" + self.metric_name in metrics:
             metrics.pop("best_" + self.metric_name)
 

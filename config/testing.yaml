@@ -1,47 +1,24 @@
 #@package _global_
 
-# DEFAULT LIST
-# defines which modules from which parameter group are used by default and in which order they are composed
+# Default List
+# Use baseline.yaml and only change/override a few parts
 defaults:
+  - baseline
   - _self_
-  - hyperparameters: default
-  - callbacks: default
-  - data_augmentation: default
-  - metric: mean_IoU
-  - dataset: Cityscapes
-  - model: hrnet
-  - environment: local
 
-  # USING COLORLOG PLUGIN OF HYDRA
-  - override hydra/hydra_logging: colorlog
-  - override hydra/job_logging: colorlog
-
+# (Required) Path to the Checkpoint which should be tested/validated
 ckpt_dir: ???
-ORG_CWD: ${hydra:runtime.cwd}
-num_example_preds: 5            # Save some example predictions during validation/testing
-                                # Just for visualization/inspection, set to 0 if not wanted
-experiment:
-#SOME CUSTOMIZATIONS OF HYDRA
+
+# Customizations of Hydra, change hydra/run/dir to ckpt_dir
 hydra:
-  output_subdir: validation/hydra
+  output_subdir: testing/hydra
   run:
     dir: ${ckpt_dir}
   sweep:
-    dir: ${hydra.run.dir}_mr
+    dir: multi_run_${hydra.run.dir}
     subdir: ${hydra.job.num}
   job_logging:
     handlers:
       file:
-        #filename: validation/${hydra.job.name}.log
+        #filename: testing/${hydra.job.name}.log
         filename: ${hydra.job.name}.log
-
-
-#DEFINING THE DATAMODULE
-datamodule:
-  _target_: datasets.DataModules.BaseDataModule   #Base Data Module
-  num_workers: ${num_workers}             # Parsing all needed hyperparameters
-  batch_size: ${batch_size}
-  val_batch_size: ${val_batch_size}
-  augmentations: ${AUGMENTATIONS}
-  dataset: ${dataset}
-

@@ -53,11 +53,11 @@ def training_loop(cfg: DictConfig):
         cfg given by hydra - build from config/baseline.yaml + commandline argumentss
     """
     log.info("Output Directory: %s", os.getcwd())
-    # seeding if given by config
+    # Seeding if given by config
     if has_not_empty_attr(cfg, "seed"):
         seed_everything(cfg.seed, workers=True)
 
-    # importing callbacks using hydra
+    # Importing callbacks using hydra
     callbacks = []
     for _, cb_conf in cfg.CALLBACKS.items():
         if cb_conf is not None:
@@ -67,12 +67,12 @@ def training_loop(cfg: DictConfig):
     if has_true_attr(cfg.pl_trainer, "enable_checkpointing"):
         callbacks.append(hydra.utils.instantiate(cfg.ModelCheckpoint))
 
-    # using tensorboard logger
+    # Using tensorboard logger
     tb_logger = pl_loggers.TensorBoardLogger(
         save_dir=".", name="", version="", default_hp_metric=False
     )
 
-    # logging information about gpu setting
+    # Logging information about gpu setting
     avail_GPUS = torch.cuda.device_count()
     selected_GPUS = cfg.pl_trainer.gpus
     number_gpus = num_gpus(avail_GPUS, selected_GPUS)
@@ -81,18 +81,18 @@ def training_loop(cfg: DictConfig):
     log.info("Number of used GPUs: %s    Selected GPUs: %s", number_gpus, cfg.pl_trainer.gpus)
     log.info("CUDA version: %s", torch._C._cuda_getCompiledVersion())
 
-    # defining dataset
+    # Defining the datamodule
     dataModule = hydra.utils.instantiate(cfg.datamodule, _recursive_=False)
 
-    # defining model and load checkpoint if wanted
+    # Defining model and load checkpoint if wanted
     # cfg.finetune_from should be the path to a .ckpt file
     if has_not_empty_attr(cfg, "finetune_from"):
         log.info("finetune from: %s", cfg.finetune_from)
         model = SegModel.load_from_checkpoint(cfg.finetune_from, strict=False, config=cfg)
     else:
         model = SegModel(config=cfg)
-    # quit()
-    # initialiazing trainer
+
+    # Initializing trainer
     trainer_args = getattr(cfg, "pl_trainer") if has_not_empty_attr(cfg, "pl_trainer") else {}
 
     # ddp=DDPPlugin(find_unused_parameters=False) if number_gpus > 1 else None
@@ -100,14 +100,15 @@ def training_loop(cfg: DictConfig):
         callbacks=callbacks,
         logger=tb_logger,
         strategy="ddp" if number_gpus > 1 else None,
+        sync_batchnorm=True if number_gpus > 1 else False,
         **trainer_args
     )
 
-    # log hyperparameters, if-statement is needed to catch fast_dev_run
+    # Log hyperparameters, if-statement is needed to catch fast_dev_run
     if hasattr(trainer.logger, "log_dir"):
         log_hyperparameters(cfg, model, trainer)
 
-    # start training
+    # Start training
     trainer.fit(
         model,
         dataModule,

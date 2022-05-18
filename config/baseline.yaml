@@ -1,57 +1,32 @@
 #@package _global_
 
-# DEFAULT LIST
+# Default List
 # defines which modules from which parameter group are used by default and in which order they are composed
 defaults:
   - _self_
-  - optional hyperparameters:
-  - optimizer: SGD
-  - lr_scheduler: polynomial
-  - callbacks: default
-  - data_augmentation: default
-  - metric: mean_IoU
-  - dataset: Cityscapes
-  - model: hrnet
-  - environment: local
+  - hyperparameters/default     # Load Default Hyperparameters
+  - optional hyperparameters:   # (Optional) Overwrite defaults with the specific hyperparameter config
+  - optimizer: SGD              # Optimizer
+  - lr_scheduler: polynomial    # Learning rate scheduler
+  - callbacks: default          # Callbacks
+  - data_augmentation: default  # Data Augmentation
+  - metric: mean_IoU            # Metric configuration
+  - dataset: Cityscapes         # Dataset
+  - model: hrnet                # Model
+  - environment: local          # Environment
 
-  # USING COLORLOG PLUGIN OF HYDRA
-  - override hydra/hydra_logging: colorlog
+  - override hydra/hydra_logging: colorlog    # Using colorlog plugin of hydra for logging
   - override hydra/job_logging: colorlog
-
 
 # Logging Related Parameters
 ORG_CWD: ${hydra:runtime.cwd}   # Saving the original working dir
-experiment: "baseline"          # possibility for naming the experiment
+experiment: "baseline"          # Possibility for naming the experiment
 LOGDIR: logs/                   # Default logging directory
-num_example_preds: 5            # Save some example predictions during validation/testing
+num_example_predictions: 5      # Save some example predictions during validation/testing
                                 # Just for visualization/inspection, set to 0 if not wanted
 
-# Basic hyperparameters for training. For some experiments (Cityscapes, VOC2010_Context they are
-# overwritten in config/hyperparameters/*.yaml, so edit the parameters there if using these datasets
-num_workers: 10                 # number of workers for dataloader
-batch_size: 6                   # batch size per gpu for training
-val_batch_size: ${batch_size}   # batch size per gpu for validation
-epochs: 400                     # number of eposchs
-lr: 0.01                        # learning rate for training (0.01445439770745928)
-momentum: 0.9                   # momentum for optimizer
-weight_decay: 0.0005            # wd for optimizer
-lossfunction: [ "CE", "CE", "CE", "CE"]     # list of lossfunctions
-lossweight:   [1.0, 0.4, 0.05, 0.05]        # corresponding weights for each loss function
-pl_trainer:                     # parameters for the pytorch lightning trainer
-  max_epochs: ${epochs}         # parsing the number of epochs which is defined as a hyperparameter
-  gpus: -1                      # using all available GPUs
-  precision: 16                 # using Mixed Precision
-  sync_batchnorm: True          # using synchronized batch normalization for multi gpu training
-  benchmark: True               # using benchmark for faster training
-  enable_checkpointing: False   # Enable/Disable Checkpointing
 
-  # Some usefull pl parameters for debugging
-  #limit_train_batches: 0.25
-  #limit_val_batches: 0.25
-  #limit_test_batches: 0.25
-  #accumulate_grad_batches: 2
-
-#SOME CUSTOMIZATIONS OF HYDRA
+# Customizations of Hydra
 hydra:
   output_subdir: hydra
   run:
@@ -59,12 +34,12 @@ hydra:
     # Example Dir: /.../Semantic_Segmentation/logs/Cityscapes/hrnet/baseline__lossfunction_CE/2022-02-14_15-42-43/<ouputs>
     # using path_formatter with is defined in main.py to resolve problems which may occur with characters like [,],",or ',' in paths
   sweep:
-    dir: ${hydra.run.dir}_mr
+    dir: multi_run_${hydra.run.dir}
     subdir: ${hydra.job.num}
   job:
     config:
       override_dirname:
-        kv_sep: "_"         # dont use "=" to prevent problems when parsing paths
+        kv_sep: "_"         # do not use "=" to prevent problems when parsing paths
         item_sep: "__"
         exclude_keys:       # excluding some key from ${hydra.job.override_dirname}
           - model           # already used in the path
@@ -75,20 +50,20 @@ hydra:
           - experiment      # already used in the path
           - LOGDIR          # no needed information for the experiments
 
-#DEFINING THE DATAMODULE
+# Defining the datamodule
 datamodule:
-  _target_: datasets.DataModules.BaseDataModule   #Base Data Module
+  _target_: datasets.DataModules.BaseDataModule   # Base Data Module
   num_workers: ${num_workers}      # Parsing all needed hyperparameters
   batch_size: ${batch_size}
   val_batch_size: ${val_batch_size}
-  augmentations: ${AUGMENTATIONS} # parsing the Data augmentation, defined in the augmentation config
-  dataset: ${dataset}             # Parsing the Dataset defined in the dataset conifg
+  augmentations: ${AUGMENTATIONS} # Parsing the Data augmentation, defined in the augmentation config
+  dataset: ${dataset}             # Parsing the Dataset defined in the dataset config
 
-#DEFINING THE SAVING BEHAVIOR, ONLY USED WHEN CHECKPOINTING IS ENABLED
+# Defining the saving behavior. Only used when checkpointing is enabled in the pl_trainer
 ModelCheckpoint:
-  _target_: utils.callbacks.customModelCheckpoint   #cusotom checkpointing
-  monitor: "metric/${METRIC.NAME}"        # name of the metric during logging
+  _target_: utils.callbacks.customModelCheckpoint   # Custom checkpoint Callback with a few modifications
+  monitor: "metric/${METRIC.NAME}"        # Name of the metric during logging
   mode: "max"                             # min or max: should be metric me maximised or minimized
   filename: 'best_epoch_{epoch}__${METRIC.NAME}_{metric/${METRIC.NAME}:.4f}'
-  auto_insert_metric_name: False          # needs to be false for better naming of checkpoint
-  save_last: True                         # if the last checkpoint should be saved too
+  auto_insert_metric_name: False          # Needs to be false for better naming of checkpoint
+  save_last: True                         # If the last checkpoint should be saved too

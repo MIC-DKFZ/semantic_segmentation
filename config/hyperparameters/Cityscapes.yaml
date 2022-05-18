@@ -1,18 +1,11 @@
 # @package _global_
 
 #Hyperparameters for Cityscapes Dataset
-num_workers: 8                  # number of workers for dataloader
 batch_size: 6                   # batch size per gpu for training
 val_batch_size: ${batch_size}   # batch size per gpu for validation
 epochs: 400                     # number of eposchs
 lr: 0.01                        # learning rate for training (0.01445439770745928)
 momentum: 0.9                   # momentum for optimizer
 weight_decay: 0.0005            # wd for optimizer
-lossfunction: [ "wCE", "CE", "CE", "CE"]     # list of lossfunctions
+lossfunction: [ "wCE", "wCE", "wCE", "wCE"]     # list of lossfunctions
 lossweight:   [1.0, 0.4, 0.05, 0.05]            # corresponding weights for each loss function
-pl_trainer:                     # parameters for the pytorch lightning trainer
-  max_epochs: ${epochs}         # parsing the number of epochs which is defined as a hyperparameter
-  gpus: -1                      # using all available GPUs
-  precision: 16                 # using Mixed Precision
-  sync_batchnorm: true          # using synchronized batch normalization for multi gpu training
-  benchmark: true               # using benchmark for faster training

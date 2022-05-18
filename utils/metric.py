@@ -50,7 +50,6 @@ class ConfusionMatrix(Metric):
             default=torch.zeros((num_classes, num_classes), dtype=torch.int64),
             dist_reduce_fx="sum",
         )
-        self.c = 0
 
     def update(self, pred: torch.Tensor, gt: torch.Tensor) -> None:
         """

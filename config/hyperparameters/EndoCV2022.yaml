@@ -1,5 +1,4 @@
 #@package _global_
-num_workers: 10                 #number of workers for dataloader
 batch_size: 6                   #batch size per gpu for training
 val_batch_size: 1 #${batch_size}   #batch size per gpu for validation
 epochs: 150                     #number of eposchs

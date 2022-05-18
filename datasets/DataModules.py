@@ -147,7 +147,7 @@ class BaseDataModule(LightningDataModule):
         # computing the maximal number of steps for training
         base_size = len(self.DS_train)
         steps_per_epoch = base_size // self.batch_size
-        steps_per_gpu = int(np.ceil(steps_per_epoch / self.trainer.num_gpus))
+        steps_per_gpu = int(np.ceil(steps_per_epoch / self.trainer.num_devices))
         acc_steps_per_gpu = int(np.ceil(steps_per_gpu / self.trainer.accumulate_grad_batches))
         max_steps = self.trainer.max_epochs * acc_steps_per_gpu
 

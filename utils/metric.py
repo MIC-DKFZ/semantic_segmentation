@@ -110,9 +110,7 @@ class ConfusionMatrix(Metric):
         plt.close(figure)
 
         trainer.logger.experiment.add_figure(
-            "ConfusionMatrix/confmat",
-            figure,
-            trainer.current_epoch,
+            "ConfusionMatrix/confmat", figure, trainer.current_epoch
         )
 
 

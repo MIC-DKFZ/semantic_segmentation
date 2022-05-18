@@ -12,3 +12,6 @@ lightning_logs
 models/edit
 config/data_augmentation/old
 stuff.py
+
+*hrnet_v2*
+*hrnet_v3*

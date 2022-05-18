@@ -43,9 +43,9 @@ class SegModel(LightningModule):
             if has_not_empty_attr(config.METRIC, "METRIC_CALL")
             else "global"
         )
-        if not self.metric_call in ["global", "stepwise", "global_and_stepwise"]:
+        if self.metric_call not in ["global", "stepwise", "global_and_stepwise"]:
             log.warning(
-                "Metric Call %s is not in [global,stepwise,global_and_stepwise]: Metric Call will"
+                "Metric_Call %s is not in [global,stepwise,global_and_stepwise]: Metric_Call will"
                 " be set to global",
                 self.metric_call,
             )
@@ -125,7 +125,6 @@ class SegModel(LightningModule):
             prediction of the model which a separate key for each model output
         """
         x = self.model(x)
-
         # covert output to dict if output is list, tuple or tensor
         if not isinstance(x, dict):
             if isinstance(x, list) or isinstance(x, tuple):
@@ -159,7 +158,14 @@ class SegModel(LightningModule):
 
         # compute and log loss
         loss = self.get_loss(y_pred, y_gt)
-        self.log("Loss/training_loss", loss, on_step=True, on_epoch=True, logger=True)
+        self.log(
+            "Loss/training_loss",
+            loss,
+            on_step=True,
+            on_epoch=True,
+            logger=True,
+            sync_dist=True if self.trainer.num_devices > 1 else False,
+        )
 
         # (optional) update train metric
         if hasattr(self, "metric_train"):
@@ -203,7 +209,12 @@ class SegModel(LightningModule):
         # compute and log loss to tensorboard
         val_loss = self.get_loss(y_pred, y_gt)
         self.log(
-            "Loss/validation_loss", val_loss, on_step=True, on_epoch=True, logger=True
+            "Loss/validation_loss",
+            val_loss,
+            on_step=True,
+            on_epoch=True,
+            logger=True,
+            sync_dist=True if self.trainer.num_devices > 1 else False,
         )  # ,prog_bar=True)
 
         # update validation metric
@@ -362,7 +373,14 @@ class SegModel(LightningModule):
 
         # compute and return loss of final prediction
         test_loss = F.cross_entropy(total_pred, y_gt, ignore_index=self.config.DATASET.IGNORE_INDEX)
-        self.log("Loss/Test_loss", test_loss, on_step=True, on_epoch=True, logger=True)
+        self.log(
+            "Loss/Test_loss",
+            test_loss,
+            on_step=True,
+            on_epoch=True,
+            logger=True,
+            sync_dist=True if self.trainer.num_devices > 1 else False,
+        )
 
         # log some example predictions to tensorboard
         # ensure that exactly self.num_example_preds examples are taken
@@ -515,7 +533,7 @@ class SegModel(LightningModule):
                     "step": torch.tensor(self.current_epoch, dtype=torch.float32),
                 },
                 logger=True,
-                sync_dist=True,
+                sync_dist=True if self.trainer.num_devices > 1 else False,
                 **kwargs
             )
 

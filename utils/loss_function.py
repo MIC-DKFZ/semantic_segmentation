@@ -1,4 +1,5 @@
 import torch
+import torch.nn
 from omegaconf import DictConfig
 from utils.loss.rmi import RMILoss
 from utils.loss.Dice_Loss import DiceLoss
@@ -59,5 +60,4 @@ def get_loss_function_from_cfg(name_lf: str, cfg: DictConfig) -> list:
             ignore_label=ignore_index,
         )
         loss_function = lambda pred, gt: DC_TopK(pred.clone(), gt[:, None])
-
     return loss_function

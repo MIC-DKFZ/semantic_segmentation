@@ -701,7 +701,6 @@ class OCRNet(nn.Module):
         log.info("=> init weights from normal distribution")
         for name, m in self.named_modules():
             if any(part in name for part in {"cls", "aux", "ocr"}):
-                # print('skipped', name)
                 continue
             if isinstance(m, nn.Conv2d):
                 nn.init.normal_(m.weight, std=0.001)
@@ -715,7 +714,7 @@ class OCRNet(nn.Module):
             pretrained_dict = torch.load(pretrained, map_location={"cuda:0": "cpu"})
             log.info("Loading pretrained weights {}".format(pretrained))
 
-            ### SOME PREPROCESSING
+            # some preprocessing
             if "state_dict" in pretrained_dict.keys():
                 pretrained_dict = pretrained_dict["state_dict"]
             pretrained_dict = {
@@ -725,26 +724,29 @@ class OCRNet(nn.Module):
 
             model_dict = self.state_dict()
 
-            ### FOUND WEIGHTS WHICH MATCH TO THE MODEL ###
+            # find weights which match to the model
             pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict.keys()}
             no_match = set(model_dict) - set(pretrained_dict)
 
-            ### CHECK IF SIZE OF PRETRAINED WEIGHTS MATCH TO THE MODEL ###
+            # check if shape of pretrained weights match to the model
             pretrained_dict = {
                 k: v for k, v in pretrained_dict.items() if v.shape == model_dict[k].shape
             }
             shape_mismatch = (set(model_dict) - set(pretrained_dict)) - no_match
 
-            if len(no_match) >= 5:
-                no_match = list(no_match)[:5]
-                no_match.append("...")
-            log.info("No Weights found for: {}".format(no_match))
-            if len(shape_mismatch) >= 5:
-                shape_mismatch = list(shape_mismatch)[:5]
-                shape_mismatch.append("...")
-            log.info("Shape Mismatch for: {}".format(shape_mismatch))
+            # log info about weights which are not found and weights which have a shape mismatch
+            if len(no_match):
+                if len(no_match) >= 5:
+                    no_match = list(no_match)[:5]
+                    no_match.append("...")
+                log.info("No pretrained Weights found for: {}".format(no_match))
+            if len(shape_mismatch):
+                if len(shape_mismatch) >= 5:
+                    shape_mismatch = list(shape_mismatch)[:5]
+                    shape_mismatch.append("...")
+                log.info("Shape Mismatch for: {}".format(shape_mismatch))
 
-            ### LOAD WEIGHTS ###
+            # load weights
             model_dict.update(pretrained_dict)
             self.load_state_dict(model_dict)
             del model_dict, pretrained_dict

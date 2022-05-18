@@ -1,0 +1,8 @@
+#@package _global_
+model:
+  _target_: models.UNet.UNet
+  n_channels: 3
+  n_classes: ${DATASET.NUM_CLASSES}
+
+MODEL:
+  NAME: UNet

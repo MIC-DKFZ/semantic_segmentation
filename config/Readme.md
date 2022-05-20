@@ -1,3 +1,7 @@
+<p align="left">
+  <img src="../imgs/Logos/HI_Title.png" >
+</p>
+
 # Walkthrough of the Config Jungle
 
 In this repository [Hydra](https://hydra.cc/) is used for configuring and managing experiments.
@@ -1072,3 +1076,13 @@ python testing.py ckpt_dir="/home/.../PASCALContext/hrnet/data_augmentations=PAS
 
 </p>
 </details>
+
+# Acknowledgements
+
+<p align="left">
+  <img src="../imgs/Logos/HI_Logo.png" width="150"> &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="../imgs/Logos/DKFZ_Logo.png" width="500"> 
+</p>
+
+This Repository is developed and maintained by the Applied Computer Vision Lab (ACVL)
+of [Helmholtz Imaging](https://www.helmholtz-imaging.de/).

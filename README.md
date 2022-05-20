@@ -1,4 +1,5 @@
 <div align="center">
+
 <p align="left">
   <img src="imgs/Logos/HI_Title.png" >
 </p>
@@ -6,26 +7,32 @@
 <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/-Python 3.9-3776AB?&logo=python&logoColor=white"></a>
 <a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/-PyTorch 1.10-EE4C2C?logo=pytorch&logoColor=white"></a>
 <a href="https://pytorchlightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Pytorch Lightning 1.6-792EE5?logo=pytorchlightning&logoColor=white"></a>
-<a href="https://hydra.cc/"><img alt="Hydra" src="https://img.shields.io/badge/Hydra 1.1-89b8cd"></a>
 <a href="https://albumentations.ai/"><img alt="Albumentations" src="https://img.shields.io/badge/Albumentations 1.10 -cc0000"></a>
+<a href="https://hydra.cc/"><img alt="L: Hydra" src="https://img.shields.io/badge/Hydra 1.1-89b8cd" ></a>
+<a href="https://pytorch-lightning.readthedocs.io/en/stable/api/pytorch_lightning.loggers.tensorboard.html"><img alt="Tensorboard" src="https://img.shields.io/badge/Tensorboard 2.7 -FF6F00"></a>
+
 </div>
 
 This repository contains an easy-to-use and flexibly customizable framework for training semantic
 segmentation models.
-This provides the ability to compare different state-of-the-art (SOTA) segmentation models under
-same conditions on different datasets.
-Several architectures like [High-Resolution Network (HRNet)](https://arxiv.org/pdf/1904.04514.pdf)
-, [Object Contextual Representation (OCR)](https://arxiv.org/pdf/1909.11065.pdf)
-and [Hierarchical Multi-Scale Attention (MS OCR)](https://arxiv.org/pdf/2005.10821.pdf) are already
-supported,
-as well as relevant datasets like [Cityscapes](https://www.cityscapes-dataset.com/) (coarse and
+The focus was put on being usable out of the box, but also on giving the possibility to be adapted to individual projects.
+Therefore, this repository is designed to be extended with additional models and datasets, as well as other optimizers, schedulers,
+metrics, loss functions, metrics and data augmentation pipelines.
+In addition, new and popular packages such as Pytorch Lightning, Hydra and Albumentations were used 
+to enable features, among others, such as multi-GPU, device independent and mixed precision training as well as
+easy job configuration and easy construction of data augmentation pipelines.\
+Several architectures like [High-Resolution Network (HRNet)](https://arxiv.org/pdf/1904.04514.pdf), 
+[Object Contextual Representation (OCR)](https://arxiv.org/pdf/1909.11065.pdf), 
+[Hierarchical Multi-Scale Attention (MS OCR)](https://arxiv.org/pdf/2005.10821.pdf), 
+[FCN](https://arxiv.org/pdf/1411.4038.pdf), 
+[DeepLabv3](https://arxiv.org/pdf/1706.05587.pdf) and 
+[UNet](https://arxiv.org/pdf/1505.04597.pdf) are already
+supported, as well as benchmark datasets like [Cityscapes](https://www.cityscapes-dataset.com/) (coarse and
 fine) and [PASCAL VOC2010 Context](https://cs.stanford.edu/~roozbeh/pascal-context/) (59 and 60
-classes).
-Additionally, features like [Region Mutual Information (RMI)](https://arxiv.org/pdf/1910.12037.pdf)
-loss, mixed precision or multi-GPU training are provided among others.
-This repository uses new and upcoming packages such as Pytorch Lightning and Hydra, and is designed
-to be extended with additional models and datasets, as well as other optimizers, schedulers,
-metrics, loss functions, and data augmentations.
+classes). 
+Additionally, [Region Mutual Information (RMI)](https://arxiv.org/pdf/1910.12037.pdf) loss is included.
+All this together provides the ability to compare different state-of-the-art (SOTA) segmentation models under
+same conditions on different datasets.
 
 The following contains information about how to [set up the data](#setting-up-the-data)
 and [run the code](#running-code).
@@ -83,6 +90,7 @@ This repository adopts code from the following sources:
 - **MS OCR** (Hierarchical Multi-Scale Attention for Semantic
   Segmentation, [paper](https://arxiv.org/pdf/2005.10821.pdf)
   , [source code](https://github.com/NVIDIA/semantic-segmentation/tree/main/network))
+- **UNet** ([paper](https://arxiv.org/pdf/1505.04597.pdf), [source code](https://github.com/milesial/Pytorch-UNet))
 - **RMI** (Region Mutual Information Loss for Semantic
   Segmentation, [paper](https://arxiv.org/pdf/1910.12037.pdf)
   , [source code](https://github.com/ZJULearning/RMI))
@@ -103,12 +111,12 @@ system [here](https://pytorch.org/get-started/locally/#start-locally).
 pip install -r requirements.txt
 ````
 
-To check if the installation was successful, you can run a small "unit test" using Pytorch
-Lightnings [fast_dev_run](https://pytorch-lightning.readthedocs.io/en/stable/common/debugging.html#fast-dev-run)
-by:
+After Setting up a dataset, you check if the installation was successful and everythink is working,
+by running a small "unit test" using Pytorch
+Lightnings [fast_dev_run](https://pytorch-lightning.readthedocs.io/en/stable/common/debugging.html#fast-dev-run):
 
 ````
-python main.py +pl_trainer.fast_dev_run=True
+python main.py dataset=<name.of.dataset> +pl_trainer.fast_dev_run=True
 ````
 
 Among others, this repository is mainly built on the following packages.
@@ -138,8 +146,8 @@ You may want to familiarize yourself with their basic use beforehand.
 
 ## Setting up the Data
 
-Currently, the following datasets are supported: Cityscapes Dataset(fine and coarse) and Pascal
-Context Dataset(59 and 60 classes).
+Currently, the following datasets are supported: Cityscapes Dataset (fine and coarse) and Pascal
+Context Dataset (59 and 60 classes).
 Follow the instructions below to set up the respective datasets.
 Moreover, the [customization section](/config#dataset) gives advice on adding further datasets.
 
@@ -312,22 +320,15 @@ paths:
 
 ## Download Pretrained Weights
 
-Pretrained weights for HRNet can be
-found [here](https://github.com/HRNet/HRNet-Image-Classification#imagenet-pretrained-models).
-Pretrained weights on ImageNet and PadddleClas are available.
-Since all models (HRNet, OCR, OCR+ASPP, MS OCR) are using a HRNet backbone, these weights can be
-used for all of them.
-For MS OCR pretrained weights on Mapillary are
-available [here](https://github.com/NVIDIA/semantic-segmentation#download-weights).
-These Mapillary weights can be also be used for the other models.
+Pretrained weights for HRNet-based models (HRNet, OCR, MS OCR) are available on ImageNet, PadddleClas and Mapillary.
 Download the preferred weights (direct download links below) and put them in the *pretrained/*
 folder.
 
-- ImageNet weights: [download](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk)
-- PaddleClas
-  weights: [download](https://github.com/HRNet/HRNet-Image-Classification/releases/download/PretrainedWeights/HRNet_W18_C_ssld_pretrained.pth)
-- Mapillary
-  weights: [download](https://drive.google.com/file/d/1Whz--rurtBoIsfF-t3YB9NEt3GT6hBQI/view?usp=sharing)
+- **ImageNet** weights: [source](https://github.com/HRNet/HRNet-Image-Classification#imagenet-pretrained-models), [direct download](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk)
+- **PaddleClas**
+  weights: [source](https://github.com/HRNet/HRNet-Image-Classification#imagenet-pretrained-models), [direct download](https://github.com/HRNet/HRNet-Image-Classification/releases/download/PretrainedWeights/HRNet_W18_C_ssld_pretrained.pth)
+- **Mapillary**
+  weights: [source](https://github.com/NVIDIA/semantic-segmentation#download-weights), [direct download](https://drive.google.com/file/d/1Whz--rurtBoIsfF-t3YB9NEt3GT6hBQI/view?usp=sharing)
 
 ## Running Code
 
@@ -350,39 +351,54 @@ by:
 python main.py
 ````
 
-This trains HRNet on the Cityscape Dataset with the following default settings:
-Stochastic Gradient Descent(SGD) with weight decay of 0.0005 and a momentum of 0.9 as optimizer.
+This trains HRNet (pretrained on ImageNet) on the Cityscape Dataset with the following default settings:
+Stochastic Gradient Descent(SGD) Optimizer with weight decay of 0.0005 and a momentum of 0.9.
 The initial learning rate is set to 0.01 and a polynomial learning rate scheduler with exponent of
 0.9 is used.
-It is trained for 400 epochs and a batch size of 6 per GPU.
-Cross Entropy Loss is used as well as Mixed Precision and Synchronized Batch Normalization (for
+It is trained for 400 epochs and a batch size of 6 per GPU (all available GPUs are used).
+Cross Entropy(CE) Loss is used as well as Mixed Precision and DDP with Synchronized Batch Normalization (only for
 multiple GPUS).
-By default ImageNet pretrained weights are used for each model.
 
 ### Selecting a Model
 
 You can change the model by adopting the corresponding entry in */config/baseline.yaml* or from the
-commandline by:
+commandline as shown below.\
+**Available options for 'model' are: DeepLabv3, FCN, UNet, hrnet, hrnet_ocr, hrnet_ocr_aspp, hrnet_ocr_ms**.
 
 ````shell
 python main.py model=hrnet                      # High-Resolution Representations for Semantic Segmentation
 python main.py model=hrnet_ocr                  # Object Contextual Representation
 python main.py model=hrnet_ocr_aspp             # Combination of OCR with an ASPP module
 python main.py model=hrnet_ocr_ms               # Hierarchical Multi-Scale Attention for Semantic Segmentation
+python main.py model=FCN                        # torchvision version of FCN 
+python main.py model=DeepLabv3                  # torchvision version of DeepLabv3
+python main.py model=UNet                       # UNet
 ````
 
 #### Selecting Pretrained weights
 
+Available Pretrained Weights for each model:
+- hrnet,hrnet_ocr, hrnet_ocr_aspp, hrnet_ocr_ms: *ImageNet, PaddleClas, Mapillary*
+- FCN, DeepLabv3: *Coco*
+- UNet: *None*
+
 ````shell
-python main.py MODEL.PRETRAINED=False           # Trained from scratch without Pretraining
-python main.py MODEL.pretrained_on=ImageNet     # Pretrained on ImageNet
+#For hrnet,hrnet_ocr, hrnet_ocr_aspp, hrnet_ocr_ms
+python main.py MODEL.PRETRAINED=False           # Training from scratch without Pretraining
+python main.py MODEL.pretrained_on=ImageNet     # (Default) Pretrained on ImageNet
 python main.py MODEL.pretrained_on=Paddle       # Pretrained using PaddleClas weights
 python main.py MODEL.pretrained_on=Mapillary    # Pretrained on Mapillary Dataset
+#For FCN and DeepLab
+python main.py model.pretrained=False           # Training from scratch without Pretraining
+python main.py model.pretrained=True            # (Default) Pretrained on Coco
 ````
 
 ### Selecting a Dataset
 
-In the same way the dataset can be changed by:
+In the same way as the model, also the dataset can be changed from the commandline. 
+For these provided datasets, the corresponding hyperaparmeters (from config/hyperparameters/) and 
+data augmentations (from config/data_augmentation/) are adapted automatically.\
+**Available options for 'dataset' are: Cityscapes, Cityscapes_coarse, Cityscapes_fine_coarse, VOC2010_Context, VOC2010_Context_60**.
 
 ````shell
 python main.py dataset=Cityscapes               # Cityscapes Dataset with 19 classes using fine annotated data
@@ -394,7 +410,9 @@ python main.py dataset=VOC2010_Context_60       # VOC2010_Context Dataset with 6
 
 ### Changing Hyperparmeters
 
-The basic hyperparameters needed for training can be set as shown below (in the example below the
+The default hyperparameters are defined in *config/hyperparameters/default.yaml* and are overwritten by the 
+corresponding *config/hyperparameters/<dataset.name>.yaml* for the predefined datasets.
+The basic hyperparameters needed for training can be set from the commandline as shown below (in the example the
 default values are shown):
 
 ````shell
@@ -409,7 +427,8 @@ If the model has multiple outputs, pass a list of loss functions ``lossfunction=
 with one entry for each model output.
 The ``lossweight`` argument can be used analogues to weight the model outputs differently.
 The provided models have the following number of outputs: model(num_putputs), hrnet(1), hrnet_ocr(2)
-, hrnet_ocr_aspp(2), hrnet_ocr_ms(4).
+, hrnet_ocr_aspp(2), hrnet_ocr_ms(4).\
+**Available options for 'lossfunction': CE, wCE, RMI, wRMI**
 
 ````shell
 python main.py lossfunction=CE                  # default Cross Entropy loss
@@ -422,10 +441,13 @@ python main.py lossfunction=[CE,CE,CE,CE] lossweight=[1.0,0.4,0.05,0.05]    # de
 
 ### Logging and Checkpointing
 
-The logging structure of the code is depicted below.
+The logging structure of the output folder is depicted below.
 The ``LOGDIR=<some.folder.dir>`` argument defines the logging folder (*"logs/"* by default).
 For a better overview, experiments can also be named by ``experiment="my_experiment"`` ("baseline"
 by default).
+The parameters which are logged are: Hyperparameters (like epochs, batch_size, initial lr,...), 
+metrics, loss (train+val), time (train+val) and learning rate as well as example predictions 
+during validation  (can be disabled by setting ``num_example_predictions=0``).
 Checkpointing can be disabled/enabled by ``pl_trainer.enable_checkpointing= <True or False>``.
 To resume training from a checkpoint use the *continue_from* argument.
 If you want to finetune from a checkpoint (only load the weights) use the *finetune_from* argument.
@@ -446,12 +468,12 @@ LOGDIR                                      # logs/ by default
         └──Model                            # Name of the used Model
            └──experiment_overrides          # Parameters that have been overwritten and differ from the baseline
               └──Date                       # Date as unique identifier
-                  ├── checkpoints/          # if checkpointing is enabled this contains the best and the last epochs checkpoint
-                  ├── hydra/                # contains hydra files
-                  ├── validation/           # optional (only when model is validated) - contains testing results
+                  ├── checkpoints/          # If checkpointing is enabled this contains the best and the last epochs checkpoint
+                  ├── hydra/                # Contains hydra config files
+                  ├── testing/              # (Optional) only when model is tested - contains testing results
                   ├── event.out...          # Tensorboard log
-                  ├── main.log              # logging
-                  └── hparams.yaml          # resolved config
+                  ├── main.log              # Console logging file
+                  └── hparams.yaml          # Resolved config
 ````
 
 Since [Tensorboard](https://pytorch.org/tutorials/recipes/recipes/tensorboard_with_pytorch.html#run-tensorboard)
@@ -467,65 +489,77 @@ tensorboard --logdir=/home/.../logs/Cityscapes/hrnet/baseline/2022-04-21_10-25-3
 # example for viewing all runs in .../baseline
 tensorboard --logdir=/home/.../logs/Cityscapes/hrnet/baseline
 ````
-Node: Tensorboard does not show all saved imaged (example predictions, condusion matrix) by default.
-To see all images use``tensorboard --logdir=<some.dir> --samples_per_plugin images=<num_epochs>``
+**Node**: Tensorboard does not show the images for all epochs (like the example predictions or confusion matrix) by default.
+If you need to see all images use ``tensorboard --logdir=<some.dir> --samples_per_plugin images=<num_epochs>``
 
-### Run Validation/Testing
+### Run Testing/Validation
 
-Some models and datasets need validation/testing under different conditions than during training(
-e.g. additional scale for MS OCR, or multiscale testing for VOC2010_Context).
-Therefore, the following command must be executed beforehand.
-Consider that checkpointing hast to be enabled when
+If a model should be tested or validated under different settings (e.g. additional scale for MS OCR, or multiscale testing for VOC2010_Context), the following script can be used.
+Thereby the test dataset is loaded, this means if you don't have one, or you want to use the validation set instead, 
+your dataset class should return the validation set when getting the *split=test* input argument (see datasets/Cityscapes/Cityscapes.py).
+For testing, the configuration used during training is reconstructed and composed with the arguments given by the command line.
+Consider that checkpointing hast to be enabled during
 training (``python main.py .... pl_trainer.enable_checkpointing=True`` or set to True in '
 baseline.yaml') to validate/test afterwards.
-MS OCR and VOC2010_Context use a predefined validation setting. However, this setting can be
-changed [here](/config#testing). Since the configuration is composed of different configs, it can 
-happen that hydra raises error because some attributes from the commandline didn't exist at the 
-current config.  If this happens add a "++" in front of the argument (e.g. `` ... ++example=True``)
 
-````shellS
+No public test set exists for the Cityscapes and VOC2010_Context datasets, so the validation set is used instead.
+MS OCR and VOC2010_Context use a predefined validation setting. However, this setting can be
+changed as shown [here](/config#testing). Since the configuration is composed of different configs, it can 
+happen that hydra raises error because some attributes from the commandline didn't exist at the 
+current config. If this happens add a "++" in front of the argument (e.g. `` ... ++example=True``) or 
+load the missing config group manually (e.g. ``... model=mymodel MODEL.specific_parameter=X``)
+
+````shell
 python testing.py ckpt_dir=<path.to.the.outputdir.of.training>
 # eg python testing.py ckpt_dir="/../Semantic_Segmentation/logs/VOC2010_Context/hrnet/baseline_/2022-02-15_13-51-42"
 ````
 
-Node: For validation the same config is reconstructed which was used during training.
+**Node**: For validation the same config is reconstructed which was used during training.
 This means if you train and test on different devices you have to adapt the environment
 parameter(``python testing.py ckpt_dir=<some.dir> environment=some_env``). 
 
 
 ### Additional Tools
 
-The ``tools/`` folder contains some other useful tools for developing and experimenting. 
-It is not guaranteed that these tools will work for all kind of datasets and datatypes but even then
-they can be used as a starting point and adapted with a few changes.
+The ``tools/`` folder contains some useful tools for developing and experimenting. 
+It is not guaranteed that these tools will work for all kind of use-cases, datasets and datatypes but even then
+they can be used as a starting point and can be adapted with a few changes.
+
 - **show_data.py**: Load and Visualize the pytorch dataset which is defined in the dataset config.
   - dataset: Name of the dataset config (see [here](#selecting-a-dataset))
+  ````shell
+  pyhton tools/show_data.py dataset=<dataset.name>
+  pyhton tools/show_data.py dataset=Cityscapes
+  ````
+
 - **show_prediction.py**: Show the predictions of a trained model. Basically has the same syntax 
 as the [validation/testing](#run-validationtesting), but visualizes the result instead of calculating 
 metrics. The Test Dataset is used for predicting together with the train data-augmentations. For a 
 nicer appearance the normalization operation is inverted during visualization (not for prediction). 
 (Note, depending on the size of the input, the inference time of the model and the available hardware, 
-there might be a delay when changing the image.)
+there might be a delay when sliding through the images)
   - ckpt_dir: path to the checkpoint which should be used
-- **dataset_stats**: Getting some basic stats about the dataset like: mean and std for each channel, ratio
-of classes. 
+  ````shell
+  python tools/show_prediction.py ckpt_dir=<path>
+  python tools/show_prediction.py ckpt_dir=ckpt_dir="/../Semantic_Segmentation/logs/VOC2010_Context/hrnet/baseline_/2022-02-15_13-51-42"
+  ````
+
+- **dataset_stats.py**: Getting some basic stats about the dataset like: mean and std for each channel, ratio
+of classes and potential class weights. 
   - dataset: Name of the dataset config (see [here](#selecting-a-dataset))
-````shell
-# Show the Data
-pyhton tools/show_data.py dataset=<dataset.name>
-# Example
-pyhton tools/show_data.py dataset=Cityscapes
+  ````shell
+  python tools/dataset_stats.py dataset=<dataset.name>
+  pyhton tools/dataset_stats.py dataset=Cityscapes
+  ````
 
-# Show Model Predictions
-python tools/show_prediction.py ckpt_dir=<path>
-# Example
-python tools/show_prediction.py ckpt_dir=ckpt_dir="/../Semantic_Segmentation/logs/VOC2010_Context/hrnet/baseline_/2022-02-15_13-51-42"
+- **lr_finder.py**: Implementation to use pytorch lightning's [Learning Rate Finder](https://pytorch-lightning.readthedocs.io/en/1.4.0/advanced/lr_finder.html)
+to get some guidance when choosing an optimal initial lr (Should be used with caution, especially if random augmentations are used).
+  - +num_training: number of batches which are used from the lr finder (100 by default)
+  ````shell
+  python tools/lr_finder.py
+  pyhton tools/lr_finder.py dataset=Cityscapes model=hrnet +num_training=300
+  ````
 
-# Get some Stats about the Dataset
-python tools/dataset_stats.py dataset=<dataset.name>
-# Example
-pyhton tools/dataset_stats.py dataset=Cityscapes
-````
 
 # Experiments
 

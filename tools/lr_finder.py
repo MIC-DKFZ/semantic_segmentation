@@ -1,63 +1,42 @@
+import argparse
+import os
+import glob
 import logging
+import sys
 
+import matplotlib.pyplot as plt
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 logging.basicConfig(level=logging.INFO)
 
-import os
-import hydra
-
-import torch
 from pytorch_lightning import loggers as pl_loggers
-from pytorch_lightning import Trainer, seed_everything
-from pytorch_lightning.plugins import DDPPlugin
+from pytorch_lightning import Trainer
+import hydra
+import torch
 
-from utils.utils import (
-    has_true_attr,
-    has_not_empty_attr,
-    get_logger,
-    num_gpus,
-    log_hyperparameters,
-)
-from omegaconf import DictConfig, OmegaConf
 from Segmentation_Model import SegModel
+
+from utils.utils import has_true_attr, has_not_empty_attr, get_logger, num_gpus
+
 
 log = get_logger(__name__)
 
 
-# OmegaConf resolver for preventing problems in the output path
-OmegaConf.register_new_resolver(
-    "path_formatter",
-    lambda s: s.replace("[", "")
-    .replace("]", "")
-    .replace("}", "")
-    .replace("{", "")
-    .replace(")", "")
-    .replace("(", "")
-    .replace(",", "_")
-    .replace("=", "_")
-    .replace("/", ".")
-    .replace("+", ""),
-)
-
-
-@hydra.main(config_path="config", config_name="baseline")
-def training_loop(cfg: DictConfig):
+def find_lr(overrides_cl: list) -> None:
     """
-    Running Training
-    import Callbacks and initialize Logger
-    Load Model, Datamodule and Trainer
-    Train the model
+    Implementation for using Pytorch Lightning learning rate finder
 
     Parameters
     ----------
-    cfg :
-        cfg given by hydra - build from config/baseline.yaml + commandline argumentss
+    overrides_cl : list of strings
+        arguments from the commandline to overwrite the config
     """
-    log.info("Output Directory: %s", os.getcwd())
-    # Seeding if given by config
-    if has_not_empty_attr(cfg, "seed"):
-        seed_everything(cfg.seed, workers=True)
+    # initialize hydra
+    hydra.initialize(config_path="../config")
 
-    # Importing callbacks using hydra
+    overrides_cl.append("ORG_CWD=./")
+    cfg = hydra.compose(config_name="baseline", overrides=overrides_cl)
+
     callbacks = []
     for _, cb_conf in cfg.CALLBACKS.items():
         if cb_conf is not None:
@@ -65,7 +44,7 @@ def training_loop(cfg: DictConfig):
             callbacks.append(cb)
     # Adding a Checkpoint Callback if checkpointing is enabled
     if has_true_attr(cfg.pl_trainer, "enable_checkpointing"):
-        callbacks.append(hydra.utils.instantiate(cfg.ModelCheckpoint))
+        cfg.pl_trainer.enable_checkpointing = False
 
     # Using tensorboard logger
     tb_logger = pl_loggers.TensorBoardLogger(
@@ -101,21 +80,24 @@ def training_loop(cfg: DictConfig):
         logger=tb_logger,
         strategy="ddp" if number_gpus > 1 else None,
         sync_batchnorm=True if number_gpus > 1 else False,
-        **trainer_args
+        auto_lr_find="config.lr",
+        **trainer_args,
     )
 
-    # Log hyperparameters, if-statement is needed to catch fast_dev_run
-    if hasattr(trainer.logger, "log_dir"):
-        log_hyperparameters(cfg, model, trainer)
-
-    # Start training
-    trainer.fit(
-        model,
-        dataModule,
-        ckpt_path=cfg.continue_from if hasattr(cfg, "continue_from") else None,
+    lr_finder = trainer.tuner.lr_find(
+        model=model,
+        datamodule=dataModule,
+        num_training=cfg.num_training if has_not_empty_attr(cfg, "num_training") else 100,
     )
+    print("lr suggestion: ", lr_finder.suggestion())
+
+    fig = lr_finder.plot(suggest=True)
+    plt.show()
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
 
-    training_loop()
+    args, overrides = parser.parse_known_args()
+
+    find_lr(overrides)

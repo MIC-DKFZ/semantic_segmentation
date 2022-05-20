@@ -66,6 +66,7 @@ class SegModel(LightningModule):
             if has_not_empty_attr(config, "num_example_predictions")
             else 0
         )
+        # self.lr = config.lr
 
     def configure_optimizers(self) -> dict:
         """
@@ -79,6 +80,7 @@ class SegModel(LightningModule):
             contains the optimizer and the scheduler + config
 
         """
+
         # instantiate lossfunction and lossweight for each element in list
         if isinstance(self.config.lossfunction, str):
             self.loss_functions = [

@@ -20,7 +20,7 @@ Therefore, this repository is designed to be extended with additional models and
 metrics, loss functions, metrics and data augmentation pipelines.
 In addition, new and popular packages such as Pytorch Lightning, Hydra and Albumentations were used 
 to enable features, among others, such as multi-GPU, device independent and mixed precision training as well as
-easy job configuration and easy construction of data augmentation pipelines.\
+easy job configuration and easy construction of data augmentation pipelines.
 Several architectures like [High-Resolution Network (HRNet)](https://arxiv.org/pdf/1904.04514.pdf), 
 [Object Contextual Representation (OCR)](https://arxiv.org/pdf/1909.11065.pdf), 
 [Hierarchical Multi-Scale Attention (MS OCR)](https://arxiv.org/pdf/2005.10821.pdf), 
@@ -111,7 +111,7 @@ system [here](https://pytorch.org/get-started/locally/#start-locally).
 pip install -r requirements.txt
 ````
 
-After Setting up a dataset, you check if the installation was successful and everythink is working,
+After Setting up a dataset, you check if the installation was successful and everything is working,
 by running a small "unit test" using Pytorch
 Lightnings [fast_dev_run](https://pytorch-lightning.readthedocs.io/en/stable/common/debugging.html#fast-dev-run):
 
@@ -426,7 +426,7 @@ For a single output the loss function can be changed by ``lossfunction=RMI``.
 If the model has multiple outputs, pass a list of loss functions ``lossfunction=[RMI,CE,CE,CE]``,
 with one entry for each model output.
 The ``lossweight`` argument can be used analogues to weight the model outputs differently.
-The provided models have the following number of outputs: model(num_putputs), hrnet(1), hrnet_ocr(2)
+The provided models have the following number of outputs [*model(num_putputs)*]: DeepLabv3(1), FCN(1), UNet(1), hrnet(1), hrnet_ocr(2)
 , hrnet_ocr_aspp(2), hrnet_ocr_ms(4).\
 **Available options for 'lossfunction': CE, wCE, RMI, wRMI**
 

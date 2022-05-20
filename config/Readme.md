@@ -48,22 +48,22 @@ baseline.yaml
   ─────────────────────────────
 defaults:
   - _self_
-  - optional hyperparameters:
-  - callbacks: default
-  - data_augmentation: default
-  - optimizer: SGD
-  - lr_scheduler: polynomial
-  - metric: confmat_IoU
-  - dataset: Cityscapes
-      -
-        - model: hrnet
-  - environment: local
+  - hyperparameters/default     # Load Default Hyperparameters
+  - optional hyperparameters:   # (Optional) Overwrite defaults with the specific hyperparameter config
+  - optimizer: SGD              # Optimizer
+  - lr_scheduler: polynomial    # Learning rate scheduler
+  - callbacks: default          # Callbacks
+  - data_augmentation: default  # Data Augmentation Pipeline
+  - metric: mean_IoU            # Metric configuration
+  - dataset: Cityscapes         # Dataset
+  - model: hrnet                # Model
+  - environment: local          # Environment
 ````
 
 The configs of each config group are merged from top to bottom, where later groups can overwrite the
 parameters of earlier groups.
 In addition to the order, the default list also sets default values for the configuration groups.
-This means if not changed, the parameters defined in *baseline.yaml*,..., *datasets/Cityscapes.yaml*
+This means if not changed, the parameters defined in *hyperparameters/default.yaml*,..., *datasets/Cityscapes.yaml*
 and *model/hrnet.yaml* are used in this case.
 To change the used config file of a config group, the corresponding entry in the default list can be
 changed in the *baseline.yaml*, or the entry can be overwritten from the commandline.
@@ -96,12 +96,12 @@ the *example.yaml* has to be changed.
 ````yaml
 example.yaml
   ─────────────────────────────
-#Generall syntax
+# Generall syntax
 name:
   _target_: path.to.class
   arg1:     some_argument
   arg2:     ...
-# Example for defining an torch-optimizer
+# Example for defining a torch-optimizer
 optimizer:
   _target_:     torch.optim.SGD
   lr:           0.01
@@ -226,14 +226,13 @@ Some  **Basic Assignments** are shown here:
 ````yaml
 example.yaml
   ─────────────────────────────
-#Comments in yaml
+# Comments in yaml
 number: 10                   # Simple value, works for int and float.
 string: Text|"Text"          # Strings, Quotation marks are not necessarily required.
 empty: None| |Empty|Null
 explicit_Type: !!float 1     # Explicitly defined type. works as well for other types like str etc.
 missing_vale: ???            # Missing required value. The  has to be given e.g. from the commandline.
-optional opt_value:          # Optional Value. Can be empty or ???, and will only be considered if 
-# it has a value.
+optional opt_value:          # Optional Value. Can be empty or ???, and will only be considered if it has a value.
 value2: ${number}            # Value interpolation (takes the value of attribute number, in this 
                              # case 10). $ indicates reference and {} is required.
 value3: "myvalue ${number}"  # String interpolation, same as value interpolation just with string output.
@@ -277,8 +276,8 @@ customized, for example to add a new model or a new dataset to the framework.
 <details><summary>Configure</summary>
 <p>
 
-Currently, the following models are supported, and they can be selected as shown below. By default
-hrnet is used.
+Currently, the following models are supported, by default hrnet is used. 
+How to select a model and the used pretrained weights is explained [here](../config#selecting-a-model).
 
 - **hrnet**: [High-Resolution Network (HRNet)](https://arxiv.org/pdf/1904.04514.pdf). Segmentation
   model with a single output.
@@ -287,36 +286,20 @@ hrnet is used.
   The model has two outputs, a primary and an auxiliary one.
 - **hrnet_ocr_aspp**: Additionally including an ASPP module into the ORC model. Again the model has
   two outputs.
-- **
-  hrnet_ocr_ms**: [Hierarchical Multiscale Attention Network](https://arxiv.org/pdf/2005.10821.pdf).
+- **hrnet_ocr_ms**: [Hierarchical Multiscale Attention Network](https://arxiv.org/pdf/2005.10821.pdf).
   Extends ORC with multiscale and attention.
   The model has 4 outputs: primary, auxiliary, high_scale_prediction, low_scale_prediction
     - ``MODEL.MSCALE_INFERENCE`` is used to enable/disable the use of multiple scales (only during
       inference and validation), which is False by default.
-    - ``MODEL.N_SCALES`` defines the scales which are used during *MSCALE_INFERENCE*, by default *
-      = [0.5, 1.0, 2.0]*
-
-```shell
-python main.py model=hrnet
-python main.py model=hrnet_ocr
-python main.py model=hrnet_ocr_aspp
-python main.py model=hrnet_ocr_ms
-python main.py model=hrnet_ocr_ms MODEL.MSCALE_INFERENCE=True MODEL.N_SCALES=[0.75, 1., 1.25]
-```
-
-Besides, the **MODEL.PRETRAINED** parameter can be used to indicate if pretrained weights should be
-used (True by default).
-If enabled (*MODEL.PRETRAINED=True*) the possibility to select between different **pretrained
-weights**.
-ImageNet, PaddleClass and Mapillary pretrained weights are provided.
-By default, ImageNet weights are used:
-
-````shell 
-python main.py MODEL.PRETRAINED=False
-python main.py MODEL.pretrained_on=ImageNet
-python main.py MODEL.pretrained_on=Paddle
-python main.py MODEL.pretrained_on=Mapillary
-````
+    - ``MODEL.N_SCALES`` defines the scales which are used during *MSCALE_INFERENCE*, by default *= [0.5, 1.0, 2.0]*
+- **FCN**: including torchvision's FCN  ([docs]((https://pytorch.org/vision/stable/models.html#fully-convolutional-networks)), [paper](https://arxiv.org/pdf/1411.4038.pdf)).
+Besides the arguments described in the [torchvision docs](https://pytorch.org/vision/stable/generated/torchvision.models.segmentation.fcn_resnet101.html#torchvision.models.segmentation.fcn_resnet101) you can specify the following arguments:
+  - ``model.backbone`` can be resnet50 or resnet101, to define which version of the model should be used. resnet101 by default.
+- **DeepLab**: including torchvision's DeepLabv3 ([docs]((https://pytorch.org/vision/stable/models.html#deeplabv3)), [paper]()). 
+Besides the arguments described in the [torchvision docs](https://pytorch.org/vision/stable/generated/torchvision.models.segmentation.deeplabv3_resnet101.html#torchvision.models.segmentation.deeplabv3_resnet101) you can specify the following arguments:
+  - ``model.backbone`` can be resnet50 or resnet101, to define which version of the model should be used. resnet101 by default.
+- **UNet**: Implementation of UNet ([paper](https://www.nature.com/articles/s41592-020-01008-z)
+  , [source code](https://github.com/MIC-DKFZ/nnUNet)). No pretrained weights are available
 
 </p>
  </details>
@@ -328,27 +311,27 @@ Defining a custom model is done in two steps, first defining your custom pytorch
 afterwards setting up its config file.
 
 1. **Defining your Pytorch Model**, thereby the following thinks have to be considered:
-    - optional: Put your *model file* in the *models/* folder to keep things tidy
-    - **Model Output**: Your model should **return a dict** which contain all the models outputs.
-      The naming can be arbitrary.
+    - **Model Input**: The input of the model will be a torch.Tensor of shape [batch_size, channels, height, width]).
+    - **Model Output**: It is recommended that your model **return a dict** which contain all the models outputs.
+      The naming can be arbitrary but the ordering matters. 
       For example if you have one output return as follows: ``return {"out": model_prediction}``. If
       you have multiple output to it analogues:
       ``return {"main": model_prediction, "aux": aux_out}``.
-      It should be noted that the **order of the outputs is relevant**. Only the first output is
-      used for updating the metric during validation.
+      The output of the model can also be a single Tensor, a list or a tuple, but in this case the output is converted into dict automatically.
+      It should be noted that in each case the **order of the outputs is relevant**. Only the first output is
+      used for updating the metric during validation or testing.
       Further the order of the outputs should match the order of your losses in *lossfunction* and
       the weights in *lossweights*.(see [Lossfunction](#loss-function) for more details on that)
 
 2. **Setting up your model config**
-    - Create a *custom_model.yaml* file in *config/model/*. For the content of the *.yaml* file
-      adopt the following dummy.
-      you can
+    - Create a *custom_model.yaml* file in *config/model/*. Therby the name of the file defines how the model can be select over hydras commandline syntax.
+   For the content of the *.yaml* file adopt the following dummy. Node that *MODEL.NAME* is required.
 
 ````yaml 
 #@package _global_
-### model is used to initialize your custom model, 
-### _target_: should point to your model class or a getter function which returns your model
-### afterwards you can handle your custom input arguments which are used to initialize the model
+# model is used to initialize your custom model, 
+# _target_: should point to your model class or a getter function which returns your model
+# afterwards you can handle your custom input arguments which are used to initialize the model
 model:
    _target_: models.my_model.get_model     # if you want to use a getter function to load weights 
                                            # or initialize you model
@@ -356,14 +339,18 @@ model:
    num_classes:  ${DATASET.NUM_CLASSES}    # example arguments, for example the number of classes
    pretrained: ${MODEL.PRETRAINED}         # of if pretrained weights should be used
    arg1: ...
-### MODEL IS USED TO STORE INFORMATION WHICH ARE NEEDED FOR YOUR MODEL
+# model is used to store information which are needed for your model
 MODEL:
-  #REQUIRED MODEL ARGUMENTS
+  # Required model arguments
   NAME: MyModel            # Name of the model is needed for logging
-  #YOUR ARGUMENTS, FOR EXAMPLE SOMETHINNK LIKE THAT
+  # Your arguments, for example somethinnk like that
   PRETRAINED: True         # e.g. a parameter to indicate if pretrained weights should be used 
   PRETRAINED_WEIGHTS: /pretrained/weights.pth  # give the path to the weights      
 ````
+3. **Train your model**
+   ````shell
+    python main.py model=custom_model     # to select config/model/custom_model.yaml
+    ````
 
 </p>
 </details>
@@ -373,8 +360,8 @@ MODEL:
 <details><summary>Configure</summary>
 <p>
 
-Currently, the following datasets are supported, and they can be selected as shown below. By
-default, the cityscapes dataset is used.
+Currently, the following datasets are supported, and they can be selected as shown [here](../config#selecting-a-dataset). 
+By default, the cityscapes dataset is used.
 
 - **Cityscapes**: [Cityscapes dataset](https://www.cityscapes-dataset.com/) with using fine
   annotated images. Contains 19 classes and 2.975 training and 500 validation images.
@@ -393,17 +380,8 @@ default, the cityscapes dataset is used.
 - **VOC2010_Context_60**: The **VOC2010_Context** dataset with an additional background class,
   resulting in a total of 60 classes.
 
-```shell
-python main.py dataset=Cityscapes
-python main.py dataset=Cityscapes_coarse
-python main.py dataset=Cityscapes_fine_coarse
-python main.py dataset=VOC2010_Context
-python main.py dataset=VOC2010_Context_60
-```
-
 </p>
  </details>
-
 
 <details><summary>Customize</summary>
 <p>
@@ -462,29 +440,35 @@ afterwards setting up its config file.
 
    ````yaml 
    #@package _global_
-   ### dataset is used to initialize your custom dataset, 
-   ### _target_: should point to your dataset class
-   ### afterwards you can handle your custom input arguments which are used to initialize the dataset
+   # dataset is used to initialize your custom dataset, 
+   # _target_: should point to your dataset class
+   # afterwards you can handle your custom input arguments which are used to initialize the dataset
    dataset:
      _target_: datasets.MyDataset.Custom_dataset 
      root: /home/.../Datasets/my_dataset     #the root to the data as an example input
      #root: ${path.my_dataset}               #the root if defined in config/environment/used_env.yaml
      input1: ...                    #All your other input arguments
      input2: ...
-   ### DATASET is used to store information about the dataset which are needed during training
+   # DATASET is used to store information about the dataset which are needed during training
    DATASET:
-     ## REQUIRED DATASER ARGUMENTS
+     # Required dataser arguments
      NAME:            # Used for the logging directory
      NUM_CLASSES:     # Needed for defining the model and the metrics
+     # (Optional) but needed if ignore index should be used
      IGNORE_INDEX:    # Needed for the loss function, if no ignore indes set to 255 or another number
                       # which do no occur in your dataset 
-     ## OPTIONAL, BUT NEEDED IF WEIGHTED LOSSFUNCTIONS ARE USED
+     # (Optional) needed if weighted lossfunctions are used
      CLASS_WEIGHTS: [ 0.9, 1.1, ...]                
-     ##OPTIONAL, CAN BE USED FOR NICER FOR LOGGING 
+     # (Optional) can be used for nicer for logging 
      CLASS_LABELS:
         - class1
         - class2 ...
    ````
+3. **Train on your Dataset**
+   ````shell
+    python main.py dataset=custom_dataset     # to select config/dataset/custom_dataset.yaml
+    ````
+
 
 </p>
 </details>
@@ -496,7 +480,9 @@ afterwards setting up its config file.
 
 #### Hyperparameters
 
-The following hyperparameters are supported and can be changed in the *baseline.yaml* directly or
+The default hyperparameters are defined in *config/hyperparameters/default.yaml*. 
+For the specific datasets they are overwriten from *config/hyperparameters/<dataset.name>.yaml*
+The following hyperparameters are supported and can be changed in the *.yaml*-files directly or
 can be overwritten from the command line as shown below.
 
 - **epochs:** number of epochs for training.
@@ -525,22 +511,20 @@ pl_trainer:                     # parameters for the pytorch lightning trainer
   max_epochs: ${epochs}         # parsing the number of epochs which is defined as a hyperparameter
   gpus: -1                      # defining the used GPUs - in this case using all available GPUs
   precision: 16                 # using Mixed Precision
-  sync_batchnorm: True          # using synchronized batch normalization for multi gpu training
   benchmark: True               # using benchmark for faster training
 ````
 
 ````shell
-#Overwriting
+# Overwriting
 python main.py pl_trainer.precision=32 pl_trainer.benchmark=false
-#Adding
+# Adding
 python main.py +fast_dev_run=True +pl_trainer.reload_dataloaders_every_n_epochs=2 
-#Removing
+# Removing
 python main.py ~pl_trainer.precision 
 ````
 
 A full list of all available options of the Pytorch Lightning Trainer class can be seen in
-the [Lightning docs](https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html#trainer-class-api)
-. \
+the [Lightning docs](https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html#trainer-class-api). \
 Some arguments are defined inside the code and can't be overwritten from the config file.
 These parameters are not intended to be changed, if you still want to adapt them you can do this
 in *main.py* in the *training_loop* function.
@@ -549,6 +533,7 @@ The effected parameters are:
 - *callbacks*: callbacks are defined in *config/callbacks*, so add your callbacks there
 - *logger*: tb_logger is used by default
 - *strategy*: ddp if multiple gpus are used, else None
+- *sync_batchnorm*: sync_batchnorm is True if multiple gpus are used, else False
 
 </p>
 </details>
@@ -556,11 +541,11 @@ The effected parameters are:
 <details><summary>Customize</summary>
 <p>
 
-Hyperparameters can be added or changed in *baseline.yaml* or from the commandline.
+Hyperparameters can be added or changed in *.yaml*-files or from the commandline.
 For different experiments, a group of parameters may need to be adjusted at once.
 To not have to change them manually each time there is an optional *hyperparameters* config group to
 easily switch between different hyperparameter settings.
-Create *hyperparameters/my_hparams.yaml* and insert all parameters that differ from the baseline
+Create *hyperparameters/my_hparams.yaml* and insert all parameters that differ from the default.yaml
 into it.
 A dummy and how this can be used it shown below:
 
@@ -573,10 +558,9 @@ val_batch_size: 4
 epochs: 175
 lossfunction: RMI
 ...
-#Also fo Pytorch Lightning Trainer Arguments
+# Also fo Pytorch Lightning Trainer Arguments
 pl_trainer:
   precision: 32
-  sync_batchnorm: False
   ...               
 ````
 
@@ -621,7 +605,7 @@ the model parameters in the following way:
 `````yaml
 config/optimizer/my_optimizer.yaml
   ─────────────────────────────
-_target_: path.to.my.optimizer.class      #for example torch.optim.SGD
+_target_: path.to.my.optimizer.class      # for example torch.optim.SGD
 lr: ${lr}
 arg1: custom_args
 arg2: ...
@@ -655,7 +639,6 @@ python main lr_scheduler=polynomial_epoch
 
 <details><summary>Customize</summary>
 <p>
-
 
 To add a custom lr_scheduler create a *my_scheduler.yaml* file in *config/lr_scheduler/*.
 A dummy and how this can be used it shown below.
@@ -706,11 +689,9 @@ shown below:
   output and Cross Entropy for the secondary output.
   The following losses are supported and can be selected by using the corresponding
   name/abbreviation:
-    - **
-      CE**: [Cross Entropy Loss](https://pytorch.org/docs/1.9.1/generated/torch.nn.CrossEntropyLoss.html)
+    - **CE**: [Cross Entropy Loss](https://pytorch.org/docs/1.9.1/generated/torch.nn.CrossEntropyLoss.html)
     - **wCE**: CE with using weighting of classes
-    - **
-      RMI**: [Region Mutual Information Loss for Semantic Segmentation](https://arxiv.org/pdf/1910.12037.pdf)
+    - **RMI**: [Region Mutual Information Loss for Semantic Segmentation](https://arxiv.org/pdf/1910.12037.pdf)
     - **wRMI**: slightly adopted RMI with using weighting of classes
     - **DC**: Dice Loss
     - **DC_CE**: Combination of Dice and Cross Entropy Loss
@@ -725,21 +706,16 @@ shown below:
   By default ``lossweight=[1, 0.4, 0.05, 0.05]`` is used.
 
 ```shell
-python main.py lossfunction=wCE lossweight=1                    #For one output like for HRNet
-python main.py lossfunction=[RMI, CE] lossweight=[1,0.4]        #Two outputs like OCR and OCR+ASPP
-python main.py lossfunction=[wRMI, wCE, wCE, wCE] lossweight=[1, 0.5, 0.1, 0.05]  #Four outputs like OCR+MS
+python main.py lossfunction=wCE lossweight=1                    # For one output like for HRNet
+python main.py lossfunction=[RMI, CE] lossweight=[1,0.4]        # Two outputs like OCR and OCR+ASPP
+python main.py lossfunction=[wRMI, wCE, wCE, wCE] lossweight=[1, 0.5, 0.1, 0.05]  # Four outputs like OCR+MS
 ```
 
 Consider the number of outputs of each model for **defining the correct number of losses in the
 right order**.
 If the number of given loss functions/lossweights is higher than the number of model outputs that's
 no problem and only the first corresponding lossfunctions/lossweights are used.
-For the supported models the number of outputs looks like this:
-
-- hrnet:  1 output
-- hrnet_ocr: 2 outputs *[primary, auxiliary]*
-- hrnet_ocr_aspp: 2 outputs *[primary, auxiliary]*
-- hrnet_ocr_ms: 4 outputs *[primary, auxiliary, high_scale_prediction, low_scale_prediction]*
+For the supported models the number of outputs is listed [here](../config#loss-function)
 
 </p>
  </details>
@@ -1010,14 +986,14 @@ config/envrironment/custom_env.yaml
   ─────────────────────────────
 #@package _global_
 
-#Output directory for logs and checkpoints
+# Output directory for logs and checkpoints
 LOGDIR: logs/
-#Paths to datasets
+# Paths to datasets
 paths:
   cityscapes: /home/.../Datasets/cityscapes
   VOC2010_Context: /home/.../Datasets/VOC2010_Context
   other_datasets: ...
-#Whatever you need
+# Whatever you need
 CUSTOM_PATH: ...
 Some_Parameter: ...
 ...

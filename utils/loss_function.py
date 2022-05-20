@@ -4,6 +4,7 @@ from omegaconf import DictConfig
 from utils.loss.rmi import RMILoss
 from utils.loss.Dice_Loss import DiceLoss
 from utils.loss.DC_CE_Loss import DC_and_CE_loss, TopKLoss, DC_and_topk_loss
+from utils.utils import has_not_empty_attr
 
 
 def get_loss_function_from_cfg(name_lf: str, cfg: DictConfig) -> list:
@@ -23,7 +24,9 @@ def get_loss_function_from_cfg(name_lf: str, cfg: DictConfig) -> list:
     list of Lossfunctions
     """
     num_classes = cfg.DATASET.NUM_CLASSES
-    ignore_index = cfg.DATASET.IGNORE_INDEX
+    ignore_index = (
+        cfg.DATASET.IGNORE_INDEX if has_not_empty_attr(cfg.DATASET, "IGNORE_INDEX") else -100
+    )
     if name_lf == "CE":
         loss_function = torch.nn.CrossEntropyLoss(ignore_index=ignore_index)
 

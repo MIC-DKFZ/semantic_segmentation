@@ -438,6 +438,7 @@ class HighResolutionNet(nn.Module):
         return nn.Sequential(*modules), num_inchannels
 
     def forward(self, x):
+        print(x.shape, type(x))
         x_size = x.size(2), x.size(3)
 
         x = self.conv1(x)

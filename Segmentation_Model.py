@@ -100,6 +100,15 @@ class SegModel(LightningModule):
             "Loss Functions with Weights: %s", list(zip(self.loss_functions, self.loss_weights))
         )
 
+        # self.val_loss = torch.nn.CrossEntropyLoss(
+        #    weight=self.cfg.DATASET.WEIGHTS.cuda()
+        #    if has_not_empty_attr(self.cfg.DATASET, "WEIGHTS")
+        #    else None,
+        #    ignore_index=self.cfg.DATASET.IGNORE_INDEX
+        #    if has_not_empty_attr(self.cfg.DATASET, "IGNORE_INDEX")
+        #    else -100,
+        # )
+
         # instantiate optimizer
         self.optimizer = hydra.utils.instantiate(self.config.optimizer, self.parameters())
 
@@ -439,7 +448,6 @@ class SegModel(LightningModule):
         torch.Tenor
             weighted sum of the losses of the individual model outputs
         """
-
         if self.training:
             loss = sum(
                 [

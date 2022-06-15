@@ -11,16 +11,16 @@ momentum: 0.9                   # momentum for optimizer
 weight_decay: 0.0005            # wd for optimizer
 lossfunction: [ "CE", "CE", "CE", "CE"]     # list of lossfunctions
 lossweight:   [1.0, 0.4, 0.05, 0.05]        # corresponding weights for each loss function
-seed: 1234
+# seed: 1234                    # seed everything
 pl_trainer:                     # parameters for the pytorch lightning trainer
   max_epochs: ${epochs}         # parsing the number of epochs which is defined as a hyperparameter
   gpus: -1                      # using all available GPUs
   precision: 16                 # using Mixed Precision
-  benchmark: False               # using benchmark for faster training
-  enable_checkpointing: True   # Enable/Disable Checkpointing
-
+  benchmark: True               # using benchmark for faster training
+  enable_checkpointing: True    # Enable/Disable Checkpointing
+  #deterministic: True
   # Some usefull pl parameters for debugging
-  #limit_train_batches: 0.25
-  #limit_val_batches: 0.25
+  limit_train_batches: 0.1
+  limit_val_batches: 0.5
   #limit_test_batches: 0.25
   #accumulate_grad_batches: 2

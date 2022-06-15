@@ -1,4 +1,5 @@
 import hydra
+import torchmetrics
 from omegaconf import DictConfig
 
 import torch
@@ -66,7 +67,6 @@ class SegModel(LightningModule):
             if has_not_empty_attr(config, "num_example_predictions")
             else 0
         )
-        # self.lr = config.lr
 
     def configure_optimizers(self) -> dict:
         """
@@ -95,7 +95,6 @@ class SegModel(LightningModule):
             self.loss_weights = self.config.lossweight
         else:
             self.loss_weights = [1] * len(self.loss_functions)
-
         log.info(
             "Loss Functions with Weights: %s", list(zip(self.loss_functions, self.loss_weights))
         )
@@ -215,6 +214,7 @@ class SegModel(LightningModule):
         torch.Tensor :
             validation loss
         """
+
         # predict batch
         x, y_gt = batch
         y_pred = self(x)
@@ -222,8 +222,8 @@ class SegModel(LightningModule):
         # compute and log loss to tensorboard
         val_loss = self.get_loss(y_pred, y_gt)
         self.log(
-            "Loss/validation_loss",
-            val_loss,
+            name="Loss/validation_loss",
+            value=val_loss,
             on_step=True,
             on_epoch=True,
             logger=True,
@@ -231,6 +231,7 @@ class SegModel(LightningModule):
         )  # ,prog_bar=True)
 
         # update validation metric
+
         if self.metric_call in ["stepwise", "global_and_stepwise"]:
             # update global metric and log stepwise metric to tensorboard
             metric_step = self.metric(list(y_pred.values())[0], y_gt)
@@ -355,7 +356,6 @@ class SegModel(LightningModule):
 
             # if flipping is used the average over the predictions from the flipped and not flipped image is taken
             if self.test_flip:
-                print("flip")
                 x_flip = torch.flip(x_s, [3])  #
 
                 y_flip = self(x_flip)  # ["out"]
@@ -448,6 +448,7 @@ class SegModel(LightningModule):
         torch.Tenor
             weighted sum of the losses of the individual model outputs
         """
+
         if self.training:
             loss = sum(
                 [
@@ -463,7 +464,6 @@ class SegModel(LightningModule):
                     for i, y in enumerate(y_pred.values())
                 ]
             )
-
         return loss
 
     def metric_logger(self, metric_group, best_metric, stage="Validation", save_metric_state=False):

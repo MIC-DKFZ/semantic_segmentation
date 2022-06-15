@@ -326,7 +326,7 @@ folder.
 
 - **ImageNet** weights: [source](https://github.com/HRNet/HRNet-Image-Classification#imagenet-pretrained-models), [direct download](https://1drv.ms/u/s!Aus8VCZ_C_33dKvqI6pBZlifgJk)
 - **PaddleClas**
-  weights: [source](https://github.com/HRNet/HRNet-Image-Classification#imagenet-pretrained-models), [direct download](https://github.com/HRNet/HRNet-Image-Classification/releases/download/PretrainedWeights/HRNet_W18_C_ssld_pretrained.pth)
+  weights: [source](https://github.com/HRNet/HRNet-Image-Classification#imagenet-pretrained-models), [direct download](https://github.com/HRNet/HRNet-Image-Classification/releases/download/PretrainedWeights/HRNet_W48_C_ssld_pretrained.pth)
 - **Mapillary**
   weights: [source](https://github.com/NVIDIA/semantic-segmentation#download-weights), [direct download](https://drive.google.com/file/d/1Whz--rurtBoIsfF-t3YB9NEt3GT6hBQI/view?usp=sharing)
 

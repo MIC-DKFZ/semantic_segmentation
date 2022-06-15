@@ -7,7 +7,7 @@ from torchmetrics.utilities.data import dim_zero_cat
 from utils.utils import get_logger
 import pytorch_lightning as pl
 import itertools
-
+from torchmetrics.utilities.data import _bincount
 import matplotlib.pyplot as plt
 
 log = get_logger(__name__)
@@ -25,6 +25,7 @@ class MetricModule(MetricCollection):
         kwargs :
             arguments passed to super class (MetricCollection)
         """
+
         metrics = {}
         for name, m_conf in config.items():
             if m_conf is not None:
@@ -34,6 +35,8 @@ class MetricModule(MetricCollection):
 
 
 class ConfusionMatrix(Metric):
+    full_state_update = False
+
     def __init__(self, num_classes: int) -> None:
         """
         Create an empty confusion matrix
@@ -43,7 +46,7 @@ class ConfusionMatrix(Metric):
         num_classes : int
             number of classes inside the Dataset
         """
-        super().__init__(dist_sync_on_step=False, compute_on_step=False)
+        super().__init__(dist_sync_on_step=False)
         self.num_classes = num_classes
         self.add_state(
             "mat",
@@ -69,7 +72,10 @@ class ConfusionMatrix(Metric):
         with torch.no_grad():
             k = (gt >= 0) & (gt < n)
             inds = n * gt[k].to(torch.int64) + pred[k]
-            confmat = torch.bincount(inds, minlength=n**2).reshape(n, n)
+            # Using the torchmetrics implementation of bincount, since the torch one does not
+            # support deterministic behaviour
+            # confmat = torch.bincount(inds, minlength=n**2).reshape(n, n)
+            confmat = _bincount(inds, minlength=n**2).reshape(n, n)
         self.mat += confmat  # .to(self.mat)
 
     def save_state(self, trainer: pl.Trainer) -> None:
@@ -132,7 +138,9 @@ class IoU(ConfusionMatrix):
         kwargs:
             arguments passed to the super class (ConfusionMatrix)
         """
+
         super().__init__(**kwargs)
+
         self.per_class = per_class
         self.ignore_class = ignore_class
         if labels is not None:

@@ -146,7 +146,7 @@ the cfg in python is straight forward:
 
 ````yaml
 example.yaml
-  ─────────────────────────────
+─────────────────────────────
 Parameters:
   lr:     0.01
   epochs: 100
@@ -192,7 +192,7 @@ and in that case the value will be the value of that node.
 
 ````yaml
 dataset/a_dataset.yaml
-  ─────────────────────────────
+─────────────────────────────
   #@package _global_
 ...
 dataset:
@@ -201,7 +201,7 @@ dataset:
 
 ````yaml
 model/a_model.yaml
-  ─────────────────────────────
+─────────────────────────────
   #@package _global_
 ...
 num_output_classes: ${dataset.number_classes} # num_output_classes will have the value 24 at runtime
@@ -225,7 +225,7 @@ Some  **Basic Assignments** are shown here:
 
 ````yaml
 example.yaml
-  ─────────────────────────────
+─────────────────────────────
 # Comments in yaml
 number: 10                   # Simple value, works for int and float.
 string: Text|"Text"          # Strings, Quotation marks are not necessarily required.
@@ -551,7 +551,7 @@ A dummy and how this can be used it shown below:
 
 ````yaml
 config/hyperparameters/my_hparams.yaml
-  ─────────────────────────────
+─────────────────────────────
 # @package _global_
 batch_size: 6
 val_batch_size: 4
@@ -604,7 +604,7 @@ the model parameters in the following way:
 
 `````yaml
 config/optimizer/my_optimizer.yaml
-  ─────────────────────────────
+─────────────────────────────
 _target_: path.to.my.optimizer.class      # for example torch.optim.SGD
 lr: ${lr}
 arg1: custom_args
@@ -653,7 +653,7 @@ Even if you do not want to use this information make sure to catch the input arg
 
 `````yaml
 config/lr_scheduler/my_scheduler.yaml
-  ─────────────────────────────
+─────────────────────────────
 interval: step #or epoch    # when the scheduler should be called, at each step of each epoch
 frequency: 1                # how often should it be called, in most cases this should be 1
 monitor: metric_to_track    # parameter for pytorch lightning to log the lr
@@ -789,7 +789,7 @@ list of all operations and the last operation is a *ToTensorV2*.
 
 ````yaml
 config/data_augmentations/custom_augmentation.yaml
-  ─────────────────────────────
+─────────────────────────────
 #@package _global_
 AUGMENTATIONS:
   VALIDATION:
@@ -929,7 +929,7 @@ The remaining Parameters should be set as described in the *Configure* section a
 
 `````yaml
 config/metric/my_metric.yaml
-  ─────────────────────────────
+─────────────────────────────
 #@package _global_
 METRIC:
   NAME: mymetric_name # Name of the target metric should be on of the names defined in METRIC.METRICS
@@ -983,7 +983,7 @@ file in *config/environment/* and adapt the following dummy:
 
 ````yaml
 config/envrironment/custom_env.yaml
-  ─────────────────────────────
+─────────────────────────────
 #@package _global_
 
 # Output directory for logs and checkpoints
@@ -1032,7 +1032,7 @@ training is also used for testing.
 
 ````yaml
 config/somewhere/xxx.yaml
-  ─────────────────────────────
+─────────────────────────────
 TESTING:
   SCALES: [ 0.5, 1.0, 1.5, 2.0 ] # scales for multiscale testing, if not wanted delete the line of leave empty
   FLIP: True # if flipping should be used during testing, delete or set the line to false if not wanted

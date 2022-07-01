@@ -66,7 +66,8 @@ class ConfusionMatrix(Metric):
             gt mask
         """
         gt = gt.flatten()  # .detach()#.cpu()
-        pred = pred.argmax(1).flatten()  # .detach()#.cpu()
+        #pred = pred.argmax(1).flatten()  # .detach()#.cpu()
+        pred = pred.flatten()  # .detach()#.cpu()
         n = self.num_classes
 
         with torch.no_grad():
@@ -118,6 +119,31 @@ class ConfusionMatrix(Metric):
             "ConfusionMatrix/confmat", figure, trainer.current_epoch
         )
 
+class Dice_AGGC2022(ConfusionMatrix):
+    def compute(self):
+        conf_mat=self.mat
+        Stroma_Recall = conf_mat[1, 1] / torch.sum(conf_mat[1, :])
+        Normal_Recall = conf_mat[2, 2] / torch.sum(conf_mat[2, :])
+        G3_Recall = conf_mat[3, 3] / torch.sum(conf_mat[3, :])
+        G4_Recall = conf_mat[4, 4] / torch.sum(conf_mat[4, :])
+        G5_Recall = conf_mat[5, 5] / torch.sum(conf_mat[5, :])
+
+        Stroma_Pre = conf_mat[1, 1] / (torch.sum(conf_mat[:, 1]) - conf_mat[0, 1])
+        Normal_Pre = conf_mat[2, 2] / (torch.sum(conf_mat[:, 2]) - conf_mat[0, 2])
+        G3_Pre = conf_mat[3, 3] / (torch.sum(conf_mat[:, 3]) - conf_mat[0, 3])
+        G4_Pre = conf_mat[4, 4] / (torch.sum(conf_mat[:, 4]) - conf_mat[0, 4])
+        G5_Pre = conf_mat[5, 5] / (torch.sum(conf_mat[:, 5]) - conf_mat[0, 5])
+
+        F1_Stroma = 2 * Stroma_Pre * Stroma_Recall / (Stroma_Pre + Stroma_Recall)
+        F1_Normal = 2 * Normal_Pre * Normal_Recall / (Normal_Pre + Normal_Recall)
+        F1_G3 = 2 * G3_Pre * G3_Recall / (G3_Pre + G3_Recall)
+        F1_G4 = 2 * G4_Pre * G4_Recall / (G4_Pre + G4_Recall)
+        F1_G5 = 2 * G5_Pre * G5_Recall / (G5_Pre + G5_Recall)
+
+        Weighted_average_F1score = 0.25 * F1_G3 + 0.25 * F1_G4 + 0.25 * F1_G5 + 0.125 * F1_Normal + 0.125 * F1_Stroma
+
+        print(" %s = %.4f " % ('Weighted_average_F1score ', Weighted_average_F1score))
+        print(Weighted_average_F1score)
 
 class IoU(ConfusionMatrix):
     def __init__(

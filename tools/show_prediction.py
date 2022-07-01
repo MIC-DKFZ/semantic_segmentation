@@ -238,7 +238,8 @@ def show_prediction(overrides_cl: list) -> None:
             break
 
     # instantiate dataset
-    dataset = hydra.utils.instantiate(cfg.dataset, split="train", transforms=transforms)
+    # dataset = hydra.utils.instantiate(cfg.dataset, split="train", transforms=transforms)
+    dataset = hydra.utils.instantiate(cfg.dataset, split="test", transforms=transforms)
 
     # define colormap
     color_map = "viridis"
@@ -283,6 +284,7 @@ def show_prediction(overrides_cl: list) -> None:
 
 
 if __name__ == "__main__":
+    torch.cuda.empty_cache()
     parser = argparse.ArgumentParser()
 
     args, overrides = parser.parse_known_args()

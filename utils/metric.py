@@ -67,9 +67,9 @@ class ConfusionMatrix(Metric):
         """
         gt = gt.flatten()  # .detach()#.cpu()
         # if softmax input
-        #pred = pred.argmax(1).flatten()  # .detach()#.cpu()
+        pred = pred.argmax(1).flatten()  # .detach()#.cpu()
         # if argmax input
-        pred = pred.flatten()  # .detach()#.cpu()
+        #pred = pred.flatten()  # .detach()#.cpu()
         n = self.num_classes
 
         with torch.no_grad():

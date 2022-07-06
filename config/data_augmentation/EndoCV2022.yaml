@@ -3,23 +3,23 @@ AUGMENTATIONS:
   TRAIN:
     - Compose:
         transforms:
-          - RandomScale:
-              scale_limit: [ -0.5,0 ]
-              p: 1.0
-          - RGBShift:
-              p:             1
-              r_shift_limit: 10
-              g_shift_limit: 10
-              b_shift_limit: 10
-          - PadIfNeeded:
-              min_height:  520
-              min_width:   1024
-              border_mode: 0 #"cv2.BORDER_CONSTANT"
-              value:       0
-              mask_value:  0 #${DATASET.IGNORE_INDEX}
+          #- RandomScale:
+          #    scale_limit: [ -0.5,0 ]
+          #    p: 1.0
+          #- RGBShift:
+          #    p:             1
+          #    r_shift_limit: 10
+          #    g_shift_limit: 10
+          #    b_shift_limit: 10
+          #- PadIfNeeded:
+          #    min_height:  520
+          #    min_width:   1024
+          #    border_mode: 0 #"cv2.BORDER_CONSTANT"
+          #    value:       0
+          #    mask_value:  0 #${DATASET.IGNORE_INDEX}
           - RandomCrop:
-              height: 520
-              width:  1024
+              height: 512
+              width:  512
           - HorizontalFlip:
               p: 0.25
           - VerticalFlip:

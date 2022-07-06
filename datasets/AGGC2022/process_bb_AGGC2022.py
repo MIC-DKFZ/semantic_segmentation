@@ -20,11 +20,12 @@ Image.MAX_IMAGE_PIXELS = None  # 4.630.873.600
 
 if __name__ == "__main__":
     path_imgs = "/home/l727r/Documents/E132-Projekte/Projects/2022_AGGC_challenge/GleasonGradMICCAIChallenge2022"
-    path_masks = "/media/l727r/data/AGGC2022/Subset1/masks_png"
+    path_masks = "/media/l727r/data/AGGC2022/Subset3/masks_png"
     output_directory = "/media/l727r/data/AGGC2022/"
     # output_directory = "/media/l727r/data/AGGC2022/Subset1/boxes"
-
+    path_masks_org = path_masks
     subsets = ["Subset1", "Subset2", "Subset3"]
+    subsets = ["Subset3"]
     for subset in subsets:
         # Create Folders if they not exist
         path_bb = os.path.join(output_directory, subset)
@@ -51,13 +52,25 @@ if __name__ == "__main__":
 
         imgs.sort()
         masks.sort()
-
+        print("I", imgs[0:10])
+        print("M", masks[0:10])
+        # quit()
+        # imgs = ["/media/l727r/data/AGGC2022/Subset3/imgs_png/Subset3_Train_12_Philips.png"]
+        # imgs = [
+        #    "/home/l727r/Documents/E132-Projekte/Projects/2022_AGGC_challenge/GleasonGradMICCAIChallenge2022/Subset3_Train_image/Philips/Subset3_Train_12_Philips.tiff"
+        # ]
+        # masks = ["/media/l727r/data/AGGC2022/Subset3/masks_png/Subset3_Train_12_Philips.png"]
         # print(imgs)
         # print(masks)
 
         print("For {}: {} Images and {} Masks are found".format(subset, len(imgs), len(masks)))
         # continue
         for mask_path, img_path in zip(masks, imgs):
+            mask_path = os.path.join(
+                path_masks_org, img_path.rsplit("/", 1)[-1].replace("tiff", "png")
+            )
+            print(mask_path, img_path)
+            # continue
             # q index = 3
             # index = 5
             # print(imgs[index])
@@ -98,14 +111,13 @@ if __name__ == "__main__":
                         y = (y * scale_factor).astype(int)
                         # print(min(x), min(y), max(x), max(y))
                         # bbs_class.append((min(x), min(y), max(x), max(y)))
-                        if size_bb > 5:
+                        if size_bb > 4:
                             bbs_class.append(
                                 (
                                     int(min(x)),
                                     int(min(y)),
                                     int(np.ceil(max(x))),
                                     int(np.ceil(max(y))),
-                                    int(size_bb),
                                 )
                             )
                         else:
@@ -113,6 +125,23 @@ if __name__ == "__main__":
                         # print(bbs_class)
                         # print(np.array(bbs_class))
                         # cv2.rectangle(bb_map, (min(x), min(y)), (max(x), max(y)), 1, -1)
+                # print(width_org, height_org)
+                # print(np.array(bbs_class, dtype=int))
+                # print(np.array(bbs_class, dtype=int).shape)
+                # print("NUll", np.array(bbs_class, dtype=int)[:, 0])
+                x_min = np.array(bbs_class, dtype=int)[:, 0]
+                y_min = np.array(bbs_class, dtype=int)[:, 1]
+                if np.any(np.array(bbs_class, dtype=int) < 0):
+                    print("Min value below 0, for {}".format(np.array(bbs_class, dtype=int)))
+
+                x_max = np.array(bbs_class, dtype=int)[:, 2]
+                y_max = np.array(bbs_class, dtype=int)[:, 3]
+                if np.any(x_max >= height_org) or np.any(y_max >= width_org):
+                    print(
+                        "Max value outside img({},{}), for {} ".format(
+                            width_org, height_org, np.array(bbs_class, dtype=int)
+                        )
+                    )
                 bb[str(un_mask)] = np.array(bbs_class, dtype=int)
                 # bb[str(un_mask)] = bbs_class
             name = mask_path.rsplit("/")[-1].replace(".png", ".json")
@@ -122,7 +151,7 @@ if __name__ == "__main__":
                 json.dump(bb, fp)
 
     quit()
-    imgs = glob.glob(os.path.join(path_imgs, "*.tiff"))
+    """imgs = glob.glob(os.path.join(path_imgs, "*.tiff"))
     masks = glob.glob(os.path.join(path_masks, "*.png"))
     imgs.sort()
     masks.sort()
@@ -203,3 +232,4 @@ if __name__ == "__main__":
     cv2.imshow("Window_mask", mask)
     # cv2.imshow("Window_bb",)
     cv2.waitKey()
+    """

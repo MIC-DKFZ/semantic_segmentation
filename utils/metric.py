@@ -69,7 +69,7 @@ class ConfusionMatrix(Metric):
         # if softmax input
         pred = pred.argmax(1).flatten()  # .detach()#.cpu()
         # if argmax input
-        #pred = pred.flatten()  # .detach()#.cpu()
+        # pred = pred.flatten()  # .detach()#.cpu()
         n = self.num_classes
 
         with torch.no_grad():
@@ -121,9 +121,10 @@ class ConfusionMatrix(Metric):
             "ConfusionMatrix/confmat", figure, trainer.current_epoch
         )
 
+
 class Dice_AGGC2022(ConfusionMatrix):
     def compute(self):
-        conf_mat=self.mat
+        conf_mat = self.mat
         Stroma_Recall = conf_mat[1, 1] / torch.sum(conf_mat[1, :])
         Normal_Recall = conf_mat[2, 2] / torch.sum(conf_mat[2, :])
         G3_Recall = conf_mat[3, 3] / torch.sum(conf_mat[3, :])
@@ -142,10 +143,31 @@ class Dice_AGGC2022(ConfusionMatrix):
         F1_G4 = 2 * G4_Pre * G4_Recall / (G4_Pre + G4_Recall)
         F1_G5 = 2 * G5_Pre * G5_Recall / (G5_Pre + G5_Recall)
 
-        Weighted_average_F1score = 0.25 * F1_G3 + 0.25 * F1_G4 + 0.25 * F1_G5 + 0.125 * F1_Normal + 0.125 * F1_Stroma
+        if F1_Stroma.isnan():
+            F1_Stroma = 0.0
+        if F1_Normal.isnan():
+            F1_Normal = 0.0
+        if F1_G3.isnan():
+            F1_G3 = 0.0
+        if F1_G4.isnan():
+            F1_G4 = 0.0
+        if F1_G5.isnan():
+            F1_G5 = 0.0
 
-        print(" %s = %.4f " % ('Weighted_average_F1score ', Weighted_average_F1score))
-        print(Weighted_average_F1score)
+        Weighted_average_F1score = (
+            0.25 * F1_G3 + 0.25 * F1_G4 + 0.25 * F1_G5 + 0.125 * F1_Normal + 0.125 * F1_Stroma
+        )
+        return {
+            "wF1": Weighted_average_F1score,
+            "F1_Stroma": F1_Stroma,
+            "F1_Normal": F1_Normal,
+            "F1_G3": F1_G3,
+            "F1_G4": F1_G4,
+            "F1_G5": F1_G5,
+        }
+        # print(" %s = %.4f " % ("Weighted_average_F1score ", Weighted_average_F1score))
+        # print(Weighted_average_F1score)
+
 
 class IoU(ConfusionMatrix):
     def __init__(
@@ -200,7 +222,7 @@ class IoU(ConfusionMatrix):
 
         if self.ignore_class is not None and 0 <= self.ignore_class < self.num_classes:
             IoU = torch.cat((IoU[: self.ignore_class], IoU[self.ignore_class + 1 :]))
-        IoU[IoU.isnan()] = 0
+        IoU[IoU.isnan()] = 0.0
         return IoU
 
     def compute(self) -> dict or torch.Tensor:

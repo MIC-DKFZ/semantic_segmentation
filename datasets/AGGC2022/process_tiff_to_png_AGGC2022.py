@@ -18,7 +18,7 @@ def save_pil_as_png(image_pil, output_file):
     image_pil.save(output_file)
 
 
-def load_and_resize_mask(slide: OpenSlide, target_shape: tuple = None):
+def load_and_resize_mask(slide: OpenSlide, target_shape: tuple = None, name=None):
     """
     Load, Resize and Save the Image as a png
 
@@ -28,7 +28,11 @@ def load_and_resize_mask(slide: OpenSlide, target_shape: tuple = None):
     target_shape
         shape of the target for resize operation
     """
-    slide_pil = slide.read_region([0, 0], 0, slide.level_dimensions[0]).convert("L")
+    if name == "Subset1_Train_96":
+        w, h = slide.level_dimensions[0]
+        slide_pil = slide.read_region([1500, 0], 0, (w - 1500, h - 0)).convert("L")
+    else:
+        slide_pil = slide.read_region([0, 0], 0, slide.level_dimensions[0]).convert("L")
     # slide_pil = slide.read_region([20000, 20000], 0, [10000, 8000]).convert("L")
     # image_pil = slide.read_region([0, 0], 0, [4000,4000]).convert('RGB')
 
@@ -38,7 +42,7 @@ def load_and_resize_mask(slide: OpenSlide, target_shape: tuple = None):
     return slide_pil
 
 
-def load_and_resize_img(slide: OpenSlide, target_shape: tuple = None):
+def load_and_resize_img(slide: OpenSlide, target_shape: tuple = None, name=None):
     """
     Load, Resize and Save the Image as a png
 
@@ -51,7 +55,11 @@ def load_and_resize_img(slide: OpenSlide, target_shape: tuple = None):
     # print(slide.level_dimensions[0])
     # print(slide.dimensions)
     # print(slide.properties)
-    slide_pil = slide.read_region([0, 0], 0, slide.level_dimensions[0]).convert("RGB")
+    if name == "Subset1_Train_96":
+        w, h = slide_img.level_dimensions[0]
+        slide_pil = slide.read_region([1500, 0], 0, (w - 1500, h - 0)).convert("RGB")
+    else:
+        slide_pil = slide.read_region([0, 0], 0, slide.level_dimensions[0]).convert("RGB")
     # w, h = slide.level_dimensions[0]
     # slide_pil = slide.read_region([1500, 0], 0, (w - 1500, h - 0)).convert("RGB")
     # slide_pil = slide.read_region([20000, 20000], 0, [10000, 8000]).convert("RGB")
@@ -128,12 +136,9 @@ if __name__ == "__main__":
             output_file_img = os.path.join(output_dir, "imgs_png", name + ".png")
             output_file_mask = os.path.join(output_dir, "masks_png", name + ".png")
             # This file is corrupt
-            if (
-                name == "Subset1_Train_83"  # corrupy
-                # or "Philips" in name
-                or name == "Subset1_Train_96"  # corrupt shape?
-                # or name == "Subset3_Train_25_Zeiss"  # to large
-            ):
+            if name == "Subset1_Train_83":
+                continue
+            elif name != "Subset1_Train_96":
                 continue
 
             """
@@ -146,6 +151,9 @@ if __name__ == "__main__":
             """
             if resize_img:
                 width, height = slide_img.dimensions
+
+                if name == "Subset1_Train_96":
+                    width = width - 1500
                 max_length = 4000
                 if width > height:
                     new_height = height * max_length / width
@@ -164,7 +172,7 @@ if __name__ == "__main__":
             if not os.path.exists(output_file_img):
                 print("{} : Loading Image with shape {}: ...".format(name, slide_img.dimensions))
                 # Reading Image
-                img_pil = load_and_resize_img(slide_img, target_shape)
+                img_pil = load_and_resize_img(slide_img, target_shape, name)
 
                 print("{} : Save Image with shape {}: ...".format(name, img_pil.size))
                 save_pil_as_png(img_pil, output_file_img)
@@ -196,7 +204,7 @@ if __name__ == "__main__":
 
                         slide_class = open_slide(file_class)
                         # class_pil = load_and_resize_mask(slide_class, target_shape)
-                        class_pil = load_and_resize_mask(slide_class, target_shape)
+                        class_pil = load_and_resize_mask(slide_class, target_shape, name)
                         class_np = np.asarray(class_pil, dtype=np.uint8)
                         del class_pil
                         x, y = np.where(class_np == 255)

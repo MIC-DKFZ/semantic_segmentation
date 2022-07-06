@@ -111,6 +111,13 @@ if __name__ == "__main__":
         else:
             image_files = image_files[start_id:end_id]
             mask_files = mask_files[start_id:end_id]
+
+        image_files = [
+            "/home/l727r/Documents/E132-Projekte/Projects/2022_AGGC_challenge/GleasonGradMICCAIChallenge2022/Subset3_Train_image/Philips/Subset3_Train_12_Philips.tiff"
+        ]
+        mask_files = [
+            "/home/l727r/Documents/E132-Projekte/Projects/2022_AGGC_challenge/GleasonGradMICCAIChallenge2022/Subset3_Train_annotation/Train/Philips/Subset3_Train_12_Philips/"
+        ]
         print(
             "For {}: {} Images and {} Masks are found".format(
                 subset, len(image_files), len(mask_files)
@@ -120,15 +127,19 @@ if __name__ == "__main__":
         print("Start Processing")
         # continue
         for img_file, mask_file in zip(image_files, mask_files):
-
+            print(img_file, mask_file)
             name = os.path.split(img_file)[-1].split(".tiff")[0]
             # if "Philips" in name:
             #    continue
+
             output_file_img = os.path.join(output_dir, "imgs", name + ".zarr")
             output_file_mask = os.path.join(output_dir, "masks", name + ".zarr")
+            print(output_file_img)
             # This file is corrupt
-            if name == "Subset1_Train_83" or name == "Subset1_Train_96":
+            if name == "Subset1_Train_83":
                 continue
+            # elif name != "Subset1_Train_96":
+            #    continue
             """
             Init the Openslide Object
             """
@@ -138,6 +149,8 @@ if __name__ == "__main__":
             Determine the Output shape, with a max length of max_length
             """
             target_shape = slide_img.dimensions
+            if name == "Subset1_Train_96":
+                target_shape = (target_shape[0] - 1500, target_shape[1])
 
             """
             Image: Load, Resize and Save
@@ -146,9 +159,13 @@ if __name__ == "__main__":
             if not os.path.exists(output_file_img):  # and subset != "Subset3":
                 print("{} : Loading Image with shape {}: ...".format(name, slide_img.dimensions))
                 # Reading Image
-                img_pil = slide_img.read_region([0, 0], 0, slide_img.level_dimensions[0]).convert(
-                    "RGB"
-                )
+                if name == "Subset1_Train_96":
+                    w, h = slide_img.level_dimensions[0]
+                    img_pil = slide_img.read_region([1500, 0], 0, (w - 1500, h - 0)).convert("RGB")
+                else:
+                    img_pil = slide_img.read_region(
+                        [0, 0], 0, slide_img.level_dimensions[0]
+                    ).convert("RGB")
                 print("{} : Save Image with shape {}: ...".format(name, img_pil.size))
                 # Convert to numpy
                 img_np = np.asarray(img_pil, dtype=np.uint8)
@@ -183,9 +200,15 @@ if __name__ == "__main__":
 
                         slide_class = open_slide(file_class)
                         # class_pil = load_and_resize_mask(slide_class, target_shape)
-                        class_pil = slide_class.read_region(
-                            [0, 0], 0, slide_class.level_dimensions[0]
-                        ).convert("L")
+                        if name == "Subset1_Train_96":
+                            w, h = slide_class.level_dimensions[0]
+                            class_pil = slide_class.read_region(
+                                [1500, 0], 0, (w - 1500, h - 0)
+                            ).convert("L")
+                        else:
+                            class_pil = slide_class.read_region(
+                                [0, 0], 0, slide_class.level_dimensions[0]
+                            ).convert("L")
                         class_np = np.asarray(class_pil, dtype=np.uint8)
                         del class_pil
                         x, y = np.where(class_np == 255)

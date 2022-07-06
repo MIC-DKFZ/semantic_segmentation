@@ -7,6 +7,7 @@ from pytorch_lightning import LightningDataModule
 
 import albumentations as A
 import albumentations.pytorch
+import utils.augmentations as custom_augmentations
 
 from utils.utils import has_not_empty_attr
 from utils.utils import get_logger
@@ -60,6 +61,9 @@ def get_augmentations_from_config(augmentations: DictConfig) -> list:
             elif hasattr(A.pytorch, transform):
                 # ToTensorV2 transformation is located in A.pytorch
                 func = getattr(A.pytorch, transform)
+                trans.append(func(**parameters))
+            elif hasattr(custom_augmentations, transform):
+                func = getattr(custom_augmentations, transform)
                 trans.append(func(**parameters))
             else:
                 log.info("No Operation Found: %s", transform)
@@ -217,7 +221,7 @@ class BaseDataModule(LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             drop_last=True,
-            persistent_workers=True,
+            persistent_workers=True if self.num_workers > 0 else False,
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -232,7 +236,7 @@ class BaseDataModule(LightningDataModule):
             pin_memory=True,
             batch_size=self.val_batch_size,
             num_workers=self.num_workers,
-            persistent_workers=True,
+            persistent_workers=True if self.num_workers > 0 else False,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -247,5 +251,5 @@ class BaseDataModule(LightningDataModule):
             pin_memory=True,
             batch_size=self.val_batch_size,
             num_workers=self.num_workers,
-            persistent_workers=True,
+            persistent_workers=True if self.num_workers > 0 else False,
         )

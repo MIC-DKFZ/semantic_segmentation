@@ -1,0 +1,10 @@
+#@package _global_
+METRIC:
+  NAME: wF1
+  DURING_TRAIN: False
+  METRIC_CALL: global
+  METRICS:
+    mIoU:
+      _target_: utils.metric.Dice_AGGC2022
+      num_classes: ${DATASET.NUM_CLASSES}
+

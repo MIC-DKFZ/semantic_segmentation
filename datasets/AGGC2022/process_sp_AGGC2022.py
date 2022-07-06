@@ -21,11 +21,12 @@ Image.MAX_IMAGE_PIXELS = None  # 4.630.873.600
 
 if __name__ == "__main__":
     path_imgs = "/home/l727r/Documents/E132-Projekte/Projects/2022_AGGC_challenge/GleasonGradMICCAIChallenge2022"
-    path_masks = "/media/l727r/data/AGGC2022/Subset1/masks_png"
+    path_masks = "/media/l727r/data/AGGC2022/Subset3/masks_png"
     output_directory = "/media/l727r/data/AGGC2022/"
     # output_directory = "/media/l727r/data/AGGC2022/Subset1/boxes"
-
+    path_masks_org = path_masks
     subsets = ["Subset1", "Subset2", "Subset3"]
+    subsets = ["Subset3"]
     for subset in subsets:
         # Create Folders if they not exist
         path_bb = os.path.join(output_directory, subset)
@@ -59,6 +60,10 @@ if __name__ == "__main__":
         print("For {}: {} Images and {} Masks are found".format(subset, len(imgs), len(masks)))
         # continue
         for mask_path, img_path in zip(masks, imgs):
+            mask_path = os.path.join(
+                path_masks_org, img_path.rsplit("/", 1)[-1].replace("tiff", "png")
+            )
+            print(mask_path, img_path)
             name = os.path.split(mask_path)[-1].split(".png")[0]
             print(name)
             # q index = 3

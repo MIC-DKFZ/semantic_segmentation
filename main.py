@@ -95,11 +95,12 @@ def training_loop(cfg: DictConfig):
     # Initializing trainer
     trainer_args = getattr(cfg, "pl_trainer") if has_not_empty_attr(cfg, "pl_trainer") else {}
 
-    # ddp=DDPPlugin(find_unused_parameters=False) if number_gpus > 1 else None
+    ddp = DDPPlugin(find_unused_parameters=False)  # if number_gpus > 1 else None
     trainer = Trainer(
         callbacks=callbacks,
         logger=tb_logger,
-        strategy="ddp" if number_gpus > 1 else None,
+        # strategy="ddp" if number_gpus > 1 else None,
+        strategy=ddp if number_gpus > 1 else None,
         sync_batchnorm=True if number_gpus > 1 else False,
         **trainer_args
     )

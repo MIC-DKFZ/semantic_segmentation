@@ -1,5 +1,5 @@
 #@package _global_
-batch_size: 16                #batch size per gpu for training
+batch_size: 32                #batch size per gpu for training
 val_batch_size: ${batch_size}   #batch size per gpu for validation
 epochs: 20                    #number of eposchs
 #lr: 0.001 #0.004                       #learning rate for training (0.01445439770745928)

@@ -20,6 +20,11 @@ class StrongAugmentor(ImageOnlyTransform):
         return VahadaneStrongAugmentor(img)
 
 
+class VahadaneNormalizer(ImageOnlyTransform):
+    def apply(self, img, **params):
+        return Vahadane_Normalizer(img)
+
+
 def VahadaneLightAugmentor(image):
     light_augmentor.fit(image)
     return light_augmentor.pop()

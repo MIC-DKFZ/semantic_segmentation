@@ -4,16 +4,6 @@ AUGMENTATIONS:
   TRAIN:
     - Compose:
         transforms:
-          #- LightAugmentor:
-          #    p: 0.5
-          - ShiftScaleRotate:
-              shift_limit: 0
-              scale_limit: 0
-              rotate_limit: 15
-          - HorizontalFlip:
-              p: 0.5
-          - RandomRotate90:
-              p: 0.5
           - ColorJitter:
               brightness: 0.2
               contrast: 0.2
@@ -22,19 +12,6 @@ AUGMENTATIONS:
               p: 0.5
           - JPEGcompressor:
               p: 0.5
-          #- RandomScale:AGGC2022.yaml
-          #    scale_limit: [ -0.5, 1.0 ]
-          #    p: 1.0
-          #- PadIfNeeded:
-          #    min_height: 768
-          #    min_width: 768
-          #- RandomCrop:
-          #    height: 768
-          #    width:  768
-          #- HorizontalFlip:
-          #    p: 0.25
-          #- VerticalFlip:
-          #    p: 0.25
           - Normalize:
               mean: [ 0.485, 0.456, 0.406 ]
               std: [ 0.229, 0.224, 0.225 ]

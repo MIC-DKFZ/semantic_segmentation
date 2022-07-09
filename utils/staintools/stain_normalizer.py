@@ -4,6 +4,7 @@ from staintools.stain_extraction.macenko_stain_extractor import MacenkoStainExtr
 from staintools.stain_extraction.vahadane_stain_extractor import VahadaneStainExtractor
 from staintools.miscellaneous.optical_density_conversion import convert_OD_to_RGB
 from staintools.miscellaneous.get_concentrations import get_concentrations
+from staintools.miscellaneous.exceptions import TissueMaskException
 
 
 class StainNormalizer(object):
@@ -34,7 +35,10 @@ class StainNormalizer(object):
         :param I: Image RGB uint8.
         :return:
         """
-        stain_matrix_source = self.extractor.get_stain_matrix(I)
+        try:
+            stain_matrix_source = self.extractor.get_stain_matrix(I)
+        except TissueMaskException:
+            return I
         source_concentrations = get_concentrations(I, stain_matrix_source)
         maxC_source = np.percentile(source_concentrations, 99, axis=0).reshape((1, 2))
         source_concentrations *= self.maxC_target / maxC_source

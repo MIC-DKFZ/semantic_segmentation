@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.INFO)
 
 import hydra
 from omegaconf import OmegaConf
-
+from datasets.DataModules import get_augmentations_from_config
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import cv2
@@ -56,9 +56,16 @@ def show_data(overrides_cl: list) -> None:
     cmap = np.array(cm.get_cmap(color_map, cfg.DATASET.NUM_CLASSES).colors * 255, dtype=np.uint8)[
         :, 0:3
     ]
-    transforms = A.Compose([ToTensorV2()])
-    dataset = hydra.utils.instantiate(cfg.dataset, split="train", transforms=transforms)
+    # transforms = A.Compose([ToTensorV2()])
+    # dataset = hydra.utils.instantiate(cfg.dataset, split="train", transforms=transforms)
+    # transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TRAIN)
+    # print("Done")
+    # get_augmentations_from_config(self.augmentations.TRAIN)[0]
 
+    #
+    dataModule = hydra.utils.instantiate(cfg.datamodule, _recursive_=False)
+    dataModule.setup(stage="fit")
+    dataset = dataModule.DS_train
     visualizer = Visualizer(dataset, cmap)
 
     # Create the cv2 Window

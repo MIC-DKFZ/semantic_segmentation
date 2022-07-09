@@ -121,6 +121,7 @@ class BaseDataModule(LightningDataModule):
         # additional arguments are the split and the augmentations
         if stage in (None, "fit"):
             transforms_train = get_augmentations_from_config(self.augmentations.TRAIN)[0]
+            # print(transforms_train)
             self.DS_train = hydra.utils.instantiate(
                 self.dataset, split="train", transforms=transforms_train
             )

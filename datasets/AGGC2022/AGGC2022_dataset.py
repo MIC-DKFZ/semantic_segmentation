@@ -20,7 +20,8 @@ def get_dataset(
     sampling="box",
     NumSamplesPerSubject=1000,
     RandomProb=0.2,
-    Class_Prob={"1": 0.125, "2": 0.125, "3": 0.25, "4": 0.25, "5": 0.25},
+    # Class_Prob={"1": 0.125, "2": 0.125, "3": 0.25, "4": 0.25, "5": 0.25},
+    Class_Prob={"1": 0.125, "2": 0.125, "3": 0.25, "4": 0.25, "5": 1.0},
     PatchSize=512,
     transforms=None,
 ):

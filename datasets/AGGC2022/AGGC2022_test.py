@@ -89,9 +89,11 @@ class AGGC2022_dataset(torch.utils.data.Dataset):
         # print(self.imgs[idx].replace("/imgs_png/", "/masks_ong/"))
         mask = cv2.imread(self.imgs[idx].replace("/imgs_png/", "/masks_png/"), -1)
         # thats how you apply Albumentations transformations
+        print("A", img.shape)
         transformed = self.transforms(image=img, mask=mask)
         img = transformed["image"]
         mask = transformed["mask"]
+        print("B", img.shape)
         # print(mask.shape)
         return img, mask.long()
 

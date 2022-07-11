@@ -8,8 +8,8 @@ defaults:
 # _target_: should point to your dataset class
 # afterwards you can handle your custom input arguments which are used to initialize the dataset
 dataset:
-  #_target_: datasets.AGGC2022.AGGC2022_dataset.get_dataset
-  _target_: datasets.AGGC2022.AGGC2022_test.get_dataset
+  _target_: datasets.AGGC2022.AGGC2022_dataset.get_dataset
+  #_target_: datasets.AGGC2022.AGGC2022_test.get_dataset
   #_target_: datasets.AGGC2022.AGGC2022.AGGC2022_tiff_dataset
   data_dir: ${paths.AGGC2022}
   fold: 0

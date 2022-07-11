@@ -127,6 +127,7 @@ def randAugment_AGGC(N, M, p=0.5):
         A.RandomBrightnessContrast(contrast_limit=0, brightness_limit=brightness[M], p=p),
         # A.RandomBrightness(limit=brightness[M], p=p),
         # Sharpness
+        A.UnsharpMask(p=p),
         # A.Sharpen(alpha=[1, 1], lightness=sharpness[M], p=p),
         # A.Sharpen(alpha=sharpness[M], lightness=sharpness[M], p=p),
         ## Rotate
@@ -138,32 +139,19 @@ def randAugment_AGGC(N, M, p=0.5):
         A.Affine(
             shear={"x": (-abs(shear_x[M]), abs(shear_x[M])), "y": 0},
             p=p,
-            fit_output=True,
-            keep_ratio=True,
+            # fit_output=True,
+            # keep_ratio=True,
             mode=2,
         ),
         A.Affine(
             shear={"x": 0, "y": (abs(shear_y[M]), abs(shear_y[M]))},
             p=0,
-            fit_output=True,
-            keep_ratio=True,
+            # fit_output=True,
+            # keep_ratio=True,
             mode=2,
         ),
-        A.UnsharpMask(p=p),
-        A.AdvancedBlur(p=p)
-        # Color
-        # A.RandomBrightnessContrast(brightness_limit=color[M], contrast_limit=color[M], p=p),
-        # Equalize
-        # A.Equalize(mode="pil", p=p),
-        # JPEGcompressor(p=p),
-        # StrongAugmentor(p=1)
-        # A.OneOf(
-        #    [
-        #        LightAugmentor(p=1),
-        #        StrongAugmentor(p=1),
-        #    ],
-        #    p=p,
-        # ),
+        # Noise/Blur
+        A.AdvancedBlur(p=p),
     ]
 
     # Sampling from the Transformation search space
@@ -173,3 +161,171 @@ def randAugment_AGGC(N, M, p=0.5):
     transforms = A.SomeOf(color_Aug, n=N)
 
     return transforms  # , ops
+
+
+def randAugment_AGGC_equ(N, M, p=0.5):
+    # p = 1
+    # https://towardsdatascience.com/augmentation-methods-using-albumentations-and-pytorch-35cd135382f8
+    # https://openreview.net/pdf?id=JrBfXaoxbA2
+    # Magnitude(M) search space
+    contrast = [np.linspace(-0.8, -0.1, 10), np.linspace(0.1, 2, 10)]
+    brightness = np.linspace(0.1, 0.7, 15)
+    rotation = np.linspace(0, 90, 15)
+    shear_x = np.linspace(0, 10, 15)
+    shear_y = np.linspace(0, 10, 15)
+    HSV_shift = np.linspace(0, 0.5, 15)
+    HED_shift = np.linspace(-0.5, 0.5, 15)
+
+    color_Aug = [
+        # HSV shift
+        A.ColorJitter(
+            brightness=0,
+            contrast=0,
+            saturation=abs(HSV_shift[M]),
+            hue=abs(HSV_shift[M]),
+            p=p,
+        ),
+        # Contrast
+        # A.RandomBrightnessContrast(contrast_limit=contrast[M], brightness_limit=0, p=p),
+        A.RandomBrightnessContrast(
+            contrast_limit=(contrast[0][M], contrast[1][M]), brightness_limit=0, p=p
+        ),
+        # Brightness
+        A.RandomBrightnessContrast(contrast_limit=0, brightness_limit=brightness[M], p=p),
+        # Sharpness
+        A.UnsharpMask(p=p),
+        ## Rotate
+        A.Rotate(limit=rotation[M], p=p),
+        # Shear x and y
+        A.Affine(
+            shear={"x": (-abs(shear_x[M]), abs(shear_x[M])), "y": 0},
+            p=p,
+            mode=2,
+        ),
+        A.Affine(
+            shear={"x": 0, "y": (abs(shear_y[M]), abs(shear_y[M]))},
+            p=0,
+            mode=2,
+        ),
+        A.AdvancedBlur(p=p),
+        JPEGcompressor(p=p),
+        # Equalize
+        A.Equalize(p=p),
+    ]
+    transforms = A.SomeOf(color_Aug, n=N)
+
+    return transforms
+
+
+def randAugment_AGGC_light(N, M, p=0.5):
+    # p = 1
+    # https://towardsdatascience.com/augmentation-methods-using-albumentations-and-pytorch-35cd135382f8
+    # https://openreview.net/pdf?id=JrBfXaoxbA2
+    # Magnitude(M) search space
+    contrast = [np.linspace(-0.8, -0.1, 10), np.linspace(0.1, 2, 10)]
+    brightness = np.linspace(0.1, 0.7, 15)
+    rotation = np.linspace(0, 90, 15)
+    shear_x = np.linspace(0, 10, 15)
+    shear_y = np.linspace(0, 10, 15)
+    HSV_shift = np.linspace(0, 0.5, 15)
+    HED_shift = np.linspace(-0.5, 0.5, 15)
+
+    color_Aug = [
+        # HSV shift
+        A.ColorJitter(
+            brightness=0,
+            contrast=0,
+            saturation=abs(HSV_shift[M]),
+            hue=abs(HSV_shift[M]),
+            p=p,
+        ),
+        # Contrast
+        # A.RandomBrightnessContrast(contrast_limit=contrast[M], brightness_limit=0, p=p),
+        A.RandomBrightnessContrast(
+            contrast_limit=(contrast[0][M], contrast[1][M]), brightness_limit=0, p=p
+        ),
+        # Brightness
+        A.RandomBrightnessContrast(contrast_limit=0, brightness_limit=brightness[M], p=p),
+        # Sharpness
+        A.UnsharpMask(p=p),
+        ## Rotate
+        A.Rotate(limit=rotation[M], p=p),
+        # Shear x and y
+        A.Affine(
+            shear={"x": (-abs(shear_x[M]), abs(shear_x[M])), "y": 0},
+            p=p,
+            mode=2,
+        ),
+        A.Affine(
+            shear={"x": 0, "y": (abs(shear_y[M]), abs(shear_y[M]))},
+            p=0,
+            mode=2,
+        ),
+        A.AdvancedBlur(p=p),
+        JPEGcompressor(p=p),
+        # HED Augmentations
+        LightAugmentor(p=p),
+        # StrongAugmentor(p=p),
+        # Equalize
+        # A.Equalize(p=p),
+    ]
+    transforms = A.SomeOf(color_Aug, n=N)
+
+    return transforms
+
+
+def randAugment_AGGC_strong(N, M, p=0.5):
+    # p = 1
+    # https://towardsdatascience.com/augmentation-methods-using-albumentations-and-pytorch-35cd135382f8
+    # https://openreview.net/pdf?id=JrBfXaoxbA2
+    # Magnitude(M) search space
+    contrast = [np.linspace(-0.8, -0.1, 10), np.linspace(0.1, 2, 10)]
+    brightness = np.linspace(0.1, 0.7, 15)
+    rotation = np.linspace(0, 90, 15)
+    shear_x = np.linspace(0, 10, 15)
+    shear_y = np.linspace(0, 10, 15)
+    HSV_shift = np.linspace(0, 0.5, 15)
+    HED_shift = np.linspace(-0.5, 0.5, 15)
+
+    color_Aug = [
+        # HSV shift
+        A.ColorJitter(
+            brightness=0,
+            contrast=0,
+            saturation=abs(HSV_shift[M]),
+            hue=abs(HSV_shift[M]),
+            p=p,
+        ),
+        # Contrast
+        # A.RandomBrightnessContrast(contrast_limit=contrast[M], brightness_limit=0, p=p),
+        A.RandomBrightnessContrast(
+            contrast_limit=(contrast[0][M], contrast[1][M]), brightness_limit=0, p=p
+        ),
+        # Brightness
+        A.RandomBrightnessContrast(contrast_limit=0, brightness_limit=brightness[M], p=p),
+        # Sharpness
+        A.UnsharpMask(p=p),
+        ## Rotate
+        A.Rotate(limit=rotation[M], p=p),
+        # Shear x and y
+        A.Affine(
+            shear={"x": (-abs(shear_x[M]), abs(shear_x[M])), "y": 0},
+            p=p,
+            mode=2,
+        ),
+        A.Affine(
+            shear={"x": 0, "y": (abs(shear_y[M]), abs(shear_y[M]))},
+            p=0,
+            mode=2,
+        ),
+        A.AdvancedBlur(p=p),
+        JPEGcompressor(p=p),
+        # HED Augmentations
+        # LightAugmentor(p=p),
+        StrongAugmentor(p=p),
+        # Equalize
+        # A.Equalize(p=p),
+    ]
+    transforms = A.SomeOf(color_Aug, n=N)
+
+    return transforms

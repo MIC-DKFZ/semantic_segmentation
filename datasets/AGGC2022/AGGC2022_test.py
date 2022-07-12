@@ -35,7 +35,7 @@ def get_dataset(data_dir, split="train", fold=0, transforms=None, *args, **kwarg
         Cases = [case[1:] if case.startswith("/") else case for case in Cases]
     Cases = [os.path.join(data_dir, case) for case in Cases]
     Cases = [case.replace(".zarr", ".png").replace("/imgs/", "/imgs_png/") for case in Cases]
-    # print(Cases)
+
     dataset = AGGC2022_dataset(root=data_dir, imgs=Cases, transforms=transforms)
     log.info("AGGC2022 {} Datasets for Fold {} with lenght {}".format(split, fold, len(dataset)))
     return dataset
@@ -82,18 +82,19 @@ class AGGC2022_dataset(torch.utils.data.Dataset):
         # )
 
     def __getitem__(self, idx):
-        # print(self.imgs[idx])
+        print(self.imgs[idx])
+        self.imgs[idx] = "/media/l727r/data/AGGC2022/Subset1/imgs_png/Subset1_Train_77.png"
         # reading images and masks as numpy arrays
         img = cv2.imread(self.imgs[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # cv2 reads images in BGR order
         # print(self.imgs[idx].replace("/imgs_png/", "/masks_ong/"))
         mask = cv2.imread(self.imgs[idx].replace("/imgs_png/", "/masks_png/"), -1)
         # thats how you apply Albumentations transformations
-        print("A", img.shape)
+        # print("A", img.shape)
         transformed = self.transforms(image=img, mask=mask)
         img = transformed["image"]
         mask = transformed["mask"]
-        print("B", img.shape)
+        # print("B", img.shape)
         # print(mask.shape)
         return img, mask.long()
 

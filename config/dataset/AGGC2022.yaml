@@ -25,7 +25,7 @@ DATASET:
   IGNORE_INDEX: -100   # Needed for the loss function, if no ignore indes set to 255 or another number
                    # which do no occur in your dataset
   # (Optional) needed if weighted lossfunctions are used
-  #CLASS_WEIGHTS: [ 0.9, 1.1, ...]
+  CLASS_WEIGHTS: [0.69197575, 0.87702736, 0.88052768, 0.80019297, 0.79988677,0.95038939]
   # (Optional) can be used for nicer for logging
   CLASS_LABELS:
     - Background

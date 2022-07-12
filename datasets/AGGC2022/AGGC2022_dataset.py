@@ -29,7 +29,9 @@ def get_dataset(
     validation_fold = [train_folds.pop(4 - fold)]
     if split == "train":
         Cases = GetTrainFold(os.path.join(data_dir, "Splits"), train_folds)
+        # print(Cases)
         Cases = [case[1:] if case.startswith("/") else case for case in Cases]
+        # Cases = ["Subset1/imgs/Subset1_Train_1.zarr"]
         if sampling == "box":
             dataset = ChallengeDataset(
                 data_dir, Cases, NumSamplesPerSubject, RandomProb, Class_Prob, PatchSize, transforms
@@ -38,11 +40,16 @@ def get_dataset(
             dataset = ChallengeDataset_point_sampling(
                 data_dir, Cases, NumSamplesPerSubject, RandomProb, Class_Prob, PatchSize, transforms
             )
+        elif sampling == "both":
+            dataset = ChallengeDataset_box_point_sampling(
+                data_dir, Cases, NumSamplesPerSubject, RandomProb, Class_Prob, PatchSize, transforms
+            )
         log.info("AGGC2022 Train Datasets for Fold {} with lenght {}".format(fold, len(dataset)))
         return dataset
     elif split == "val" or split == "test":
         Cases = GetTrainFold(os.path.join(data_dir, "Splits"), validation_fold)
         Cases = [case[1:] if case.startswith("/") else case for case in Cases]
+        # Cases = ["Subset1/imgs/Subset1_Train_1.zarr"]
         dataset = ChallengeDataset_Validation(data_dir, Cases, PatchSize, transforms)
         log.info(
             "AGGC2022 Validation Datasets for Fold {} with lenght {}".format(fold, len(dataset))
@@ -229,7 +236,6 @@ class ChallengeDataset_Validation(Dataset):
 
         # Select correct WSI
         subject = self.cases[self.case_select[item]]
-
         self.Img = zarr.open(os.path.join(self.data_dir, subject), mode="r")
         self.Mask = zarr.open(
             os.path.join(self.data_dir, subject.replace("imgs", "masks")), mode="r"
@@ -343,6 +349,151 @@ class ChallengeDataset_point_sampling(Dataset):
             Extracted_Patch = Img[x_pos : x_pos + self.PatchSize, y_pos : y_pos + self.PatchSize, :]
             Extracted_Mask = Mask[x_pos : x_pos + self.PatchSize, y_pos : y_pos + self.PatchSize]
 
+        if self.transform:
+            augmented = self.transform(image=Extracted_Patch, mask=Extracted_Mask)
+
+            Extracted_Patch = augmented["image"].type(torch.float)
+            Extracted_Mask = augmented["mask"]
+            Extracted_Mask = Extracted_Mask.type(torch.long)
+
+        return Extracted_Patch, Extracted_Mask
+
+
+class ChallengeDataset_box_point_sampling(Dataset):
+    def __init__(
+        self,
+        data_dir,
+        Cases,
+        NumSamplesPerSubject,
+        RandomProb,
+        Class_Prob,
+        PatchSize,
+        transform=None,
+    ):
+        self.data_dir = data_dir
+        self.Cases = Cases
+        SubjectCount = len(self.Cases)
+        self.NumPatches = list(range(1, SubjectCount * NumSamplesPerSubject + 1))
+
+        self.RandomProb = RandomProb
+        self.NumSamplesPerSubject = NumSamplesPerSubject
+        self.PatchSize = PatchSize
+        self.ClassProb = Class_Prob
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.NumPatches)
+
+    def __getitem__(self, item):
+        item += 1
+        WSIPath = self.Cases[
+            int(np.ceil(item / self.NumSamplesPerSubject)) - 1
+        ]  # assign WSI subject (1-100) to samples between 0-500000
+        # ImgPath = self.data_dir + WSIPath
+        ImgPath = os.path.join(self.data_dir, WSIPath)
+        Img = zarr.open(ImgPath, mode="r")
+        Mask = zarr.open(ImgPath.replace("imgs", "masks"), mode="r")
+        Prob = np.random.random(1)  # Determine if we sample random patches or from bounding box
+
+        if Prob.item() < self.RandomProb:
+            x_pos = np.random.randint(0, Img.shape[0] - self.PatchSize)
+            y_pos = np.random.randint(0, Img.shape[1] - self.PatchSize)
+            Extracted_Patch = Img[x_pos : x_pos + self.PatchSize, y_pos : y_pos + self.PatchSize, :]
+            Extracted_Mask = Mask[x_pos : x_pos + self.PatchSize, y_pos : y_pos + self.PatchSize]
+
+        elif Prob.item() < (1 - self.RandomProb) / 2 + self.RandomProb:
+            PointFile = open(
+                ImgPath.replace("imgs", "sample_points").replace(".zarr", ".pkl"), "rb"
+            )  # +'.json')
+            SamplePoints = pkl.load(PointFile)
+            PresentClasses = set(SamplePoints.keys())
+            Probs = {key: self.ClassProb[key] for key in self.ClassProb.keys() & PresentClasses}
+            classes = list(Probs.keys())
+            probs = list(Probs.values())
+            probs = probs / np.sum(probs)
+            choice = np.random.choice(classes, p=probs)
+            Points = SamplePoints[choice]
+            point_id = np.random.randint(0, len(Points[0]))
+            x_pos = Points[0][point_id]
+            y_pos = Points[1][point_id]
+
+            # I want the selected point to be in the center this means the distance to the patch border
+            # shouldn't be larger than 0.25 or the patch size
+            x_pos = np.random.randint(x_pos - self.PatchSize * 0.75, x_pos - self.PatchSize * 0.25)
+            y_pos = np.random.randint(y_pos - self.PatchSize * 0.75, y_pos - self.PatchSize * 0.25)
+
+            # Check if patch is still in WSI
+            if not 0 <= x_pos < (Img.shape[0] - self.PatchSize):
+                if not 0 <= x_pos:
+                    x_pos = 0
+                else:
+                    x_pos = Img.shape[0] - self.PatchSize
+
+            if not 0 <= y_pos < (Img.shape[1] - self.PatchSize):
+                if not 0 <= y_pos:
+                    y_pos = 0
+                else:
+                    y_pos = Img.shape[1] - self.PatchSize
+
+            Extracted_Patch = Img[x_pos : x_pos + self.PatchSize, y_pos : y_pos + self.PatchSize, :]
+            Extracted_Mask = Mask[x_pos : x_pos + self.PatchSize, y_pos : y_pos + self.PatchSize]
+        else:
+            BoxFile = open(ImgPath.replace("imgs", "boxes").replace(".zarr", ".json"))  # +'.json')
+            BoundingBoxes = json.load(BoxFile)
+            PresentClasses = set(BoundingBoxes.keys())
+            Probs = {key: self.ClassProb[key] for key in self.ClassProb.keys() & PresentClasses}
+            classes = list(Probs.keys())
+            probs = list(Probs.values())
+            probs = probs / np.sum(probs)
+            choice = np.random.choice(classes, p=probs)
+            Boxes = BoundingBoxes[choice]
+
+            areaList = []
+
+            for box in Boxes:
+                area = (box[2] - box[0]) * (box[3] - box[1])
+                areaList.append(area)
+
+            areaList = areaList / np.sum(areaList)
+            BoxCords = Boxes[np.random.choice(list(range(0, len(Boxes))), p=areaList)]
+
+            if (BoxCords[2] - BoxCords[0]) > self.PatchSize:
+                x_pos = np.random.randint(
+                    BoxCords[0] - int(self.PatchSize / 2),
+                    BoxCords[2] - int(self.PatchSize / 2),
+                )
+            else:
+                if BoxCords[2] == BoxCords[0]:
+                    x_pos = BoxCords[0] - int(self.PatchSize / 2)
+                else:
+                    x_pos = np.random.randint(BoxCords[0] - int(self.PatchSize / 2), BoxCords[2])
+
+            if (BoxCords[3] - BoxCords[1]) > self.PatchSize:
+                y_pos = np.random.randint(
+                    BoxCords[1] - int(self.PatchSize / 2),
+                    BoxCords[3] - int(self.PatchSize / 2),
+                )
+            else:
+                if BoxCords[3] == BoxCords[1]:
+                    y_pos = BoxCords[3] - int(self.PatchSize / 2)
+                else:
+                    y_pos = np.random.randint(BoxCords[1] - int(self.PatchSize / 2), BoxCords[3])
+
+            # Check if patch is still in WSI
+            if not 0 <= x_pos < (Img.shape[0] - self.PatchSize):
+                if not 0 <= x_pos:
+                    x_pos = 0
+                else:
+                    x_pos = Img.shape[0] - self.PatchSize
+
+            if not 0 <= y_pos < (Img.shape[1] - self.PatchSize):
+                if not 0 <= y_pos:
+                    y_pos = 0
+                else:
+                    y_pos = Img.shape[1] - self.PatchSize
+
+            Extracted_Patch = Img[x_pos : x_pos + self.PatchSize, y_pos : y_pos + self.PatchSize, :]
+            Extracted_Mask = Mask[x_pos : x_pos + self.PatchSize, y_pos : y_pos + self.PatchSize]
         if self.transform:
             augmented = self.transform(image=Extracted_Patch, mask=Extracted_Mask)
 

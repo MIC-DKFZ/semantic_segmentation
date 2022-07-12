@@ -146,11 +146,11 @@ def get_dataset_stats(overrides_cl: list) -> None:
         drop_last=False,
     )
 
-    print("## Compute Mean and Std for each Channel")
+    # print("## Compute Mean and Std for each Channel")
     # get_mean_std_global(dataloader)
-    get_mean_std_sample(dataloader)
+    # get_mean_std_sample(dataloader)
 
-    print("## Compute Class Weights for each Class")
+    # print("## Compute Class Weights for each Class")
     get_class_weights(dataloader, num_classes)
 
 

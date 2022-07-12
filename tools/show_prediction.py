@@ -231,7 +231,8 @@ def show_prediction(overrides_cl: list) -> None:
     # check if data is normalized, if yes redo this during visualization of the image
     mean = None
     std = None
-    for t in transforms.transforms.transforms:
+    print(transforms.transforms[0])
+    for t in transforms.transforms:  # .transforms:
         if isinstance(t, A.Normalize):
             mean = t.mean
             std = t.std

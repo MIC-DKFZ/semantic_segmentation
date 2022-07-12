@@ -67,36 +67,8 @@ def randAugment_AGGC(N, M, p=0.5):
     # p = 1
     # https://towardsdatascience.com/augmentation-methods-using-albumentations-and-pytorch-35cd135382f8
     # https://openreview.net/pdf?id=JrBfXaoxbA2
-    # Magnitude(M) search space
-    # shift_x = np.linspace(0, 150, 10)
-    # shift_y = np.linspace(0, 150, 10)
-    # rot = np.linspace(0, 30, 10)
-    # shear = np.linspace(0, 10, 10)
 
-    # blur = np.linspace(3, 12, 10)
-    # blur = [b for b in blur if b % 2 != 0]
-    # print(blur)
-    # sola = np.linspace(0, 256, 10)
-    # post = [4, 4, 5, 5, 6, 6, 7, 7, 8, 8]
-    # bright = np.linspace(0.1, 0.7, 10)
-    # cont = np.linspace(0.1, 0.7, 10)  # [np.linspace(-0.8, -0.1, 10), np.linspace(0.1, 2, 10)]
-    # sat = np.linspace(0.1, 0.7, 10)  # [np.linspace(-0.8, -0.1, 10), np.linspace(0.1, 2, 10)]
-    # hue = np.linspace(0.1, 0.7, 10)  # [np.linspace(-0.8, -0.1, 10), np.linspace(0.1, 2, 10)]
-    # shar = np.linspace(0.1, 0.9, 10)
-    # cut = np.linspace(0, 60, 10)
-    # Transformation search space
-    # Aug = [  # 0 - geometrical
-    #    A.ShiftScaleRotate(
-    #        shift_limit_x=shift_x[M], rotate_limit=0, shift_limit_y=0, shift_limit=shift_x[M], p=p
-    #   ),
-    #   A.ShiftScaleRotate(
-    #        shift_limit_y=shift_y[M], rotate_limit=0, shift_limit_x=0, shift_limit=shift_y[M], p=p
-    #    ),
-    #    #A.IAAAffine(rotate=rot[M], p=p),
-    #    #A.IAAAffine(shear=shear[M], p=p),
-    #    #A.InvertImg(p=p),
-    #    # 5 - Color Based
-    # contrast = np.linspace(0, 0.5, 15)
+    # Magnitude(M) search space
     contrast = [np.linspace(-0.8, -0.1, 10), np.linspace(0.1, 2, 10)]
     brightness = np.linspace(0.1, 0.7, 15)
     sharpness = np.linspace(0, 0.5, 15)
@@ -109,6 +81,8 @@ def randAugment_AGGC(N, M, p=0.5):
     HSV_shift = np.linspace(0, 0.5, 15)
     HED_shift = np.linspace(-0.5, 0.5, 15)
     color = np.linspace(0, 1, 15)
+
+    # Augmentations
     color_Aug = [
         # HSV shift
         A.ColorJitter(

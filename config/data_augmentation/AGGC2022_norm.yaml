@@ -10,6 +10,10 @@ AUGMENTATIONS:
               saturation: 0.2
               hue: 0.2
               p: 0.5
+          - RandomRotate90:
+              p: 0.25
+          - Transpose:
+              p: 0.25
           #- JPEGcompressor:
           #    p: 0.5
           - Normalize:

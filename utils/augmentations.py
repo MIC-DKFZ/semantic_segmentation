@@ -119,7 +119,7 @@ def randAugment_AGGC(N, M, p=0.5):
         ),
         A.Affine(
             shear={"x": 0, "y": (abs(shear_y[M]), abs(shear_y[M]))},
-            p=0,
+            p=p,
             # fit_output=True,
             # keep_ratio=True,
             mode=2,
@@ -289,7 +289,7 @@ def randAugment_AGGC_strong(N, M, p=0.5):
         ),
         A.Affine(
             shear={"x": 0, "y": (abs(shear_y[M]), abs(shear_y[M]))},
-            p=0,
+            p=p,
             mode=2,
         ),
         A.AdvancedBlur(p=p),

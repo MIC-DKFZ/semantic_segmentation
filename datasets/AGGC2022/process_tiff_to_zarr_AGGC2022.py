@@ -76,7 +76,7 @@ if __name__ == "__main__":
         "Normal_Mask.tif",
         "Stroma_Mask.tif",
     ]
-
+    all_classes.reverse()
     for subset in subsets:
         # Create Folders if they not exist
         output_dir = os.path.join(output_directory, subset)
@@ -84,8 +84,8 @@ if __name__ == "__main__":
             os.makedirs(output_dir)
         if not os.path.exists(os.path.join(output_dir, "imgs")):
             os.makedirs(os.path.join(output_dir, "imgs"))
-        if not os.path.exists(os.path.join(output_dir, "masks")):
-            os.makedirs(os.path.join(output_dir, "masks"))
+        if not os.path.exists(os.path.join(output_dir, "masks_2")):
+            os.makedirs(os.path.join(output_dir, "masks_2"))
         output_dir = os.path.join(output_dir)
 
         # List all images and masks in the directories
@@ -112,12 +112,12 @@ if __name__ == "__main__":
             image_files = image_files[start_id:end_id]
             mask_files = mask_files[start_id:end_id]
 
-        image_files = [
-            "/home/l727r/Documents/E132-Projekte/Projects/2022_AGGC_challenge/GleasonGradMICCAIChallenge2022/Subset3_Train_image/Philips/Subset3_Train_12_Philips.tiff"
-        ]
-        mask_files = [
-            "/home/l727r/Documents/E132-Projekte/Projects/2022_AGGC_challenge/GleasonGradMICCAIChallenge2022/Subset3_Train_annotation/Train/Philips/Subset3_Train_12_Philips/"
-        ]
+        # image_files = [
+        #    "/home/l727r/Documents/E132-Projekte/Projects/2022_AGGC_challenge/GleasonGradMICCAIChallenge2022/Subset3_Train_image/Philips/Subset3_Train_12_Philips.tiff"
+        # ]
+        # mask_files = [
+        #    "/home/l727r/Documents/E132-Projekte/Projects/2022_AGGC_challenge/GleasonGradMICCAIChallenge2022/Subset3_Train_annotation/Train/Philips/Subset3_Train_12_Philips/"
+        # ]
         print(
             "For {}: {} Images and {} Masks are found".format(
                 subset, len(image_files), len(mask_files)
@@ -133,7 +133,7 @@ if __name__ == "__main__":
             #    continue
 
             output_file_img = os.path.join(output_dir, "imgs", name + ".zarr")
-            output_file_mask = os.path.join(output_dir, "masks", name + ".zarr")
+            output_file_mask = os.path.join(output_dir, "masks_2", name + ".zarr")
             print(output_file_img)
             # This file is corrupt
             if name == "Subset1_Train_83":

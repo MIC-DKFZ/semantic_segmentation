@@ -14,18 +14,24 @@ dataset:
   data_dir: ${paths.AGGC2022}
   fold: 0
   sampling: point
+  RandomProb: 0.0
   NumSamplesPerSubject: 500 #1000
   PatchSize: 512
+  sampling_strategy: 0
+  #Subset: None
 # DATASET is used to store information about the dataset which are needed during training
 DATASET:
   # Required dataser arguments
   NAME: AGGC2022           # Used for the logging directory
   NUM_CLASSES: 6    # Needed for defining the model and the metrics
   # (Optional) but needed if ignore index should be used
-  IGNORE_INDEX: -100   # Needed for the loss function, if no ignore indes set to 255 or another number
+  IGNORE_INDEX: 0   # Needed for the loss function, if no ignore indes set to 255 or another number
                    # which do no occur in your dataset
   # (Optional) needed if weighted lossfunctions are used
-  CLASS_WEIGHTS: [0.69197575, 0.87702736, 0.88052768, 0.80019297, 0.79988677,0.95038939]
+  #CLASS_WEIGHTS: [0.69197575, 0.87702736, 0.88052768, 0.80019297, 0.79988677,0.95038939]
+  #CLASS_WEIGHTS: [0, 0.73833618, 0.73494571, 0.78789335, 0.78323873, 0.95558603]
+  #CLASS_WEIGHTS: [0, 0.75, 0.75, 1.0, 1.0, 1.0]
+  CLASS_WEIGHTS: [0, 0.5, 0.5, 1, 1, 1]
   # (Optional) can be used for nicer for logging
   CLASS_LABELS:
     - Background

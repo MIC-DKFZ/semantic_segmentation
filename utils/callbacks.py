@@ -5,8 +5,12 @@ from pytorch_lightning.callbacks import Callback, ModelCheckpoint
 from pytorch_lightning.callbacks.progress import TQDMProgressBar
 from pytorch_lightning.callbacks.progress.tqdm_progress import convert_inf, Tqdm
 
-# small modification on the ModelCheckpoint -> naming the last epoch
+
 class customModelCheckpoint(ModelCheckpoint):
+    """
+    Small modification on the ModelCheckpoint from pytorch lightning for renaming the last epoch
+    """
+
     def __init__(self, **kwargs):
         super(
             customModelCheckpoint,
@@ -15,12 +19,16 @@ class customModelCheckpoint(ModelCheckpoint):
         self.CHECKPOINT_NAME_LAST = "last_epoch_{epoch}"
 
 
-### small modification on the TQDMProgressBar class to get rid of the v_num entry and duple printing during validation###
-### https://stackoverflow.com/questions/59455268/how-to-disable-progress-bar-in-pytorch-lightning/66731318#66731318
-### https://github.com/PyTorchLightning/pytorch-lightning/issues/765
-### this is another solution to use the terminal as output console for Pycharm
-### https://stackoverflow.com/questions/59455268/how-to-disable-progress-bar-in-pytorch-lightning
 class customTQDMProgressBar(TQDMProgressBar):
+    """
+    Small modification on the TQDMProgressBar class from pytorch lightning to get rid of the
+    "v_num" entry and the printing bug during validation (linebreak + print in every step)
+    https://stackoverflow.com/questions/59455268/how-to-disable-progress-bar-in-pytorch-lightning/66731318#66731318
+    https://github.com/PyTorchLightning/pytorch-lightning/issues/765
+    this is another solution to use the terminal as output console for Pycharm
+    https://stackoverflow.com/questions/59455268/how-to-disable-progress-bar-in-pytorch-lightning
+    """
+
     def __init__(self, *args, **kwargs):
         # super(customTQDMProgressBar,self).__init__(**kwargs)
         super().__init__(*args, **kwargs)
@@ -60,8 +68,11 @@ class customTQDMProgressBar(TQDMProgressBar):
         self.main_progress_bar.set_postfix(self.get_metrics(trainer, pl_module))
 
 
-# Callback for measuring the time during train, validation and testing
 class TimeCallback(Callback):
+    """
+    Callback for measuring the time during train, validation and testing
+    """
+
     def __init__(self):
         self.t_train_start = torch.cuda.Event(enable_timing=True)
         self.t_val_start = torch.cuda.Event(enable_timing=True)
@@ -113,29 +124,3 @@ class TimeCallback(Callback):
         test_time = self.t_test_start.elapsed_time(self.end) / 1000
 
         self.log("Time/test_time", test_time, logger=True)
-
-
-# Prototype, not used
-class MS_RestictionCallback(Callback):
-    def __init__(self, ms_offset, m_scale_training, epochs):
-        if isinstance(ms_offset, int):
-            self.ms_offset = ms_offset
-        elif isinstance(ms_offset, float):
-            self.ms_offset = int(epochs * ms_offset)
-        self.m_scale_training = m_scale_training
-
-    def on_train_start(self, trainer, *args, **kwargs):
-        if trainer.gpus == 1:
-            if self.ms_offset != 0 and self.m_scale_training:
-                trainer.model.model.m_scale_training = False
-        else:
-            if self.ms_offset != 0 and self.m_scale_training:
-                trainer.model.module.m_scale_training = False
-
-    def on_train_epoch_start(self, trainer, *args, **kwargs):
-        if trainer.gpus == 1:
-            if trainer.current_epoch == self.ms_offset and self.m_scale_training:
-                trainer.model.model.m_scale_training = True
-        else:
-            if trainer.current_epoch == self.ms_offset and self.m_scale_training:
-                trainer.model.module.m_scale_training = True

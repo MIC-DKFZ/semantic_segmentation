@@ -8,7 +8,7 @@ pl_trainer:
 LOGDIR: /dkfz/cluster/gpu/checkpoints/OE0441/l727r
 
 paths:
-  cityscapes:
+  Cityscapes:
       LABELS: /dkfz/cluster/gpu/data/OE0441/l727r/cityscapes
       IMAGES: /dkfz/cluster/gpu/data/common/cityscapes
   VOC2010_Context: /dkfz/cluster/gpu/data/OE0441/l727r/VOC2010_Context

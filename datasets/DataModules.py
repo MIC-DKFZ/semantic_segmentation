@@ -15,6 +15,34 @@ from utils.utils import get_logger
 log = get_logger(__name__)
 
 
+def max_steps(
+    size_dataset, batch_size, num_devices, accumulate_grad_batches, num_epochs, drop_last=True
+) -> int:
+    """
+    Computing and Logging the number of training steps, needed for polynomial lr scheduler
+    Considering the number of gpus and if accumulate_grad_batches is used
+
+    Returns
+    -------
+    int:
+        number of training steps
+    """
+    # How many steps per epoch in total
+    if drop_last:
+        steps_per_epoch = size_dataset // batch_size  # round off if drop_last=False
+    else:
+        steps_per_epoch = np.ceil(size_dataset / batch_size)  # round up if drop_last=False
+
+    # For ddp and multiple gpus the effective batch sizes doubles
+    steps_per_gpu = int(np.ceil(steps_per_epoch / num_devices))
+    # Include accumulate_grad_batches
+    acc_steps_per_gpu = int(np.ceil(steps_per_gpu / accumulate_grad_batches))
+    max_steps = num_epochs * acc_steps_per_gpu
+
+    log.info("Number of Training steps: %s", max_steps)
+    return max_steps
+
+
 def get_augmentations_from_config(augmentations: DictConfig) -> list:
     """
     Build an Albumentations augmentation pipeline from the input config

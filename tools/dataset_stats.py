@@ -1,9 +1,12 @@
 import argparse
 import os
 import sys
+from itertools import combinations, combinations_with_replacement
+import omegaconf
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import matplotlib.pyplot as plt
 import hydra
 from tqdm import tqdm
 import torch
@@ -15,30 +18,27 @@ from albumentations.pytorch import ToTensorV2
 from utils.utils import has_not_empty_attr
 
 
-def get_class_weights(dataloader: DataLoader, num_classes: int) -> None:
-    """
-    compute weights (inverted and balanced) for each class in the Dataset
-
-    Parameters
-    ----------
-    dataloader : DataLoader
-    num_classes : int
-    """
-    count = torch.zeros(num_classes)
-    no = 0
-    for img, mask in tqdm(dataloader):
-        val, coun = np.unique(np.array(mask), return_counts=True)
-        for v, c in zip(val, coun):
-            if v < num_classes:
-                count[v] += c
+def get_mask_stats(dataloader: DataLoader, num_classes: int):
+    pixel_count = torch.zeros(num_classes, dtype=int)
+    sample_count = torch.zeros((num_classes, num_classes), dtype=int)
+    ignore = 0
+    for _, mask in tqdm(dataloader):
+        mask = np.array(mask)
+        val, cnt = np.unique(mask, return_counts=True)
+        for v, c in zip(val, cnt):
+            if v >= 0 and v < num_classes:
+                pixel_count[v] += c
             else:
-                no += c
-    print("Total number of pixel per class: ", np.array(count))
-    print("      number of ignored pixel: ", no)
-    counts = 1 - count / count.sum()
-    print("Inverse Weights", np.array(counts))
-    counts_bal = (1 / count) * (count.sum() / num_classes)
-    print("Balanced Weights: ", np.array(counts_bal))
+                ignore += c
+
+        for m in mask:
+            val_m = [v_m for v_m in val if v_m in m and v_m >= 0 and v_m < num_classes]
+            for a, b in combinations_with_replacement(val_m, 2):
+                sample_count[a, b] += 1
+                if a != b:
+                    sample_count[b, a] += 1
+
+    return pixel_count, sample_count, ignore
 
 
 def get_mean_std_global(dataloader: DataLoader) -> tuple:
@@ -106,12 +106,17 @@ def get_mean_std_sample(dataloader: DataLoader) -> tuple:
             elements_squared += img_squared
     mean = elements / num_batches
     std = (elements_squared / num_batches - mean**2) ** 0.5
-    print("Mean per Channel:", mean.tolist())
-    print("STD per Channel:", std.tolist())
     return mean, std
 
 
-def get_dataset_stats(overrides_cl: list) -> None:
+def get_dataset_stats(
+    overrides_cl: list,
+    name: str = None,
+    split: str = "train",
+    img_only: bool = False,
+    mask_only: bool = False,
+    supress_output: bool = False,
+) -> None:
     """
     Computing the mean and std of each channel over all images inside the datasets
     Computing weights for each Class in the Dataset
@@ -136,7 +141,7 @@ def get_dataset_stats(overrides_cl: list) -> None:
         [A.Normalize(mean=[0] * input_channels, std=[1] * input_channels), ToTensorV2()]
     )
 
-    dataset = hydra.utils.instantiate(cfg.dataset, split="train", transforms=transforms)
+    dataset = hydra.utils.instantiate(cfg.dataset, split=split, transforms=transforms)
 
     dataloader = DataLoader(
         dataset,
@@ -146,17 +151,191 @@ def get_dataset_stats(overrides_cl: list) -> None:
         drop_last=False,
     )
 
-    # print("## Compute Mean and Std for each Channel")
-    # get_mean_std_global(dataloader)
-    # get_mean_std_sample(dataloader)
+    if not mask_only:
+        # Extracting mean and std for each channel from the Image Data
+        print("Extracting Image Information...")
+        mean, std = get_mean_std_sample(dataloader)
+        print("Mean per Channel: {}".format(mean.tolist()))
+        print("STD per Channel: {}".format(std.tolist()))
+    if not img_only:
+        # Counting Pixels and Occurrences for each Class from the Label Data
+        print("Extracting Label Information...")
+        count, sample_count, ignore = get_mask_stats(dataloader, num_classes)
+        print("Pixel per Class (with  {} pixels ignored):\n{}".format(ignore, count.tolist()))
+        print(
+            "Images Containing each Class (total number of Images: {}):\n{}".format(
+                len(dataset), list(sample_count.diag().tolist())
+            )
+        )
 
-    # print("## Compute Class Weights for each Class")
-    get_class_weights(dataloader, num_classes)
+        # Computing Weights
+        weights_inv = 1 - count / count.sum()
+        print("Inverse Class Weights:\n{}".format(weights_inv.tolist()))
+        weights_bal = (1 / count) * (count.sum() / num_classes)
+        print("Balanced Class Weights:\n{} ".format(weights_bal.tolist()))
+
+    if not supress_output:
+        """
+        Define Output Dir
+        """
+        output_dir = os.path.join(os.getcwd(), "dataset_stats", cfg.DATASET.NAME)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        """
+        Save Stats to txt file
+        """
+        if name is not None:
+            file_name = os.path.join(output_dir, name + "_dataset_stats.txt")
+        else:
+            file_name = os.path.join(output_dir, "dataset_stats.txt")
+        with open(file_name, "a") as f:
+            if not mask_only:
+                f.write("Mean per Channel: {} \n".format(mean.tolist()))
+                f.write("STD per Channel: {} \n".format(std.tolist()))
+            if not img_only:
+                f.write(
+                    "Pixel per Class (with  {} pixels ignored):\n{} \n".format(
+                        ignore, count.tolist()
+                    )
+                )
+                f.write(
+                    "Images Containing each Class (total number of Images: {}):\n{} \n".format(
+                        len(dataset), sample_count.diag().tolist()
+                    )
+                )
+                f.write(
+                    "Average size per Class in pixel:\n{} \n".format(
+                        (count / sample_count.diag()).tolist()
+                    )
+                )
+
+                f.write("Inverse Class Weights:\n{} \n".format(weights_inv.tolist()))
+                f.write("Balanced Class Weights:\n{} \n".format(weights_bal.tolist()))
+
+        if not img_only:
+            """
+            Number of pixel of each class in the dataset
+            Color Viridis: https://rpubs.com/mjvoss/psc_viridisplt
+            """
+            pixel_labels = cfg.DATASET.CLASS_LABELS.copy()
+            if ignore == 0:
+                pixel_count = np.array(count)
+            else:
+                pixel_labels.append("ignored")
+                pixel_count = np.array(torch.cat((count, torch.tensor([ignore]))))
+            plt.figure(figsize=(15, 9))
+            plt.bar(pixel_labels, pixel_count, color="#414487FF")
+            plt.title("Number of pixel per class", weight="bold")
+            plt.ylabel("Number of pixel", weight="bold")
+            plt.xticks(rotation=30)
+            plt.xlabel("Classes", weight="bold")
+            plt.tight_layout()
+            if name != None:
+                plot_name = name + "_Pixel_per_Class.png"
+            else:
+                plot_name = "Pixel_per_Class.png"
+            output_name = os.path.join(output_dir, plot_name)
+            plt.savefig(output_name)
+            # plt.show()
+
+            """
+            Number of occurrences of each class
+            Color Viridis: https://rpubs.com/mjvoss/psc_viridisplt
+            """
+            labels = cfg.DATASET.CLASS_LABELS
+            plt.figure(figsize=(15, 9))
+            plt.bar(labels, sample_count.diag(), color="#414487FF")
+            plt.hlines(len(dataset), 0 - 0.5, num_classes - 0.5, "red")
+            plt.text(
+                num_classes - 0.5,
+                len(dataset),
+                "total number of images",
+                ha="right",
+                va="bottom",
+                fontsize="large",
+                color="red",
+            )
+            plt.title("Number of occurrences per class", weight="bold")
+            plt.ylabel("Number of occurrences", weight="bold")
+            plt.xticks(rotation=30)
+            plt.xlabel("Classes", weight="bold")
+            plt.tight_layout()
+            if name is not None:
+                plot_name = name + "_Class_Occurrences.png"
+            else:
+                plot_name = "Class_Occurrences.png"
+            output_name = os.path.join(output_dir, plot_name)
+            plt.savefig(output_name)
+            # plt.show()
+
+            """
+            Average size of each class
+            Color Viridis: https://rpubs.com/mjvoss/psc_viridisplt
+            """
+            labels = cfg.DATASET.CLASS_LABELS
+            plt.figure(figsize=(15, 9))
+            plt.bar(labels, count / sample_count.diag(), color="#414487FF")
+            plt.title("Average Size of Classes (in pixel)", weight="bold")
+            plt.ylabel("Number of pixel", weight="bold")
+            plt.xticks(rotation=30)
+            plt.xlabel("Classes", weight="bold")
+            plt.tight_layout()
+
+            if name is not None:
+                plot_name = name + "_Average_Class_Size.png"
+            else:
+                plot_name = "Average_Class_Size.png"
+            output_name = os.path.join(output_dir, plot_name)
+            plt.savefig(output_name)
+            # plt.show()
+
+            """
+            Number of co-occurrences of each class-pair
+            Probability of Class A to appear together with Class B
+            """
+            labels = cfg.DATASET.CLASS_LABELS
+            count_norm = np.array(sample_count).astype("float") / sample_count.diag()[:, np.newaxis]
+
+            plt.figure(figsize=(9, 9))
+            plt.imshow(count_norm, interpolation="nearest", cmap=plt.cm.viridis)
+            tick_marks = np.arange(len(labels))
+            plt.xticks(tick_marks, labels, rotation=45)
+            plt.yticks(tick_marks, labels)
+            plt.colorbar()
+            plt.title("Probability of Class A to appear together with Class B", weight="bold")
+            plt.ylabel("Classes A", weight="bold")
+            plt.xlabel("Classes B", weight="bold")
+            plt.tight_layout()
+
+            if name is not None:
+                plot_name = name + "_Probability_of_Co_Occurrence.png"
+            else:
+                plot_name = "Probability_of_Co_Occurrence.png"
+            output_name = os.path.join(output_dir, plot_name)
+            plt.savefig(output_name)
+            # plt.show()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-
+    parser.add_argument(
+        "--name", type=str, default=None, help="Name of the sub folder to save the results in"
+    )
+    parser.add_argument(
+        "--split", type=str, default="train", help="which split to use: train, val or test"
+    )
+    parser.add_argument("--img_only", action="store_true", help="Only analyse Image Data")
+    parser.add_argument("--mask_only", action="store_true", help="Only analyse Mask Data")
+    parser.add_argument(
+        "--supress_output",
+        action="store_true",
+        help="Supress creation of a output directory and output files",
+    )
     args, overrides = parser.parse_known_args()
 
-    get_dataset_stats(overrides)
+    name = args.name
+    split = args.split
+    img_only = args.img_only
+    mask_only = args.mask_only
+    supress_output = args.supress_output
+    get_dataset_stats(overrides, name, split, img_only, mask_only, supress_output)

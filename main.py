@@ -4,11 +4,10 @@ logging.basicConfig(level=logging.INFO)
 
 import os
 import hydra
-
 import torch
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning import Trainer, seed_everything
-from pytorch_lightning.plugins import DDPPlugin
+from pytorch_lightning.strategies.ddp import DDPStrategy
 
 from utils.utils import (
     has_true_attr,
@@ -18,12 +17,15 @@ from utils.utils import (
     log_hyperparameters,
 )
 from omegaconf import DictConfig, OmegaConf
-from Segmentation_Model import SegModel
+
+# from Segmentation_Model import SegModel
+from Segmentation_Model_AGGC import SegModel_AGGC  # as SegModel
 
 log = get_logger(__name__)
 
 
 # OmegaConf resolver for preventing problems in the output path
+# Removing all characters which can cause problems or are not wanted in a directory name
 OmegaConf.register_new_resolver(
     "path_formatter",
     lambda s: s.replace("[", "")
@@ -88,18 +90,19 @@ def training_loop(cfg: DictConfig):
     # cfg.finetune_from should be the path to a .ckpt file
     if has_not_empty_attr(cfg, "finetune_from"):
         log.info("finetune from: %s", cfg.finetune_from)
-        model = SegModel.load_from_checkpoint(cfg.finetune_from, strict=False, config=cfg)
+        # model = SegModel.load_from_checkpoint(cfg.finetune_from, strict=False, config=cfg)
+        model = SegModel_AGGC.load_from_checkpoint(cfg.finetune_from, strict=False, config=cfg)
     else:
-        model = SegModel(config=cfg)
+        # model = SegModel(config=cfg)
+        model = SegModel_AGGC(config=cfg)
 
     # Initializing trainer
     trainer_args = getattr(cfg, "pl_trainer") if has_not_empty_attr(cfg, "pl_trainer") else {}
 
-    ddp = DDPPlugin(find_unused_parameters=False)  # if number_gpus > 1 else None
+    ddp = DDPStrategy(find_unused_parameters=False)  # if number_gpus > 1 else None
     trainer = Trainer(
         callbacks=callbacks,
         logger=tb_logger,
-        # strategy="ddp" if number_gpus > 1 else None,
         strategy=ddp if number_gpus > 1 else None,
         sync_batchnorm=True if number_gpus > 1 else False,
         **trainer_args

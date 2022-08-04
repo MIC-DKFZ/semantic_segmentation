@@ -58,6 +58,7 @@ def show_data(overrides_cl: list) -> None:
     ]
 
     transforms = A.Compose([ToTensorV2()])
+    # dataset = hydra.utils.instantiate(cfg.dataset, split="train", transforms=transforms)
     dataset = hydra.utils.instantiate(cfg.dataset, split="train", transforms=transforms)
     # transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TRAIN)
     # print("Done")

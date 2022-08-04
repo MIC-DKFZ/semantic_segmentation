@@ -4,7 +4,16 @@ METRIC:
   DURING_TRAIN: False
   METRIC_CALL: global
   METRICS:
-    mIoU:
-      _target_: utils.metric.Dice_AGGC2022
+    F1_S1:
+      _target_: utils.metric.Dice_AGGC2022_subsets
       num_classes: ${DATASET.NUM_CLASSES}
+      subset: Subset1
+    F1_S2:
+      _target_: utils.metric.Dice_AGGC2022_subsets
+      num_classes: ${DATASET.NUM_CLASSES}
+      subset: Subset2
+    F1_S3:
+      _target_: utils.metric.Dice_AGGC2022_subsets
+      num_classes: ${DATASET.NUM_CLASSES}
+      subset: Subset3
 

@@ -6,6 +6,10 @@ from openslide import OpenSlide, open_slide
 import time
 import cv2
 from PIL import Image
+import logging
+import argparse
+
+logging.getLogger(__name__).addHandler(logging.StreamHandler())
 
 Image.MAX_IMAGE_PIXELS = None  # 4.630.873.600
 
@@ -71,15 +75,54 @@ def load_and_resize_img(slide: OpenSlide, target_shape: tuple = None, name=None)
 
 
 if __name__ == "__main__":
-    # from multiprocessing import Pool
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--subset", default="all")
+    parser.add_argument("--reverse", action="store_true")
+    parser.add_argument("--no_downscale", action="store_true")
 
+    args = parser.parse_args()
+    print(args.no_downscale)
+    if args.no_downscale:
+        print("Hi")
+    quit()
+    # Define the Subset and the Classes
+    if args.subset == "all":
+        subsets = ["Subset1", "Subset2", "Subset3"]
+    elif args.subset == "S1":
+        subsets = ["Subset1"]
+    elif args.subset == "S2":
+        subsets = ["Subset2"]
+    elif args.subset == "S3":
+        subsets = ["Subset3"]
+
+    # from multiprocessing import Pool
+    cluster_input_dir = "/dkfz/cluster/gpu/data/OE0441/l727r/GleasonGradMICCAIChallenge2022"
+    cluster_output_dir = "/dkfz/cluster/gpu/data/OE0441/l727r/AGGC2022"
+
+    local_input_dir = "/home/l727r/Documents/E132-Projekte/Projects/2022_AGGC_challenge/GleasonGradMICCAIChallenge2022"
+    local_output_dir = "/media/l727r/data/AGGC2022"
+
+    if os.path.isdir(local_input_dir) and os.path.isdir(local_output_dir):
+        logging.info("Local Environment")
+        print("Local Environment")
+        input_dir = local_input_dir
+        output_directory = local_output_dir
+    elif os.path.isdir(cluster_input_dir) and os.path.isdir(cluster_output_dir):
+        logging.info("Cluster Environment")
+        logging.info("Cluster Environment")
+        input_dir = cluster_input_dir
+        output_directory = cluster_output_dir
+    else:
+        logging.info("Local and Cluster Path do not exist!!!")
+        print("Local and Cluster Path do not exist!!!")
+        quit()
     # p = Pool(16)
     # Path to the Input files and the location where the output should be saved
-    input_dir = "/home/l727r/Documents/E132-Projekte/Projects/2022_AGGC_challenge/GleasonGradMICCAIChallenge2022"
-    output_directory = "/media/l727r/data/AGGC2022"
+    # input_dir = "/home/l727r/Documents/E132-Projekte/Projects/2022_AGGC_challenge/GleasonGradMICCAIChallenge2022"
+    # output_directory = "/media/l727r/data/AGGC2022"
 
     # Define the Subset and the Classes
-    subsets = ["Subset1", "Subset2", "Subset3"]
+    # subsets = ["Subset1", "Subset2", "Subset3"]
 
     # global_classes=
     class_mapping = {"Stroma": 1, "Normal": 2, "G3": 3, "G4": 4, "G5": 5}
@@ -90,6 +133,7 @@ if __name__ == "__main__":
         "Normal_Mask.tif",
         "Stroma_Mask.tif",
     ]
+    all_classes.reverse()
 
     for subset in subsets:
         # Create Folders if they not exist
@@ -121,7 +165,10 @@ if __name__ == "__main__":
         ]
         image_files.sort()
         mask_files.sort()
-
+        if args.reverse:
+            print("Revers img and mask")
+            image_files.reverse()
+            mask_files.reverse()
         print(
             "For {}: {} Images and {} Masks are found".format(
                 subset, len(image_files), len(mask_files)
@@ -138,8 +185,8 @@ if __name__ == "__main__":
             # This file is corrupt
             if name == "Subset1_Train_83":
                 continue
-            elif name != "Subset1_Train_96":
-                continue
+            # elif name != "Subset1_Train_96":
+            #    continue
 
             """
             Init the Openslide Object
@@ -169,7 +216,7 @@ if __name__ == "__main__":
             Image: Load, Resize and Save
             """
             start_time = time.time()
-            if not os.path.exists(output_file_img):
+            if not os.path.exists(output_file_img) and False:
                 print("{} : Loading Image with shape {}: ...".format(name, slide_img.dimensions))
                 # Reading Image
                 img_pil = load_and_resize_img(slide_img, target_shape, name)

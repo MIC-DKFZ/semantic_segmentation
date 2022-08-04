@@ -7,6 +7,7 @@
 *__pycache__*
 time/
 logs/
+*/dataset_stats/*
 lightning_logs
 .idea/
 models/edit

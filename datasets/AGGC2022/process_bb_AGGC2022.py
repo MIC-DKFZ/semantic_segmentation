@@ -20,23 +20,23 @@ Image.MAX_IMAGE_PIXELS = None  # 4.630.873.600
 
 if __name__ == "__main__":
     path_imgs = "/home/l727r/Documents/E132-Projekte/Projects/2022_AGGC_challenge/GleasonGradMICCAIChallenge2022"
-    path_masks = "/media/l727r/data/AGGC2022/Subset3/masks_png"
+    path_masks = "/media/l727r/data/AGGC2022/"
     output_directory = "/media/l727r/data/AGGC2022/"
     # output_directory = "/media/l727r/data/AGGC2022/Subset1/boxes"
     path_masks_org = path_masks
     subsets = ["Subset1", "Subset2", "Subset3"]
-    subsets = ["Subset3"]
+    # subsets = ["Subset3"]
     for subset in subsets:
         # Create Folders if they not exist
         path_bb = os.path.join(output_directory, subset)
         if not os.path.exists(path_bb):
             os.makedirs(path_bb)
-        if not os.path.exists(os.path.join(path_bb, "boxes")):
-            os.makedirs(os.path.join(path_bb, "boxes"))
-        path_bb = os.path.join(path_bb, "boxes")
+        if not os.path.exists(os.path.join(path_bb, "boxes_2")):
+            os.makedirs(os.path.join(path_bb, "boxes_2"))
+        path_bb = os.path.join(path_bb, "boxes_2")
 
         image_dir = os.path.join(path_imgs, subset + "_Train_image")
-        path_masks = os.path.join("/media/l727r/data/AGGC2022", subset, "masks_png", "*.png")
+        path_masks = os.path.join("/media/l727r/data/AGGC2022", subset, "masks_png_2", "*.png")
         # mask_dir = os.path.join(input_dir, subset + "_Train_annotation", "Train")
         if subset == "Subset3":
             imgs = glob.glob(image_dir + "/*/*")
@@ -52,8 +52,8 @@ if __name__ == "__main__":
 
         imgs.sort()
         masks.sort()
-        print("I", imgs[0:10])
-        print("M", masks[0:10])
+        # print("I", imgs[0:10])
+        # print("M", masks[0:10])
         # quit()
         # imgs = ["/media/l727r/data/AGGC2022/Subset3/imgs_png/Subset3_Train_12_Philips.png"]
         # imgs = [
@@ -67,7 +67,10 @@ if __name__ == "__main__":
         # continue
         for mask_path, img_path in zip(masks, imgs):
             mask_path = os.path.join(
-                path_masks_org, img_path.rsplit("/", 1)[-1].replace("tiff", "png")
+                path_masks_org,
+                subset,
+                "masks_png_2",
+                img_path.rsplit("/", 1)[-1].replace("tiff", "png"),
             )
             print(mask_path, img_path)
             # continue
@@ -145,7 +148,7 @@ if __name__ == "__main__":
                 bb[str(un_mask)] = np.array(bbs_class, dtype=int)
                 # bb[str(un_mask)] = bbs_class
             name = mask_path.rsplit("/")[-1].replace(".png", ".json")
-            print(name, scale_factor)
+            # print(name, scale_factor)
             bb = {k: v.tolist() for k, v in bb.items()}
             with open(os.path.join(path_bb, name), "w") as fp:
                 json.dump(bb, fp)

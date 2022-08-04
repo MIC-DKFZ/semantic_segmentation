@@ -1,0 +1,5 @@
+# optimizer
+_target_: madgrad.MADGRAD
+lr: ${lr}
+momentum: ${momentum}
+weight_decay: 0 #${weight_decay}

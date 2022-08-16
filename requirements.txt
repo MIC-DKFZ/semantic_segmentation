@@ -1,6 +1,6 @@
 # Pytorch + Pytorch - Lightning
 # Adapt the cuda versions for torch and torchvision to your needs
---find-links https://download.pytorch.org/whl/cu113
+--find-links https://download.pytorch.org/whl/cu113/torch_stable.html
 torch>=1.10.0+cu113
 torchvision>=0.11.1+cu113
 torchmetrics>=0.8

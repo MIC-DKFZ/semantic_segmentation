@@ -55,7 +55,7 @@ def load_and_resize_mask(slide: OpenSlide, target_shape: tuple = None, name=None
 
 
 if __name__ == "__main__":
-    dir = "/home/l727r/Documents/cluster-checkpoints/aggc_preds/Noisy_Subset3/*.tif"
+    """dir = "/home/l727r/Documents/cluster-checkpoints/aggc_preds/Noisy_Subset3/*.tif"
     files = glob.glob(dir)
     for file in files:
         print(file)
@@ -97,10 +97,14 @@ if __name__ == "__main__":
         save_pil_as_png(class_pil, output_file_mask)
 
     quit()
-    """root_masks = "/media/l727r/data/AGGC2022/"
-    root_masks_2 = "/home/l727r/Documents/cluster-data/AGGC2022/"
-    files = glob.glob(root_masks + "Subset*/masks_png/*.png")
-    files_2 = glob.glob(root_masks_2 + "Subset*/masks_png/*.png")
+    """
+    """
+    
+    root_masks = "/media/l727r/data/AGGC2022/"
+    root_masks = "/media/l727r/data/AGGC2022/"
+    #root_masks_2 = "/home/l727r/Documents/cluster-data/AGGC2022/"
+    files = glob.glob(root_masks + "Subset*/masks_png_2/*.png")
+    files_2 = glob.glob(root_masks + "Subset*/masks_png_3/*.png")
     Yes = 0
     No = 0
     Pix = 0
@@ -109,7 +113,7 @@ if __name__ == "__main__":
         name = file.rsplit("/", 1)[1]
         subset = name.split("_")[0]
 
-        file_2 = root_masks_2 + subset + "/masks_png/" + name
+        file_2 = root_masks + subset + "/masks_png/" + name
         if file_2 not in files_2:
             continue
         img = cv2.imread(file)
@@ -128,9 +132,9 @@ if __name__ == "__main__":
     print("Equal", Yes)
     print("Not Equal", No)
     print("Pixel", Pix / No)
+    print(name, subset)
+    quit()
     """
-    # print(name, subset)
-    # quit()
     """path = "/home/l727r/Documents/E132-Projekte/Projects/2022_AGGC_challenge/GleasonGradMICCAIChallenge2022"
     class_list = []
     number_points = 10000
@@ -180,16 +184,26 @@ if __name__ == "__main__":
     # G3 251
     # G4 254
     # G5 47
+    # NoisyStu
+    # Stroma 285
+    # Normal 285
+    # G3 283
+    # G4 280
+    # G5 223
+    # S1 104,104,104,104,97
+    # S1 37,37,35,32,4
+    # S1 144,144,144,144,122
     root_masks = "/media/l727r/data/AGGC2022/"
     output_directory = "/media/l727r/data/AGGC2022/"
     subsets = ["Subset1", "Subset2", "Subset3"]
+    subsets = ["Subset2"]
     # subsets = ["Subset1"]
     # subsets = ["Subset3"]
     class_files = [[], [], [], [], []]
     prefix = {"Subset1": "/Subset1/imgs/", "Subset2": "/Subset2/imgs/", "Subset3": "/Subset3/imgs/"}
     for subset in subsets:
 
-        path_masks = os.path.join(root_masks, subset, "masks_png_2", "*.png")
+        path_masks = os.path.join(root_masks, subset, "masks_png_3", "*.png")
         # mask_dir = os.path.join(input_dir, subset + "_Train_annotation", "Train")
         masks_files = glob.glob(path_masks)
         masks_files.sort()
@@ -219,7 +233,10 @@ if __name__ == "__main__":
     # output = {k: v.tolist() for k, v in output.items()}
     # name = mask_path.rsplit("/")[-1].replace(".png", ".json")
     # name = mask_path.rsplit("/")[-1].replace(".png", ".pkl")
-    with open(os.path.join(output_directory, "Images_per_Class.json"), "w", encoding="utf-8") as fp:
+    quit()
+    with open(
+        os.path.join(output_directory, "Images_per_Class_3.json"), "w", encoding="utf-8"
+    ) as fp:
         json.dump(output, fp)
     quit()
     # break

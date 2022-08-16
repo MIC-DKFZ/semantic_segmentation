@@ -147,7 +147,7 @@ class ConfusionMatrix(Metric):
                 labels = np.arange(self.num_classes)
 
             tick_marks = np.arange(len(labels))
-            plt.xticks(tick_marks, labels, rotation=45)
+            plt.xticks(tick_marks, labels, rotation=90)  # , rotation=45)
             plt.yticks(tick_marks, labels)
 
             plt.ylabel("True label")
@@ -162,16 +162,16 @@ class ConfusionMatrix(Metric):
         figure = mat_to_figure(confmat, "Confusion Matrix")
 
         trainer.logger.experiment.add_figure(
-            "ConfusionMatrix/confmat", figure, trainer.current_epoch
+            "ConfusionMatrix/ConfusionMatrix", figure, trainer.current_epoch
         )
 
         # Logging the Normalized Confusion Matrix
         confmat_norm = np.around(
             confmat.astype("float") / confmat.sum(axis=1)[:, np.newaxis], decimals=2
         )
-        figure = mat_to_figure(confmat_norm, "Confusion Matrix (normalized)")
+        figure = mat_to_figure(confmat_norm, "Confusion Matrix (normalized by row)")
         trainer.logger.experiment.add_figure(
-            "ConfusionMatrix/confmat_norm", figure, trainer.current_epoch
+            "ConfusionMatrix/ConfusionMatrix_normalized", figure, trainer.current_epoch
         )
 
 

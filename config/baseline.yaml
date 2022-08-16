@@ -26,6 +26,8 @@ num_example_predictions: 5      # Save some example predictions during validatio
                                 # Just for visualization/inspection, set to 0 if not wanted
 
 
+
+
 # Customizations of Hydra
 hydra:
   output_subdir: hydra
@@ -37,6 +39,7 @@ hydra:
     dir: multi_run_${hydra.run.dir}
     subdir: ${hydra.job.num}
   job:
+    chdir: True
     config:
       override_dirname:
         kv_sep: "_"         # do not use "=" to prevent problems when parsing paths

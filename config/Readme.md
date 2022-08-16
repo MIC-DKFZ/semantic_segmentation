@@ -113,7 +113,7 @@ metric:
   num_classes: 24
 ````
 
-````py
+````python3
 example.py
 ─────────────────────────────
 my_optimizer = hydra.utils.instantiate(cfg.optimizer)

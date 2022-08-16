@@ -32,12 +32,12 @@ if __name__ == "__main__":
         path_bb = os.path.join(output_directory, subset)
         if not os.path.exists(path_bb):
             os.makedirs(path_bb)
-        if not os.path.exists(os.path.join(path_bb, "sample_points_2")):
-            os.makedirs(os.path.join(path_bb, "sample_points_2"))
-        path_sp = os.path.join(path_bb, "sample_points_2")
+        if not os.path.exists(os.path.join(path_bb, "sample_points_3")):
+            os.makedirs(os.path.join(path_bb, "sample_points_3"))
+        path_sp = os.path.join(path_bb, "sample_points_3")
 
         image_dir = os.path.join(path_imgs, subset + "_Train_image")
-        path_masks = os.path.join("/media/l727r/data/AGGC2022", subset, "masks_png_2", "*.png")
+        path_masks = os.path.join("/media/l727r/data/AGGC2022", subset, "masks_png_3", "*.png")
         # mask_dir = os.path.join(input_dir, subset + "_Train_annotation", "Train")
         if subset == "Subset3":
             imgs = glob.glob(image_dir + "/*/*")
@@ -65,7 +65,7 @@ if __name__ == "__main__":
             mask_path = os.path.join(
                 path_masks_org,
                 subset,
-                "masks_png_2",
+                "masks_png_3",
                 img_path.rsplit("/", 1)[-1].replace("tiff", "png"),
             )
             print(mask_path, img_path)

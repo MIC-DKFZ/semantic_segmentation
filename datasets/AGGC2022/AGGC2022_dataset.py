@@ -22,7 +22,7 @@ def get_dataset(
     fold=0,
     sampling="box",
     NumSamplesPerSubject=1000,
-    RandomProb=0.2,
+    RandomProb=0.0,
     # Class_Prob={"1": 0.125, "2": 0.125, "3": 0.25, "4": 0.25, "5": 0.25},
     # Class_Prob={"1": 0.2, "2": 0.2, "3": 0.2, "4": 0.2, "5": 0.8},
     # Class_Prob={"1": 1, "2": 1, "3": 1, "4": 1, "5": 4},
@@ -37,19 +37,14 @@ def get_dataset(
     validation_fold = [train_folds.pop(4 - fold)]
     if split == "train":
         if sampling_strategy == 0:
-            Class_Prob = {"1": 0.75, "2": 0.75, "3": 1, "4": 1, "5": 8}
+            # Class_Prob = {"1": 0.75, "2": 0.75, "3": 1, "4": 1, "5": 8}
+            Class_Prob = {"1": 0.75, "2": 0.75, "3": 1, "4": 1, "5": 1}
             Cases = GetTrainFold(os.path.join(data_dir, "Splits"), train_folds)
             if Subset is not None:
                 Cases = [case for case in Cases if Subset in case]
             Cases = [case[1:] if case.startswith("/") else case for case in Cases]
             dataset = ChallengeDataset_point_sampling(
-                data_dir,
-                Cases,
-                NumSamplesPerSubject,
-                RandomProb,
-                Class_Prob,
-                PatchSize,
-                transforms,
+                data_dir, Cases, NumSamplesPerSubject, RandomProb, Class_Prob, PatchSize, transforms
             )
         elif sampling_strategy == 1:
             Class_Prob = {"1": 0.75, "2": 0.75, "3": 1, "4": 1, "5": 1.5}
@@ -457,7 +452,17 @@ class ChallengeDataset_point_sampling(Dataset):
         ImgPath = os.path.join(self.data_dir, WSIPath)
         Img = zarr.open(ImgPath, mode="r")
         # Mask = zarr.open(ImgPath.replace("imgs", "masks"), mode="r")
-        Mask = zarr.open(ImgPath.replace("imgs", "masks_2"), mode="r")
+        # Mask = zarr.open(ImgPath.replace("imgs", "masks_2"), mode="r")
+        MaskPath = ImgPath.replace("imgs", "masks_3")
+        # MaskPath = ImgPath.replace("imgs", "masks_2")
+        # print(MaskPath, os.path.exists(MaskPath))
+        # try:
+        Mask = zarr.open(MaskPath, mode="r")
+        # except:
+        #    print(MaskPath)
+        #    quit()
+        # print("Openede {}".format(MaskPath))
+        # Mask = zarr.open(ImgPath.replace("imgs", "masks" + self.mask_offset), mode="r")
         Prob = np.random.random(1)  # Determine if we sample random patches or from bounding box
 
         if Prob.item() < self.RandomProb:
@@ -468,10 +473,10 @@ class ChallengeDataset_point_sampling(Dataset):
 
         else:
             PointFile = open(
-                # ImgPath.replace("imgs", "sample_points").replace(".zarr", ".pkl"), "rb"
-                ImgPath.replace("imgs", "sample_points_2").replace(".zarr", ".pkl"),
-                "rb",
-            )  # +'.json')
+                ImgPath.replace("imgs", "sample_points_3").replace(".zarr", ".pkl"),
+                "rb"
+                # ImgPath.replace("imgs", "sample_points_2").replace(".zarr", ".pkl"),"rb",
+            )
             SamplePoints = pkl.load(PointFile)
             PresentClasses = set(SamplePoints.keys())
             Probs = {key: self.ClassProb[key] for key in self.ClassProb.keys() & PresentClasses}

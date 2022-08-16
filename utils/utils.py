@@ -67,7 +67,7 @@ def log_hyperparameters(
     hparams["metric"] = model.metric_name
 
     avail_GPUS = torch.cuda.device_count()
-    selected_GPUS = config.pl_trainer.gpus
+    selected_GPUS = config.pl_trainer.devices
     hparams["num_gpus"] = int(num_gpus(avail_GPUS, selected_GPUS))
 
     hparams["lossfunction"] = config.lossfunction

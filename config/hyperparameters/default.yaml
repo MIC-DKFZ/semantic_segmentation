@@ -13,8 +13,9 @@ lossfunction: [ "CE", "CE", "CE", "CE"]     # list of lossfunctions
 lossweight:   [1.0, 0.4, 0.05, 0.05]        # corresponding weights for each loss function
 # seed: 1234                    # seed everything
 pl_trainer:                     # parameters for the pytorch lightning trainer
+  accelerator: 'gpu'            # train on GPU
+  devices: -1                   # using all available GPUs
   max_epochs: ${epochs}         # parsing the number of epochs which is defined as a hyperparameter
-  gpus: -1                      # using all available GPUs
   precision: 16                 # using Mixed Precision
   benchmark: True               # using benchmark for faster training
   enable_checkpointing: True    # Enable/Disable Checkpointing

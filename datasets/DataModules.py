@@ -8,24 +8,30 @@ from pytorch_lightning import LightningDataModule
 import albumentations as A
 import albumentations.pytorch
 import utils.augmentations as custom_augmentations
+import cv2
 
 from utils.utils import has_not_empty_attr
 from utils.utils import get_logger
 
+# set number of Threads to 0 for opencv and albumentations
+cv2.setNumThreads(0)
+# import logger
 log = get_logger(__name__)
 
 
-def max_steps(
+def get_max_steps(
     size_dataset, batch_size, num_devices, accumulate_grad_batches, num_epochs, drop_last=True
 ) -> int:
     """
-    Computing and Logging the number of training steps, needed for polynomial lr scheduler
+    Computing the number of  steps, needed for polynomial lr scheduler
     Considering the number of gpus and if accumulate_grad_batches is used
 
     Returns
     -------
     int:
-        number of training steps
+        total number of steps
+    int:
+        number of steps per epoch
     """
     # How many steps per epoch in total
     if drop_last:
@@ -36,11 +42,10 @@ def max_steps(
     # For ddp and multiple gpus the effective batch sizes doubles
     steps_per_gpu = int(np.ceil(steps_per_epoch / num_devices))
     # Include accumulate_grad_batches
-    acc_steps_per_gpu = int(np.ceil(steps_per_gpu / accumulate_grad_batches))
-    max_steps = num_epochs * acc_steps_per_gpu
+    steps_per_epoch = int(np.ceil(steps_per_gpu / accumulate_grad_batches))
+    max_steps = num_epochs * steps_per_epoch
 
-    log.info("Number of Training steps: %s", max_steps)
-    return max_steps
+    return max_steps, steps_per_epoch
 
 
 def get_augmentations_from_config(augmentations: DictConfig) -> list:
@@ -178,13 +183,34 @@ class BaseDataModule(LightningDataModule):
             number of training steps
         """
         # computing the maximal number of steps for training
-        base_size = len(self.DS_train)
-        steps_per_epoch = base_size // self.batch_size
-        steps_per_gpu = int(np.ceil(steps_per_epoch / self.trainer.num_devices))
-        acc_steps_per_gpu = int(np.ceil(steps_per_gpu / self.trainer.accumulate_grad_batches))
-        max_steps = self.trainer.max_epochs * acc_steps_per_gpu
+        max_steps, max_steps_epoch = get_max_steps(
+            size_dataset=len(self.DS_train),
+            batch_size=self.batch_size,
+            num_devices=self.trainer.num_devices,
+            accumulate_grad_batches=self.trainer.accumulate_grad_batches,
+            num_epochs=self.trainer.max_epochs,
+            drop_last=True,
+        )
+        # base_size = len(self.DS_train)
+        # steps_per_epoch = base_size // self.batch_size
+        # steps_per_gpu = int(np.ceil(steps_per_epoch / self.trainer.num_devices))
+        # acc_steps_per_gpu = int(np.ceil(steps_per_gpu / self.trainer.accumulate_grad_batches))
+        # max_steps = self.trainer.max_epochs * acc_steps_per_gpu
 
-        log.info("Number of Training steps: %s", max_steps)
+        log.info("Number of Training steps: {}".format(max_steps))
+        log.info("Number of Training steps per epoch: {}".format(max_steps_epoch))
+
+        max_steps_val, max_steps_epoch_val = get_max_steps(
+            size_dataset=len(self.DS_val),
+            batch_size=self.val_batch_size,
+            num_devices=self.trainer.num_devices,
+            accumulate_grad_batches=1,
+            num_epochs=self.trainer.max_epochs,
+            drop_last=False,
+        )
+
+        log.info("Number of Validation steps: {}".format(max_steps_val))
+        log.info("Number of Validation steps per epoch: {}".format(max_steps_epoch_val))
         return max_steps
 
     def get_augmentations_from_config(self, augmentations: DictConfig) -> list:

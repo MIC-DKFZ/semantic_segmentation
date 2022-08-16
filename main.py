@@ -18,8 +18,9 @@ from utils.utils import (
 )
 from omegaconf import DictConfig, OmegaConf
 
-# from Segmentation_Model import SegModel
-from Segmentation_Model_AGGC import SegModel_AGGC  # as SegModel
+from Segmentation_Model import SegModel
+
+# from Segmentation_Model_AGGC import SegModel_AGGC  # as SegModel
 
 log = get_logger(__name__)
 
@@ -41,7 +42,7 @@ OmegaConf.register_new_resolver(
 )
 
 
-@hydra.main(config_path="config", config_name="baseline")
+@hydra.main(config_path="config", config_name="baseline", version_base="1.2")
 def training_loop(cfg: DictConfig):
     """
     Running Training
@@ -76,11 +77,11 @@ def training_loop(cfg: DictConfig):
 
     # Logging information about gpu setup
     avail_GPUS = torch.cuda.device_count()
-    selected_GPUS = cfg.pl_trainer.gpus
+    selected_GPUS = cfg.pl_trainer.devices
     number_gpus = num_gpus(avail_GPUS, selected_GPUS)
 
     log.info("Available GPUs: %s - %s", avail_GPUS, torch.cuda.get_device_name())
-    log.info("Number of used GPUs: %s    Selected GPUs: %s", number_gpus, cfg.pl_trainer.gpus)
+    log.info("Number of used GPUs: %s    Selected GPUs: %s", number_gpus, cfg.pl_trainer.devices)
     log.info("CUDA version: %s", torch._C._cuda_getCompiledVersion())
 
     # Defining the datamodule
@@ -91,10 +92,10 @@ def training_loop(cfg: DictConfig):
     if has_not_empty_attr(cfg, "finetune_from"):
         log.info("finetune from: %s", cfg.finetune_from)
         # model = SegModel.load_from_checkpoint(cfg.finetune_from, strict=False, config=cfg)
-        model = SegModel_AGGC.load_from_checkpoint(cfg.finetune_from, strict=False, config=cfg)
+        model = SegModel.load_from_checkpoint(cfg.finetune_from, strict=False, config=cfg)
     else:
         # model = SegModel(config=cfg)
-        model = SegModel_AGGC(config=cfg)
+        model = SegModel(config=cfg)
 
     # Initializing trainer
     trainer_args = getattr(cfg, "pl_trainer") if has_not_empty_attr(cfg, "pl_trainer") else {}

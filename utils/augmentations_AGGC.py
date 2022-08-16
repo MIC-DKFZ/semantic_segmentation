@@ -5,6 +5,46 @@ from io import BytesIO
 from PIL import Image
 import albumentations as A
 from albumentations.core.transforms_interface import ImageOnlyTransform
+import staintools
+from utils.staintools.stain_augmentor import StainAugmentor
+from utils.staintools.stain_normalizer import StainNormalizer
+
+light_augmentor = StainAugmentor(method="vahadane", sigma1=0.2, sigma2=0.2)
+strong_augmentor = StainAugmentor(method="vahadane", sigma1=-0.8, sigma2=-0.8)
+vahadane_normalizer = StainNormalizer(method="vahadane")
+# ReferenceFileForNormalization = staintools.read_image(
+#    "/dkfz/cluster/gpu/data/OE0441/l727r/AGGC2022/Patch_X_10984_Y_73587.png"
+# )
+
+
+class LightAugmentor(ImageOnlyTransform):
+    def apply(self, img, **params):
+        return VahadaneLightAugmentor(img)
+
+
+class StrongAugmentor(ImageOnlyTransform):
+    def apply(self, img, **params):
+        return VahadaneStrongAugmentor(img)
+
+
+class VahadaneNormalizer(ImageOnlyTransform):
+    def apply(self, img, **params):
+        return Vahadane_Normalizer(img)
+
+
+def Vahadane_Normalizer(image):
+    vahadane_normalizer.fit(ReferenceFileForNormalization)
+    return vahadane_normalizer.transform(image)
+
+
+def VahadaneLightAugmentor(image):
+    light_augmentor.fit(image)
+    return light_augmentor.pop()
+
+
+def VahadaneStrongAugmentor(image):
+    strong_augmentor.fit(image)
+    return strong_augmentor.pop()
 
 
 def RandomJPEGcompression(image):
@@ -198,7 +238,7 @@ def randAugment_AGGC_light(N, M, p=0.5):
         A.AdvancedBlur(p=p),
         JPEGcompressor(p=p),
         # HED Augmentations
-        # LightAugmentor(p=p),
+        LightAugmentor(p=p),
         # StrongAugmentor(p=p),
         # Equalize
         # A.Equalize(p=p),
@@ -256,7 +296,7 @@ def randAugment_AGGC_strong(N, M, p=0.5):
         JPEGcompressor(p=p),
         # HED Augmentations
         # LightAugmentor(p=p),
-        # StrongAugmentor(p=p),
+        StrongAugmentor(p=p),
         # Equalize
         # A.Equalize(p=p),
     ]

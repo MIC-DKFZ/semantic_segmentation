@@ -67,7 +67,8 @@ def get_loss_function_from_cfg(name_lf: str, cfg: DictConfig) -> list:
         raise NotImplementedError("No Lossfunction found for {}".format(name_lf))
     return loss_function
 
-'''
+
+"""
 # Some testing with weighting Batch samples
 class CrossEntropyLoss_AGGC(torch.nn.CrossEntropyLoss):
     def __init__(self, **kwargs):
@@ -99,4 +100,4 @@ class CrossEntropyLoss_AGGC(torch.nn.CrossEntropyLoss):
             loss = loss[target != self.ignore_index].mean()
 
         return loss
-'''
+"""

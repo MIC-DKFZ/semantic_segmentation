@@ -63,7 +63,6 @@ class EndoCV2022_dataset(torch.utils.data.Dataset):
         )
 
     def __getitem__(self, idx):
-
         img = cv2.imread(self.imgs[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
@@ -88,7 +87,6 @@ class EndoCV2022_dataset_Test(torch.utils.data.Dataset):
         log.info("Dataset: EncoCV2022 Test - %s images", len(self.imgs))
 
     def __getitem__(self, idx):
-
         img = cv2.imread(self.imgs[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 

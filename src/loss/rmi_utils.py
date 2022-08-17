@@ -80,10 +80,18 @@ def map_get_pairs_region(labels_4D, probs_4D, radius=3, is_combine=0, num_classe
             kernel_now = kernel.clone()
             kernel_now[:, :, y, x] = 1.0
             la_now = F.conv2d(
-                labels_4D, kernel_now, stride=radius, padding=padding, groups=num_classeses
+                labels_4D,
+                kernel_now,
+                stride=radius,
+                padding=padding,
+                groups=num_classeses,
             )
             pr_now = F.conv2d(
-                probs_4D, kernel_now, stride=radius, padding=padding, groups=num_classeses
+                probs_4D,
+                kernel_now,
+                stride=radius,
+                padding=padding,
+                groups=num_classeses,
             )
             la_ns.append(la_now)
             pr_ns.append(pr_now)
@@ -111,7 +119,7 @@ def log_det_by_cholesky(matrix):
     """
     # This uses the property that the log det(A) = 2 * sum(log(real(diag(C))))
     # where C is the cholesky decomposition of A.
-    #chol = torch.cholesky(matrix)
+    # chol = torch.cholesky(matrix)
     chol = torch.linalg.cholesky(matrix, upper=False)
     # return 2.0 * torch.sum(torch.log(torch.diagonal(chol, dim1=-2, dim2=-1) + 1e-6), dim=-1)
     return 2.0 * torch.sum(torch.log(torch.diagonal(chol, dim1=-2, dim2=-1) + 1e-8), dim=-1)
@@ -122,7 +130,7 @@ def batch_cholesky_inverse(matrix):
     Args: 	matrix, 4-D tensor, [N, C, M, M].
                     matrix must be a symmetric positive define matrix.
     """
-    #chol_low = torch.cholesky(matrix, upper=False)
+    # chol_low = torch.cholesky(matrix, upper=False)
     chol_low = torch.linalg.cholesky(matrix, upper=False)
     chol_low_inv = batch_low_tri_inv(chol_low)
     return torch.matmul(chol_low_inv.transpose(-2, -1), chol_low_inv)

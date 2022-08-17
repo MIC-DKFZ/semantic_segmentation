@@ -127,7 +127,11 @@ class SegModel_AGGC(SegModel):
                 # update global metric and log stepwise metric to tensorboard
                 metric_step = self.metric(list(y_pred.values())[0], y_gt, subset)
                 self.log_dict_epoch(
-                    metric_step, prefix="metric/", postfix="_stepwise", on_step=False, on_epoch=True
+                    metric_step,
+                    prefix="metric/",
+                    postfix="_stepwise",
+                    on_step=False,
+                    on_epoch=True,
                 )
             elif self.metric_call in ["global"]:
                 # update only global metric

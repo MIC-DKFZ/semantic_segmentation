@@ -18,7 +18,7 @@ from src.utils import has_not_empty_attr, has_true_attr, log_hyperparameters, ge
 log = get_logger(__name__)
 
 
-@hydra.main(config_path="config", config_name="testing",version_base="1.2")
+@hydra.main(config_path="config", config_name="testing", version_base="1.2")
 def testing(cfg: DictConfig) -> None:
     """
     Running the Testing/Validation
@@ -55,7 +55,8 @@ def testing(cfg: DictConfig) -> None:
             overrides_test = cfg.TESTING.OVERRIDES
             # Compose config again with including the new overrides
             cfg = hydra.compose(
-                config_name="testing", overrides=overrides_ckpt + overrides_test + overrides_cl
+                config_name="testing",
+                overrides=overrides_ckpt + overrides_test + overrides_cl,
             )
 
     # Load the best checkpoint and load the model
@@ -91,5 +92,4 @@ def testing(cfg: DictConfig) -> None:
 
 
 if __name__ == "__main__":
-
     testing()

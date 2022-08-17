@@ -194,7 +194,15 @@ class SpatialOCR_Module(nn.Module):
     We aggregate the global object representation to update the representation for each pixel.
     """
 
-    def __init__(self, in_channels, key_channels, out_channels, scale=1, dropout=0.1, bn_type=None):
+    def __init__(
+        self,
+        in_channels,
+        key_channels,
+        out_channels,
+        scale=1,
+        dropout=0.1,
+        bn_type=None,
+    ):
         super(SpatialOCR_Module, self).__init__()
         self.object_context_block = ObjectAttentionBlock2D(
             in_channels, key_channels, scale, bn_type
@@ -345,7 +353,12 @@ class HighResolutionModule(nn.Module):
 
         layers = []
         layers.append(
-            block(self.num_inchannels[branch_index], num_channels[branch_index], stride, downsample)
+            block(
+                self.num_inchannels[branch_index],
+                num_channels[branch_index],
+                stride,
+                downsample,
+            )
         )
         self.num_inchannels[branch_index] = num_channels[branch_index] * block.expansion
         for i in range(1, num_blocks[branch_index]):
@@ -374,7 +387,14 @@ class HighResolutionModule(nn.Module):
                 if j > i:
                     fuse_layer.append(
                         nn.Sequential(
-                            nn.Conv2d(num_inchannels[j], num_inchannels[i], 1, 1, 0, bias=False),
+                            nn.Conv2d(
+                                num_inchannels[j],
+                                num_inchannels[i],
+                                1,
+                                1,
+                                0,
+                                bias=False,
+                            ),
                             BatchNorm2d(num_inchannels[i], momentum=BN_MOMENTUM),
                         )
                     )
@@ -463,7 +483,12 @@ class OCRNet(nn.Module):
 
         # stem net
         self.conv1 = nn.Conv2d(
-            config.MODEL.INPUT_CHANNELS, 64, kernel_size=3, stride=2, padding=1, bias=False
+            config.MODEL.INPUT_CHANNELS,
+            64,
+            kernel_size=3,
+            stride=2,
+            padding=1,
+            bias=False,
         )
         self.bn1 = BatchNorm2d(64, momentum=BN_MOMENTUM)
         self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1, bias=False)
@@ -588,7 +613,11 @@ class OCRNet(nn.Module):
         if stride != 1 or inplanes != planes * block.expansion:
             downsample = nn.Sequential(
                 nn.Conv2d(
-                    inplanes, planes * block.expansion, kernel_size=1, stride=stride, bias=False
+                    inplanes,
+                    planes * block.expansion,
+                    kernel_size=1,
+                    stride=stride,
+                    bias=False,
                 ),
                 BatchNorm2d(planes * block.expansion, momentum=BN_MOMENTUM),
             )
@@ -710,7 +739,6 @@ class OCRNet(nn.Module):
 
     def load_weights(self, pretrained):
         if os.path.isfile(pretrained):
-
             pretrained_dict = torch.load(pretrained, map_location={"cuda:0": "cpu"})
             log.info("Loading pretrained weights {}".format(pretrained))
 
@@ -753,6 +781,7 @@ class OCRNet(nn.Module):
             log.info("Weights successfully loaded")
         else:
             raise NotImplementedError("No Pretrained Weights found for {}".format_map(pretrained))
+
 
 def get_seg_model(cfg):
     model = OCRNet(cfg)

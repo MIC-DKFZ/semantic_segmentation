@@ -60,7 +60,6 @@ def load_and_resize_img(slide: OpenSlide, target_shape: tuple = None):
 
 
 def save_np_as_zarr(image, output_file, chunksize=(512, 512, 3)):
-
     compressor = Blosc(cname="zstd", clevel=3, shuffle=Blosc.BITSHUFFLE)
     image = zarr.array(image, chunks=chunksize, compressor=compressor)
     zarr.convenience.save(output_file, image)
@@ -76,7 +75,6 @@ def save_pil_as_png(image_pil, output_file):
 
 
 if __name__ == "__main__":
-
     # Path to the Input files and the location where the output should be saved
     input_dir = "/home/l727r/Documents/E132-Projekte/Projects/2022_AGGC_challenge/GleasonGradMICCAIChallenge2022"
     output_dir = "/media/l727r/data/AGGC2022"
@@ -184,9 +182,7 @@ if __name__ == "__main__":
                 )
             )
             for cl in all_classes:
-
                 if cl in current_classes:
-
                     file_class = os.path.join(mask_file, cl)
 
                     slide_class = open_slide(file_class)

@@ -16,7 +16,6 @@ Image.MAX_IMAGE_PIXELS = None  # 4.630.873.600
 
 
 def save_np_as_zarr(image, output_file, chunksize=(512, 512, 3)):
-
     compressor = Blosc(cname="zstd", clevel=3, shuffle=Blosc.BITSHUFFLE)
     image = zarr.array(image, chunks=chunksize, compressor=compressor)
     zarr.convenience.save(output_file, image)
@@ -194,7 +193,6 @@ if __name__ == "__main__":
                     )
                 )
                 for cl in all_classes:
-
                     if cl in current_classes:
                         file_class = os.path.join(mask_file, cl)
 

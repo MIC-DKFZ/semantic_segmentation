@@ -23,7 +23,6 @@ def save_np_as_png(image_np, output_file):
 
 
 def save_np_as_zarr(img_np, output_file, chunksize=(512, 512)):
-
     compressor = Blosc(cname="zstd", clevel=3, shuffle=Blosc.BITSHUFFLE)
     image = zarr.array(img_np, chunks=chunksize, compressor=compressor)
     zarr.convenience.save(output_file, image)

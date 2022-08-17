@@ -152,10 +152,20 @@ class Cityscapes_dataset(torch.utils.data.Dataset):
 
         # building the paths
         imgs_path = os.path.join(
-            root_imgs, "leftImg8bit_trainvaltest", "leftImg8bit", split, "*", "*_leftImg8bit.png"
+            root_imgs,
+            "leftImg8bit_trainvaltest",
+            "leftImg8bit",
+            split,
+            "*",
+            "*_leftImg8bit.png",
         )
         masks_path = os.path.join(
-            root_labels, "gtFine_trainvaltest", "gtFine", split, "*", "*_gt*_labelIds_19classes.png"
+            root_labels,
+            "gtFine_trainvaltest",
+            "gtFine",
+            split,
+            "*",
+            "*_gt*_labelIds_19classes.png",
         )
         # elif num_classes==34:
         #    masks_path=os.path.join( root_labels,"gtFine_trainvaltest" , "gtFine" , split , "*" , "*_gt*_labelIds.png" )
@@ -166,7 +176,10 @@ class Cityscapes_dataset(torch.utils.data.Dataset):
 
         self.transforms = transforms
         log.info(
-            "Dataset: Cityscape %s - %s images - %s masks", split, len(self.imgs), len(self.masks)
+            "Dataset: Cityscape %s - %s images - %s masks",
+            split,
+            len(self.imgs),
+            len(self.masks),
         )
 
     def __getitem__(self, idx):
@@ -231,7 +244,6 @@ def viz_color_encoding():
 
 
 if __name__ == "__main__":
-
     # define some transforms
     transforms = A.Compose(
         [

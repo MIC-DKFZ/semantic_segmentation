@@ -213,7 +213,12 @@ if __name__ == "__main__":
         # print(os.path.join(root_path,file))
 
         img_file = os.path.join(
-            root_path, "VOCtrainval_03-May-2010", "VOCdevkit", "VOC2010", "JPEGImages", id + ".jpg"
+            root_path,
+            "VOCtrainval_03-May-2010",
+            "VOCdevkit",
+            "VOC2010",
+            "JPEGImages",
+            id + ".jpg",
         )
 
         if id in train:

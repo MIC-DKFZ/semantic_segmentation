@@ -31,7 +31,6 @@ class LR_Stepper:
         start_portion,
         max_coarse_epoch,
     ):
-
         self.max_epochs = epochs
         # gpus = num_gpus
         # acc_grad_batches =1 #cfg.accumulate_grad_batches

@@ -9,6 +9,7 @@ from torchmetrics.utilities.data import _bincount
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 
+
 class MetricModule(MetricCollection):
     def __init__(self, config: DictConfig, **kwargs) -> None:
         """
@@ -33,7 +34,7 @@ class MetricModule(MetricCollection):
 class ConfusionMatrix(Metric):
     full_state_update = False
 
-    def __init__(self, num_classes: int,labels: list[str]=None) -> None:
+    def __init__(self, num_classes: int, labels: list[str] = None) -> None:
         """
         Create an empty confusion matrix
 
@@ -81,7 +82,9 @@ class ConfusionMatrix(Metric):
             k = (gt >= 0) & (gt < n)
             inds = n * gt[k].to(torch.int64) + pred[k]
             # Using the torchmetrics implementation of bincount, since the torch one does not support deterministic behaviour
-            confmat = _bincount(inds, minlength=n**2).reshape(n, n) # torch.bincount(inds, minlength=n**2).reshape(n, n)
+            confmat = _bincount(inds, minlength=n**2).reshape(
+                n, n
+            )  # torch.bincount(inds, minlength=n**2).reshape(n, n)
         self.mat += confmat  # .to(self.mat)
 
     def save_state(self, trainer: pl.Trainer) -> None:
@@ -151,7 +154,7 @@ class ConfusionMatrix(Metric):
 
 class IoU(ConfusionMatrix):
     def __init__(
-        self, per_class: bool = False,name:str="IoU",replace_nan:bool=True, **kwargs
+        self, per_class: bool = False, name: str = "IoU", replace_nan: bool = True, **kwargs
     ):
         """
         Init the IoU Class as subclass of ConfusionMatrix
@@ -163,6 +166,8 @@ class IoU(ConfusionMatrix):
             If True additionally the IoU for each class is returned
         name : str, optional
             Name of the metric, used as prefix for logging the class scores
+        replace_nan : bool, optional
+            replace NaN by 0.0
         kwargs:
             arguments passed to the super class (ConfusionMatrix)
         """
@@ -170,8 +175,8 @@ class IoU(ConfusionMatrix):
         super().__init__(**kwargs)
 
         self.per_class = per_class
-        self.name=name
-        self.replace_nan=replace_nan
+        self.name = name
+        self.replace_nan = replace_nan
 
     def get_iou_from_mat(self, confmat: torch.Tensor) -> torch.Tensor:
         """
@@ -190,7 +195,7 @@ class IoU(ConfusionMatrix):
         IoU = intersection / (confmat.sum(1) + confmat.sum(0) - intersection)
 
         # for using a ignore class
-        #if self.ignore_class is not None and 0 <= self.ignore_class < self.num_classes:
+        # if self.ignore_class is not None and 0 <= self.ignore_class < self.num_classes:
         #    IoU = torch.cat((IoU[: self.ignore_class], IoU[self.ignore_class + 1 :]))
 
         return IoU
@@ -212,15 +217,16 @@ class IoU(ConfusionMatrix):
         mIoU = IoU.mean()
 
         if self.per_class:
-            IoU = {self.name+"_"+self.labels[i]: IoU[i] for i in range(len(IoU))}
-            IoU["mean"+self.name] = mIoU
+            IoU = {self.name + "_" + self.labels[i]: IoU[i] for i in range(len(IoU))}
+            IoU["mean" + self.name] = mIoU
             return IoU
         else:
             return mIoU
 
+
 class Dice(ConfusionMatrix):
     def __init__(
-        self, per_class: bool = False, name:str="Dice", **kwargs
+        self, per_class: bool = False, name: str = "Dice", replace_nan: bool = True, **kwargs
     ):
         """
         Init the Dice Class as subclass of ConfusionMatrix
@@ -233,15 +239,17 @@ class Dice(ConfusionMatrix):
             If True additionally the Dice for each class is returned
         name : str, optional
             Name of the metric, used as prefix for logging the class scores
-        kwargs:
+        replace_nan : bool, optional
+            replace NaN by 0.0
+        kwargs :
             arguments passed to the super class (ConfusionMatrix)
         """
 
         super().__init__(**kwargs)
 
         self.per_class = per_class
-        self.name=name
-
+        self.name = name
+        self.replace_nan = replace_nan
 
     def get_dice_from_mat(self, confmat: torch.Tensor) -> torch.Tensor:
         """
@@ -257,10 +265,10 @@ class Dice(ConfusionMatrix):
             Tensor contains the IoU for each class
         """
         intersection = confmat.diag()
-        Dice = 2*intersection / (confmat.sum(1) + confmat.sum(0))
+        Dice = 2 * intersection / (confmat.sum(1) + confmat.sum(0))
 
         # for using a ignore class
-        #if self.ignore_class is not None and 0 <= self.ignore_class < self.num_classes:
+        # if self.ignore_class is not None and 0 <= self.ignore_class < self.num_classes:
         #    Dice = torch.cat((Dice[: self.ignore_class], Dice[self.ignore_class + 1 :]))
 
         return Dice
@@ -279,20 +287,23 @@ class Dice(ConfusionMatrix):
         """
         Dice = self.get_dice_from_mat(self.mat.clone())
 
-        mDice=Dice.clone()
-        mDice[mDice.isnan()] = 0.0
-        mDice = mDice.mean()
+        if self.replace_nan:
+            Dice[Dice.isnan()] = 0.0
+        mDice = Dice.mean()
 
         if self.per_class:
-            Dice = {self.name+"_"+self.labels[i]: Dice[i] for i in range(len(Dice))}
-            Dice["mean"+self.name] = mDice
+            Dice = {self.name + "_" + self.labels[i]: Dice[i] for i in range(len(Dice))}
+            Dice["mean" + self.name] = mDice
             return Dice
         else:
             return mDice
 
-'''
+
+"""
 AGGC2022 Challenge
-'''
+"""
+
+
 class MetricModule_AGGC(MetricCollection):
     def __init__(self, config: DictConfig, **kwargs) -> None:
         """
@@ -319,6 +330,7 @@ class MetricModule_AGGC(MetricCollection):
         wF1 = dic["wF1_Subset1"] * 0.6 + dic["wF1_Subset2"] * 0.2 + dic["wF1_Subset3"] * 0.2
         dic["wF1"] = wF1
         return dic
+
 
 class Dice_AGGC2022(ConfusionMatrix):
     """
@@ -404,9 +416,11 @@ class Dice_AGGC2022_subsets(Dice_AGGC2022):
         out = {k + "_" + self.subset: v for k, v in out.items()}
         return out
 
-'''
+
+"""
 EndoCV2022 Challenge
-'''
+"""
+
 
 class binary_Dice(Metric):
     def __init__(self):
@@ -443,7 +457,6 @@ class binary_Dice(Metric):
                 self.per_image.append(dice)
 
     def compute(self):
-
         self.per_image = dim_zero_cat(self.per_image)
 
         # log.info("Not None samples %s", len(self.per_image))

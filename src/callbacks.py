@@ -85,42 +85,62 @@ class TimeCallback(Callback):
         self.t_train_start.record()
 
     def on_validation_epoch_start(self, trainer, *args, **kwargs):
-
         if not trainer.sanity_checking:
-
             self.end.record()
             torch.cuda.synchronize()
 
             train_time = self.t_train_start.elapsed_time(self.end) / 1000
             self.t_train.append(train_time)
 
-            self.log("Time/train_time", train_time, logger=True)
-            self.log("Time/mTrainTime", np.mean(self.t_train), logger=True)
+            self.log(
+                "Time/train_time",
+                train_time,
+                logger=True,
+                sync_dist=True if trainer.num_devices > 1 else False,
+            )
+            self.log(
+                "Time/mTrainTime",
+                np.mean(self.t_train),
+                logger=True,
+                sync_dist=True if trainer.num_devices > 1 else False,
+            )
 
         if not trainer.sanity_checking:
             self.t_val_start.record()
 
     def on_validation_epoch_end(self, trainer, *args, **kwargs):
         if not trainer.sanity_checking:
-
             self.end.record()
             torch.cuda.synchronize()
 
             val_time = self.t_val_start.elapsed_time(self.end) / 1000
             self.t_val.append(val_time)
 
-            self.log("Time/validation_time", val_time, logger=True)
-            self.log("Time/mValTime", np.mean(self.t_val), logger=True)
+            self.log(
+                "Time/validation_time",
+                val_time,
+                logger=True,
+                sync_dist=True if trainer.num_devices > 1 else False,
+            )
+            self.log(
+                "Time/mValTime",
+                np.mean(self.t_val),
+                logger=True,
+                sync_dist=True if trainer.num_devices > 1 else False,
+            )
 
     def on_test_epoch_start(self, trainer, *args, **kwargs):
-
         self.t_test_start.record()
 
-    def on_test_epoch_end(self, *args, **kwargs):
-
+    def on_test_epoch_end(self, trainer, *args, **kwargs):
         self.end.record()
         torch.cuda.synchronize()
 
         test_time = self.t_test_start.elapsed_time(self.end) / 1000
 
-        self.log("Time/test_time", test_time, logger=True)
+        self.log(
+            "Time/test_time",
+            test_time,
+            logger=True,
+            sync_dist=True if trainer.num_devices > 1 else False,
+        )

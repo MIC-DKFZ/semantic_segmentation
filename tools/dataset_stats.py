@@ -319,10 +319,16 @@ def get_dataset_stats(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--name", type=str, default=None, help="Name of the sub folder to save the results in"
+        "--name",
+        type=str,
+        default=None,
+        help="Name of the sub folder to save the results in",
     )
     parser.add_argument(
-        "--split", type=str, default="train", help="which split to use: train, val or test"
+        "--split",
+        type=str,
+        default="train",
+        help="which split to use: train, val or test",
     )
     parser.add_argument("--img_only", action="store_true", help="Only analyse Image Data")
     parser.add_argument("--mask_only", action="store_true", help="Only analyse Mask Data")

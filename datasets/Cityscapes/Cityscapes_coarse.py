@@ -78,7 +78,10 @@ class Cityscapes_coarse_dataset(Cityscapes_dataset):
 
         self.transforms = transforms
         log.info(
-            "Dataset: Cityscape %s - %s images - %s masks", split, len(self.imgs), len(self.masks)
+            "Dataset: Cityscape %s - %s images - %s masks",
+            split,
+            len(self.imgs),
+            len(self.masks),
         )
 
 

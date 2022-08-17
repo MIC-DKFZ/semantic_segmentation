@@ -56,7 +56,14 @@ class StainAugmentor(object):
         # self.source_concentrations = get_concentrations(I, self.stain_matrix)
         OD = convert_RGB_to_OD(I).reshape((-1, 3))
         self.source_concentrations = (
-            spams.lasso(X=OD.T, D=self.stain_matrix.T, mode=2, lambda1=0.01, pos=True, numThreads=1)
+            spams.lasso(
+                X=OD.T,
+                D=self.stain_matrix.T,
+                mode=2,
+                lambda1=0.01,
+                pos=True,
+                numThreads=1,
+            )
             .toarray()
             .T
         )

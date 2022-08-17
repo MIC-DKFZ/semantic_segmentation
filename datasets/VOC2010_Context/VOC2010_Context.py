@@ -197,7 +197,6 @@ class VOC2010_Context_dataset(torch.utils.data.Dataset):
 
 
 if __name__ == "__main__":
-
     transforms = A.Compose(
         [
             # A.RandomCrop(width=768, height=768),

@@ -1,8 +1,8 @@
 #@package _global_
 METRIC:
-  NAME: meanIoU_stepwise           # which metric to optimize - mean IoU over the classes
+  NAME: meanIoU           # which metric to optimize - mean IoU over the classes
   DURING_TRAIN: False     # If also a train metric is wanted
-  METRIC_CALL: stepwise     # one of ["global", "stepwise", "global_and_stepwise"], Defines if the metric is computed stepwise or/and global
+  METRIC_CALL: global     # one of ["global", "stepwise", "global_and_stepwise"], Defines if the metric is computed stepwise or/and global
   METRICS:
     meanIoU:              # Define the Metric
       _target_: src.metric.IoU     # Metric Class

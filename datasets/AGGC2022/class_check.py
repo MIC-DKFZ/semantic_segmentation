@@ -200,9 +200,12 @@ if __name__ == "__main__":
     # subsets = ["Subset1"]
     # subsets = ["Subset3"]
     class_files = [[], [], [], [], []]
-    prefix = {"Subset1": "/Subset1/imgs/", "Subset2": "/Subset2/imgs/", "Subset3": "/Subset3/imgs/"}
+    prefix = {
+        "Subset1": "/Subset1/imgs/",
+        "Subset2": "/Subset2/imgs/",
+        "Subset3": "/Subset3/imgs/",
+    }
     for subset in subsets:
-
         path_masks = os.path.join(root_masks, subset, "masks_png_3", "*.png")
         # mask_dir = os.path.join(input_dir, subset + "_Train_annotation", "Train")
         masks_files = glob.glob(path_masks)

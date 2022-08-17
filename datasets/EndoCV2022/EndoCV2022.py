@@ -51,7 +51,6 @@ class EndoCV2022_dataset(torch.utils.data.Dataset):
         )
 
     def __getitem__(self, idx):
-
         img = cv2.imread(self.imgs[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
@@ -68,7 +67,6 @@ class EndoCV2022_dataset(torch.utils.data.Dataset):
 
 
 if __name__ == "__main__":
-
     transforms = A.Compose(
         [
             A.RandomScale(scale_limit=(-0.5, 0), always_apply=True, p=1.0),

@@ -30,7 +30,10 @@ def get_dataset(data_dir, split="train", fold=0, transforms=None, *args, **kwarg
     if split == "train":
         Cases = GetTrainFold(os.path.join(data_dir, "Splits"), train_folds)
         Cases = [case[1:] if case.startswith("/") else case for case in Cases]
-        Cases = ["Subset1/imgs/Subset1_Train_1.zarr", "Subset1/imgs/Subset1_Train_1.zarr"]
+        Cases = [
+            "Subset1/imgs/Subset1_Train_1.zarr",
+            "Subset1/imgs/Subset1_Train_1.zarr",
+        ]
     elif split == "val" or split == "test":
         Cases = GetTrainFold(os.path.join(data_dir, "Splits"), validation_fold)
         Cases = [case[1:] if case.startswith("/") else case for case in Cases]
@@ -56,7 +59,6 @@ def GetTrainFold(BaseFoldPath, CaseList):
 
 class AGGC2022_dataset(torch.utils.data.Dataset):
     def __init__(self, root, imgs, transforms, fold="None"):
-
         # print(os.path.join(root, "*", "imgs", "*png"))
         self.imgs = imgs  # glob.glob(os.path.join(root, "Subset*", "imgs_png", "*png"))
         # self.masks = glob.glob(os.path.join(root, "Subset3*", "masks_png", "*png"))
@@ -132,7 +134,6 @@ class AGGC2022_tiff_dataset(torch.utils.data.Dataset):
         # self.path_masks = "/media/l727r/data/AGGC2022/Subset1/masks_zarr/Subset1_Train_1.zarr"
 
     def __getitem__(self, idx):
-
         # open zarr image
         # img = zarr.open(self.imgs[idx], mode="r")
         # mask = zarr.open(self.mask[idx], mode="r")

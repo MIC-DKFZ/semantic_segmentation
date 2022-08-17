@@ -99,7 +99,8 @@ if __name__ == "__main__":
             # A.HorizontalFlip(p=0.25),
             # A.VerticalFlip(p=0.25),
             A.Normalize(
-                mean=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], std=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+                mean=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                std=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
             ),
             ToTensorV2(),
         ]

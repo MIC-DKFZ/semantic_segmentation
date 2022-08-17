@@ -5,7 +5,13 @@ import numpy as np
 
 
 def show_data(
-    img=None, mask=None, color_mapping=None, alpha=0.5, black=[], mean=[0, 0, 0], std=[1, 1, 1]
+    img=None,
+    mask=None,
+    color_mapping=None,
+    alpha=0.5,
+    black=[],
+    mean=[0, 0, 0],
+    std=[1, 1, 1],
 ):
     # img: img tensor
     # mask: mask tensor or prediction of the model(also tensor)

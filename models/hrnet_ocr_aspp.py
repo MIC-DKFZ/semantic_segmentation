@@ -128,7 +128,12 @@ class AtrousSpatialPyramidPoolingModule(nn.Module):
             self.features.append(
                 nn.Sequential(
                     nn.Conv2d(
-                        in_dim, reduction_dim, kernel_size=3, dilation=r, padding=r, bias=False
+                        in_dim,
+                        reduction_dim,
+                        kernel_size=3,
+                        dilation=r,
+                        padding=r,
+                        bias=False,
                     ),
                     Norm2d(reduction_dim),
                     nn.ReLU(inplace=True),
@@ -320,7 +325,13 @@ class SpatialOCR_Module(nn.Module):
     """
 
     def __init__(
-        self, in_channels, key_channels, out_channels, bottleneck_ch, scale=1, dropout=0.1
+        self,
+        in_channels,
+        key_channels,
+        out_channels,
+        bottleneck_ch,
+        scale=1,
+        dropout=0.1,
     ):
         super(SpatialOCR_Module, self).__init__()
         self.object_context_block = ObjectAttentionBlock(in_channels, key_channels, scale)
@@ -376,7 +387,14 @@ class OCR_block(nn.Module):
         self.aux_head = nn.Sequential(
             nn.Conv2d(high_level_ch, high_level_ch, kernel_size=1, stride=1, padding=0),
             BNReLU(high_level_ch),
-            nn.Conv2d(high_level_ch, num_classes, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.Conv2d(
+                high_level_ch,
+                num_classes,
+                kernel_size=1,
+                stride=1,
+                padding=0,
+                bias=True,
+            ),
         )
 
         if INIT_DECODER:
@@ -432,7 +450,6 @@ class OCRNetASPP(nn.Module):
 
     def load_weights(self, pretrained):
         if os.path.isfile(pretrained):
-
             pretrained_dict = torch.load(pretrained, map_location={"cuda:0": "cpu"})
             log.info("Loading pretrained weights {}".format(pretrained))
 
@@ -475,6 +492,7 @@ class OCRNetASPP(nn.Module):
             log.info("Weights successfully loaded")
         else:
             raise NotImplementedError("No Pretrained Weights found for {}".format_map(pretrained))
+
 
 def get_seg_model(cfg):
     model = OCRNetASPP(cfg)

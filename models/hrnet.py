@@ -22,6 +22,8 @@ import torch.nn as nn
 import torch._utils
 import torch.nn.functional as F
 
+# import logging
+# log=logging.getLogger(__name__)
 from src.utils import get_logger
 
 log = get_logger(__name__)
@@ -171,7 +173,12 @@ class HighResolutionModule(nn.Module):
 
         layers = []
         layers.append(
-            block(self.num_inchannels[branch_index], num_channels[branch_index], stride, downsample)
+            block(
+                self.num_inchannels[branch_index],
+                num_channels[branch_index],
+                stride,
+                downsample,
+            )
         )
         self.num_inchannels[branch_index] = num_channels[branch_index] * block.expansion
         for i in range(1, num_blocks[branch_index]):
@@ -200,7 +207,14 @@ class HighResolutionModule(nn.Module):
                 if j > i:
                     fuse_layer.append(
                         nn.Sequential(
-                            nn.Conv2d(num_inchannels[j], num_inchannels[i], 1, 1, 0, bias=False),
+                            nn.Conv2d(
+                                num_inchannels[j],
+                                num_inchannels[i],
+                                1,
+                                1,
+                                0,
+                                bias=False,
+                            ),
                             BatchNorm2d(num_inchannels[i], momentum=BN_MOMENTUM),
                         )
                     )
@@ -289,7 +303,12 @@ class HighResolutionNet(nn.Module):
 
         # stem net
         self.conv1 = nn.Conv2d(
-            config.MODEL.INPUT_CHANNELS, 64, kernel_size=3, stride=2, padding=1, bias=False
+            config.MODEL.INPUT_CHANNELS,
+            64,
+            kernel_size=3,
+            stride=2,
+            padding=1,
+            bias=False,
         )
         self.bn1 = BatchNorm2d(64, momentum=BN_MOMENTUM)
         self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1, bias=False)
@@ -394,7 +413,11 @@ class HighResolutionNet(nn.Module):
         if stride != 1 or inplanes != planes * block.expansion:
             downsample = nn.Sequential(
                 nn.Conv2d(
-                    inplanes, planes * block.expansion, kernel_size=1, stride=stride, bias=False
+                    inplanes,
+                    planes * block.expansion,
+                    kernel_size=1,
+                    stride=stride,
+                    bias=False,
                 ),
                 BatchNorm2d(planes * block.expansion, momentum=BN_MOMENTUM),
             )
@@ -503,7 +526,6 @@ class HighResolutionNet(nn.Module):
 
     def load_weights(self, pretrained):
         if os.path.isfile(pretrained):
-
             pretrained_dict = torch.load(pretrained, map_location={"cuda:0": "cpu"})
             log.info("Loading pretrained weights {}".format(pretrained))
 

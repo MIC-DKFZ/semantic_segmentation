@@ -178,7 +178,6 @@ if __name__ == "__main__":
         print("Start Processing")
         resize_img = True
         for img_file, mask_file in zip(image_files, mask_files):
-
             name = os.path.split(img_file)[-1].split(".tiff")[0]
             output_file_img = os.path.join(output_dir, "imgs_png", name + ".png")
             output_file_mask = os.path.join(output_dir, "masks_png", name + ".png")
@@ -244,9 +243,7 @@ if __name__ == "__main__":
                     )
                 )
                 for cl in all_classes:
-
                     if cl in current_classes:
-
                         file_class = os.path.join(mask_file, cl)
 
                         slide_class = open_slide(file_class)

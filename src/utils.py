@@ -89,14 +89,20 @@ def log_hyperparameters(
     # save number of model parameters
     hparams["Parameter"] = sum(p.numel() for p in model.parameters())
     hparams["trainable Parameter"] = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    metric = {"metric/best_" + model.metric_name: 0, "Time/mTrainTime": 0, "Time/mValTime": 0}
+    metric = {
+        "metric/best_" + model.metric_name: torch.nan,
+        "Time/mTrainTime": torch.nan,
+        "Time/mValTime": torch.nan,
+    }
     # print(hparams, metric)
     # send hparams to all loggers
     trainer.logger.log_hyperparams(hparams, metric)
 
     # save resolved config in hparams.yaml
     OmegaConf.save(
-        config=config, resolve=True, f=os.path.join(trainer.logger.log_dir, "hparams.yaml")
+        config=config,
+        resolve=True,
+        f=os.path.join(trainer.logger.log_dir, "hparams.yaml"),
     )
 
 

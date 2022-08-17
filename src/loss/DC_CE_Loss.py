@@ -206,7 +206,12 @@ class DC_and_CE_loss(nn.Module):
 
 class DC_and_topk_loss(nn.Module):
     def __init__(
-        self, soft_dice_kwargs, ce_kwargs, aggregate="sum", square_dice=False, ignore_label=None
+        self,
+        soft_dice_kwargs,
+        ce_kwargs,
+        aggregate="sum",
+        square_dice=False,
+        ignore_label=None,
     ):
         super(DC_and_topk_loss, self).__init__()
         self.aggregate = aggregate

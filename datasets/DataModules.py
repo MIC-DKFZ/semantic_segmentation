@@ -20,7 +20,12 @@ log = get_logger(__name__)
 
 
 def get_max_steps(
-    size_dataset, batch_size, num_devices, accumulate_grad_batches, num_epochs, drop_last=True
+    size_dataset,
+    batch_size,
+    num_devices,
+    accumulate_grad_batches,
+    num_epochs,
+    drop_last=True,
 ) -> int:
     """
     Computing the number of  steps, needed for polynomial lr scheduler
@@ -71,7 +76,6 @@ def get_augmentations_from_config(augmentations: DictConfig) -> list:
     # otherwise recursively build the transformations
     trans = []
     for augmentation in augmentations:
-
         transforms = list(augmentation.keys())
 
         for transform in transforms:
@@ -197,8 +201,9 @@ class BaseDataModule(LightningDataModule):
         # acc_steps_per_gpu = int(np.ceil(steps_per_gpu / self.trainer.accumulate_grad_batches))
         # max_steps = self.trainer.max_epochs * acc_steps_per_gpu
 
-        log.info("Number of Training steps: {}  ({} steps per epoch)".format(max_steps,max_steps_epoch))
-
+        log.info(
+            "Number of Training steps: {}  ({} steps per epoch)".format(max_steps, max_steps_epoch)
+        )
 
         max_steps_val, max_steps_epoch_val = get_max_steps(
             size_dataset=len(self.DS_val),
@@ -209,7 +214,11 @@ class BaseDataModule(LightningDataModule):
             drop_last=False,
         )
 
-        log.info("Number of Validation steps: {}  ({} steps per epoch)".format(max_steps_val,max_steps_epoch_val))
+        log.info(
+            "Number of Validation steps: {}  ({} steps per epoch)".format(
+                max_steps_val, max_steps_epoch_val
+            )
+        )
         return max_steps
 
     def get_augmentations_from_config(self, augmentations: DictConfig) -> list:
@@ -233,7 +242,6 @@ class BaseDataModule(LightningDataModule):
         # otherwise recursively build the transformations
         trans = []
         for augmentation in augmentations:
-
             transforms = list(augmentation.keys())
 
             for transform in transforms:

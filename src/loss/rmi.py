@@ -20,10 +20,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import src.loss.rmi_utils as rmi_utils
-#import logging
 
-#logging.basicConfig(level=logging.INFO)
-#log = logging.getLogger(__name__)
+# import logging
+
+# logging.basicConfig(level=logging.INFO)
+# log = logging.getLogger(__name__)
 
 _euler_num = 2.718281828  # euler number
 _pi = 3.14159265  # pi
@@ -79,7 +80,6 @@ class RMILoss(nn.Module):
         self.class_weights = class_weights
 
     def forward(self, logits_4D, labels_4D):
-
         loss = self.forward_sigmoid(logits_4D, labels_4D)
         # loss = self.forward_softmax_sigmoid(logits_4D, labels_4D)
         return loss
@@ -285,6 +285,7 @@ class RMILoss(nn.Module):
         #######################print(rmi_per_class.shape)
         rmi_loss = torch.sum(rmi_per_class) if _IS_SUM else torch.mean(rmi_per_class)
         return rmi_loss
+
 
 if __name__ == "__main__":
     loss = RMILoss()

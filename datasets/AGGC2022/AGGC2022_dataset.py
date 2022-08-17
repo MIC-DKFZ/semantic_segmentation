@@ -33,7 +33,13 @@ def get_dataset(
     sampling_strategy=0,
 ):
     # train_folds = ["Split1.txt", "Split2.txt", "Split3.txt", "Split4.txt", "Split5.txt"]
-    train_folds = ["Split1.json", "Split2.json", "Split3.json", "Split4.json", "Split5.json"]
+    train_folds = [
+        "Split1.json",
+        "Split2.json",
+        "Split3.json",
+        "Split4.json",
+        "Split5.json",
+    ]
     validation_fold = [train_folds.pop(4 - fold)]
     if split == "train":
         if sampling_strategy == 0:
@@ -44,7 +50,13 @@ def get_dataset(
                 Cases = [case for case in Cases if Subset in case]
             Cases = [case[1:] if case.startswith("/") else case for case in Cases]
             dataset = ChallengeDataset_point_sampling(
-                data_dir, Cases, NumSamplesPerSubject, RandomProb, Class_Prob, PatchSize, transforms
+                data_dir,
+                Cases,
+                NumSamplesPerSubject,
+                RandomProb,
+                Class_Prob,
+                PatchSize,
+                transforms,
             )
         elif sampling_strategy == 1:
             Class_Prob = {"1": 0.75, "2": 0.75, "3": 1, "4": 1, "5": 1.5}
@@ -123,7 +135,6 @@ def get_dataset(
         return dataset
         """
     elif split == "val" or split == "test":
-
         if sampling_strategy == 0:
             Cases = GetTrainFold(os.path.join(data_dir, "Splits"), validation_fold)
         elif sampling_strategy == 1:
@@ -173,7 +184,6 @@ def GetTrainFold(BaseFoldPath, CaseList):
 
 
 def GetTrainFold_2(BaseFoldPath, CaseList, val=False):
-
     stroma_cases = []
     normal_cases = []
     g3_cases = []
@@ -548,7 +558,13 @@ class ChallengeDataset_point_sampling_new(Dataset):
         self.PatchSize = PatchSize
         self.ClassProb = Class_Prob
         self.transform = transform
-        self.LookUpDict = {"Stroma": "1", "Normal": "2", "G3": "3", "G4": "4", "G5": "5"}
+        self.LookUpDict = {
+            "Stroma": "1",
+            "Normal": "2",
+            "G3": "3",
+            "G4": "4",
+            "G5": "5",
+        }
 
     def __len__(self):
         return self.NumPatches

@@ -1,4 +1,5 @@
 import logging
+
 logging.basicConfig(level=logging.INFO)
 
 import os
@@ -38,6 +39,7 @@ OmegaConf.register_new_resolver(
     .replace("+", ""),
 )
 
+
 @hydra.main(config_path="config", config_name="baseline", version_base="1.2")
 def training_loop(cfg: DictConfig):
     """
@@ -76,8 +78,16 @@ def training_loop(cfg: DictConfig):
     selected_GPUS = cfg.pl_trainer.devices
     number_gpus = num_gpus(avail_GPUS, selected_GPUS)
     log.info("Available GPUs: %s - %s", avail_GPUS, torch.cuda.get_device_name())
-    log.info("Number of used GPUs: %s    Selected GPUs: %s", number_gpus, cfg.pl_trainer.devices)
-    log.info("CUDA version: {}    Pytorch version: {}".format(torch._C._cuda_getCompiledVersion(), torch. __version__))
+    log.info(
+        "Number of used GPUs: %s    Selected GPUs: %s",
+        number_gpus,
+        cfg.pl_trainer.devices,
+    )
+    log.info(
+        "CUDA version: {}    Pytorch version: {}".format(
+            torch._C._cuda_getCompiledVersion(), torch.__version__
+        )
+    )
 
     # Defining the datamodule
     dataModule = hydra.utils.instantiate(cfg.datamodule, _recursive_=False)
@@ -115,5 +125,4 @@ def training_loop(cfg: DictConfig):
 
 
 if __name__ == "__main__":
-
     training_loop()

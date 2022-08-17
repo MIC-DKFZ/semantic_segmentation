@@ -318,7 +318,14 @@ class OCR_block(nn.Module):
         self.aux_head = nn.Sequential(
             nn.Conv2d(high_level_ch, high_level_ch, kernel_size=1, stride=1, padding=0),
             BNReLU(high_level_ch),
-            nn.Conv2d(high_level_ch, num_classes, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.Conv2d(
+                high_level_ch,
+                num_classes,
+                kernel_size=1,
+                stride=1,
+                padding=0,
+                bias=True,
+            ),
         )
 
         if INIT_DECODER:
@@ -516,14 +523,12 @@ class MscaleOCR(nn.Module):
         }  # [joint_aux,joint_pred]
 
     def forward(self, inputs):
-
         if self.n_scales and not self.training and self.m_scale_inference:
             return self.nscale_forward(inputs, self.n_scales)
         return self.two_scale_forward(inputs)
 
     def load_weights(self, pretrained):
         if os.path.isfile(pretrained):
-
             pretrained_dict = torch.load(pretrained, map_location={"cuda:0": "cpu"})
             log.info("Loading pretrained weights {}".format(pretrained))
 
@@ -531,9 +536,8 @@ class MscaleOCR(nn.Module):
             if "state_dict" in pretrained_dict.keys():
                 pretrained_dict = pretrained_dict["state_dict"]
             pretrained_dict = {
-                k.replace("model.", "")
-                .replace("module.", "")
-                #.replace("backbone.", "")
+                k.replace("model.", "").replace("module.", "")
+                # .replace("backbone.", "")
                 .replace("last_layer", "aux_head"): v
                 for k, v in pretrained_dict.items()
             }
@@ -570,8 +574,8 @@ class MscaleOCR(nn.Module):
         else:
             raise NotImplementedError("No Pretrained Weights found for {}".format_map(pretrained))
 
-def get_seg_model(cfg):
 
+def get_seg_model(cfg):
     model = MscaleOCR(cfg)
     if cfg.MODEL.PRETRAINED:
         model.load_weights(cfg.MODEL.PRETRAINED_WEIGHTS)

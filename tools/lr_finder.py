@@ -16,7 +16,7 @@ import torch
 
 from Segmentation_Model import SegModel
 
-from utils.utils import has_true_attr, has_not_empty_attr, get_logger, num_gpus
+from src.utils import has_true_attr, has_not_empty_attr, get_logger, num_gpus
 
 
 log = get_logger(__name__)

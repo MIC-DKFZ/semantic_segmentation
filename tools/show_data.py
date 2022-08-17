@@ -15,7 +15,7 @@ import cv2
 import numpy as np
 from matplotlib import cm
 
-from utils.utils import get_logger
+from src.utils import get_logger
 from tools.show_prediction import Visualizer
 
 log = get_logger(__name__)
@@ -58,14 +58,14 @@ def show_data(overrides_cl: list) -> None:
     ]
 
     transforms = A.Compose([ToTensorV2()])
-    # dataset = hydra.utils.instantiate(cfg.dataset, split="train", transforms=transforms)
+    # dataset = hydra.src.instantiate(cfg.dataset, split="train", transforms=transforms)
     dataset = hydra.utils.instantiate(cfg.dataset, split="train", transforms=transforms)
     # transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TRAIN)
     # print("Done")
     # get_augmentations_from_config(self.augmentations.TRAIN)[0]
 
     #
-    # dataModule = hydra.utils.instantiate(cfg.datamodule, _recursive_=False)
+    # dataModule = hydra.src.instantiate(cfg.datamodule, _recursive_=False)
     # dataModule.setup(stage="fit")
     # dataset = dataModule.DS_train
 

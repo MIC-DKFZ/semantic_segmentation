@@ -45,7 +45,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from models.backbones.hrnet_backbone import get_backbone_model
-from utils.utils import get_logger
+from src.utils import get_logger
 
 log = get_logger(__name__)
 
@@ -533,7 +533,7 @@ class MscaleOCR(nn.Module):
             pretrained_dict = {
                 k.replace("model.", "")
                 .replace("module.", "")
-                .replace("backbone.", "")
+                #.replace("backbone.", "")
                 .replace("last_layer", "aux_head"): v
                 for k, v in pretrained_dict.items()
             }
@@ -567,7 +567,8 @@ class MscaleOCR(nn.Module):
             self.load_state_dict(model_dict)
             del model_dict, pretrained_dict
             log.info("Weights successfully loaded")
-
+        else:
+            raise NotImplementedError("No Pretrained Weights found for {}".format_map(pretrained))
 
 def get_seg_model(cfg):
 

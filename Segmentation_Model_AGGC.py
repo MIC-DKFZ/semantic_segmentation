@@ -1,8 +1,8 @@
 from Segmentation_Model import SegModel
 import torch
 import torch.nn.functional as F
-from utils.utils import get_logger
-from utils.metric import MetricModule_AGGC
+from src.utils import get_logger
+from src.metric import MetricModule_AGGC
 import numpy as np
 
 log = get_logger(__name__)

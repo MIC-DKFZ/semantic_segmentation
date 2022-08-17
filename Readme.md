@@ -4,12 +4,12 @@
   <img src="imgs/Logos/HI_Title.png" >
 </p>
 
-<a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/-Python 3.9-3776AB?&logo=python&logoColor=white"></a>
-<a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/-PyTorch 1.10-EE4C2C?logo=pytorch&logoColor=white"></a>
-<a href="https://pytorchlightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Pytorch Lightning 1.6-792EE5?logo=pytorchlightning&logoColor=white"></a>
-<a href="https://albumentations.ai/"><img alt="Albumentations" src="https://img.shields.io/badge/Albumentations 1.10 -cc0000"></a>
-<a href="https://hydra.cc/"><img alt="L: Hydra" src="https://img.shields.io/badge/Hydra 1.1-89b8cd" ></a>
-<a href="https://pytorch-lightning.readthedocs.io/en/stable/api/pytorch_lightning.loggers.tensorboard.html"><img alt="Tensorboard" src="https://img.shields.io/badge/Tensorboard 2.7 -FF6F00"></a>
+<a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/-Python-3776AB?&logo=python&logoColor=white"></a>
+<a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/-PyTorch 1.12-EE4C2C?logo=pytorch&logoColor=white"></a>
+<a href="https://pytorchlightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Pytorch Lightning 1.7-792EE5?logo=pytorchlightning&logoColor=white"></a>
+<a href="https://albumentations.ai/"><img alt="Albumentations" src="https://img.shields.io/badge/Albumentations 1.2 -cc0000"></a>
+<a href="https://hydra.cc/"><img alt="L: Hydra" src="https://img.shields.io/badge/Hydra 1.2-89b8cd" ></a>
+<a href="https://pytorch-lightning.readthedocs.io/en/stable/api/pytorch_lightning.loggers.tensorboard.html"><img alt="Tensorboard" src="https://img.shields.io/badge/Tensorboard 2.10 -FF6F00"></a>
 
 </div>
 
@@ -17,7 +17,7 @@ This repository contains an easy-to-use and flexibly customizable framework for 
 segmentation models.
 The focus was put on being usable out of the box, but also on giving the possibility to be adapted to individual projects.
 Therefore, this repository is designed to be extended with additional models and datasets, as well as other optimizers, schedulers,
-metrics, loss functions, metrics and data augmentation pipelines.
+metrics, loss functions and data augmentation pipelines.
 In addition, new and popular packages such as Pytorch Lightning, Hydra and Albumentations were used 
 to enable features, among others, such as multi-GPU, device independent and mixed precision training as well as
 easy job configuration and easy construction of data augmentation pipelines.
@@ -111,7 +111,7 @@ system [here](https://pytorch.org/get-started/locally/#start-locally).
 pip install -r requirements.txt
 ````
 
-After Setting up a dataset, you check if the installation was successful and everything is working,
+After Setting up a dataset, you can check if the installation was successful and everything is working,
 by running a small "unit test" using Pytorch
 Lightnings [fast_dev_run](https://pytorch-lightning.readthedocs.io/en/stable/common/debugging.html#fast-dev-run):
 

@@ -1,13 +1,11 @@
 #@package _global_
 METRIC:
-  NAME: meanIoU           # which metric to optimize - mean IoU over the classes
+  NAME: meanDice          # which metric to optimize - mean Dice over the classes
   DURING_TRAIN: False     # If also a train metric is wanted
   METRIC_CALL: global     # one of ["global", "stepwise", "global_and_stepwise"], Defines if the metric is computed stepwise or/and global
   METRICS:
-    meanIoU:              # Define the Metric
-      _target_: src.metric.IoU     # Metric Class
+    meanDice:             # Define the Metric
+      _target_: src.metric.Dice     # Metric Class
       num_classes: ${DATASET.NUM_CLASSES}      # Number if Classes in the Dataset
       labels: ${DATASET.CLASS_LABELS}          # Class Labels in the Dataset
       per_class: False    # Return the mean Metric with or without the Metric for each Class
-
-

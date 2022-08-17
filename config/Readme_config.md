@@ -109,7 +109,7 @@ optimizer:
   weight_decay: 0.005
 # Another example for defining a custom class object
 metric:
-  _target_:    utils.metric.ConfusionMatrix
+  _target_:    src.metric.ConfusionMatrix
   num_classes: 24
 ````
 
@@ -845,29 +845,32 @@ TRAIN:
 <details><summary>Configure</summary>
 <p>
 
-The metric used in this repository is the mean of Intersection over Union (*mean_IoU*)(class wise).
-This metric updates a confusion matrix and outputs a mean IoU (mIoU) at the end of each epoch.
-If you additionally want to log the results for each class you can use *mean_IoU_Class*.
+In this repository the Intersection over Union (*mean_IoU*) and the Dice score (mean_Dice) is provided.
+Both metric update a confusion matrix in each step and compute a final scores at the end of each epoch.
+The final score is composed of first calculating the score for each class and then taking the class wise mean.
+By default only this final score is returned and logged, if additionally the score for each class is required use  **mean_IoU_Class** or **mean_Dice_Class**.
 Some additional configurations are provided, adopt them in the config files or override them from
 commandline:
 
 - **METRIC.METRIC_CALL**: Defines when the metric should be computed and should be one
-  of ["global", "stepwise", "global_and_stepwise"].
+  of ["global", "stepwise", "global_and_stepwise"] (global by default).
   For *global* the metric is updated in each step and computed once at the end of each epoch.
   For *stepwise* the metric is computed in each step and averaged at the end of each epoch.
   For *global_and_stepwise* both is done separately.
   If *stepwise* is used the name of the logged metric will have a "_stepwise" postfix.
-  A short example when using the IoU: With using *METRIC.METRIC_CALL=global* the confusionmatrix is
+  A short example when using the IoU: With using *METRIC.METRIC_CALL=global* the confusio nmatrix is
   updated in each step and the IoU is computed once at the end of the epoch.
   With using *METRIC.METRIC_CALL=stepwise* the IoU is computed for each sample and these IoUs are
   averaged at the end of the epoch.
-- **METRIC.DURING_TRAIN**: True or False, provides the possibility to have a separate metric during
+- **METRIC.DURING_TRAIN**: True or False (False by default), provides the possibility to have a separate metric during
   training.
 
 ````shell
-python main.py metric=mean_IoU         # mean intersection over union
-python main.py metric=mean_IoU_Class   # mean intersection over union with logging IoU of each class
-python main.py METRIC.METRIC_CALL=global_and_stepwise METRIC.DURING_TRAIN=True # change metric settings
+python main.py metric=mean_IoU         # mean Intersection over Onion (IoU)
+python main.py metric=mean_Dice        # mean Dice score
+python main.py metric=mean_IoU_Class   # mean IoU with additionally logging scores for each class
+python main.py metric=mean_Dice_Class  # mean Dice with additionally logging scores for each class
+python main.py METRIC.METRIC_CALL=global_and_stepwise METRIC.DURING_TRAIN=True  # change metric settings
 ````
 
 </p>
@@ -885,12 +888,11 @@ found [here](https://torchmetrics.readthedocs.io/en/stable/pages/implement.html)
 As a restriction in this repository, the *compute()* method must return either a single tensor or a
 dict.
 A dict should be used when multiple metrics are returned, e.g. the IoU for each class separately.  
-If a dict is used the metric is logged named by the corresponding key, if a single tensor is
+If a dict is used the metric is logged named by the corresponding key (avoid duplicates), if a single tensor is
 returned it will be named by name of the metric defined in the config.
 
 ````py
 from torchmetrics import Metric
-
 
 class CustomMetric(Metric):
     def __init__(self, ...):
@@ -900,7 +902,7 @@ class CustomMetric(Metric):
         ...
 
     def update(self, pred: torch.Tensor, gt: torch.Tensor):  
-        # input is the bacth-wise ground truth (gt) and models prediction (pred)
+        # input is the batch-wise ground truth (gt) and models prediction (pred)
         ...     # pred.shape= [batch_size, num_classes, height, width]
                 # gt.shape= [batch_size, height, width]
 
@@ -924,7 +926,7 @@ After implementing the metric you have to set up the config of the metric.
 Therefore create a *my_metric.yaml* in *config/metric/* and use the following dummy to define the
 metric.
 *METRIC.NAME* should be the name of your target metric which should be one of the metrics defined in
-METRIC.METRICS.
+METRIC.METRICS(if the metric returns a single tensor), if the metric returns a dict *METRIC.NAME* should be a key in this dict.
 The remaining Parameters should be set as described in the *Configure* section above
 
 `````yaml
@@ -936,10 +938,10 @@ METRIC:
   #NAME: mymetric_name_stepwise   # if a stepwise metric is used add a _stepwise postfix
   DURING_TRAIN: False
   METRIC_CALL: global             # one of ["global", "stepwise", "global_and_stepwise"]. 
-                                  # Defines if the metric is computed stepwise o
+                                  # Defines if the metric is computed stepwise or/and global
   METRICS:
     mymetric_name: # define the name of the metric, needed for logging and to find the target metric
-      _target_: utils.metric.myMetricClass  # path to the metric Class
+      _target_: src.metric.myMetricClass  # path to the metric Class
       ...
       #num_classes: ${DATASET.NUM_CLASSES}  # list of arguments for initialization, e.g. number of classes
 `````

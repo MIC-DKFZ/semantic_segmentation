@@ -1,5 +1,4 @@
 import logging
-
 logging.basicConfig(level=logging.INFO)
 
 import os
@@ -9,7 +8,7 @@ from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.strategies.ddp import DDPStrategy
 
-from utils.utils import (
+from src.utils import (
     has_true_attr,
     has_not_empty_attr,
     get_logger,
@@ -19,8 +18,6 @@ from utils.utils import (
 from omegaconf import DictConfig, OmegaConf
 
 from Segmentation_Model import SegModel
-
-# from Segmentation_Model_AGGC import SegModel_AGGC  # as SegModel
 
 log = get_logger(__name__)
 
@@ -40,7 +37,6 @@ OmegaConf.register_new_resolver(
     .replace("/", ".")
     .replace("+", ""),
 )
-
 
 @hydra.main(config_path="config", config_name="baseline", version_base="1.2")
 def training_loop(cfg: DictConfig):
@@ -79,10 +75,9 @@ def training_loop(cfg: DictConfig):
     avail_GPUS = torch.cuda.device_count()
     selected_GPUS = cfg.pl_trainer.devices
     number_gpus = num_gpus(avail_GPUS, selected_GPUS)
-
     log.info("Available GPUs: %s - %s", avail_GPUS, torch.cuda.get_device_name())
     log.info("Number of used GPUs: %s    Selected GPUs: %s", number_gpus, cfg.pl_trainer.devices)
-    log.info("CUDA version: %s", torch._C._cuda_getCompiledVersion())
+    log.info("CUDA version: {}    Pytorch version: {}".format(torch._C._cuda_getCompiledVersion(), torch. __version__))
 
     # Defining the datamodule
     dataModule = hydra.utils.instantiate(cfg.datamodule, _recursive_=False)
@@ -91,10 +86,8 @@ def training_loop(cfg: DictConfig):
     # cfg.finetune_from should be the path to a .ckpt file
     if has_not_empty_attr(cfg, "finetune_from"):
         log.info("finetune from: %s", cfg.finetune_from)
-        # model = SegModel.load_from_checkpoint(cfg.finetune_from, strict=False, config=cfg)
         model = SegModel.load_from_checkpoint(cfg.finetune_from, strict=False, config=cfg)
     else:
-        # model = SegModel(config=cfg)
         model = SegModel(config=cfg)
 
     # Initializing trainer

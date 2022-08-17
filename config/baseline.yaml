@@ -29,6 +29,7 @@ num_example_predictions: 5      # Save some example predictions during validatio
 
 
 # Customizations of Hydra
+
 hydra:
   output_subdir: hydra
   run:
@@ -64,7 +65,7 @@ datamodule:
 
 # Defining the saving behavior. Only used when checkpointing is enabled in the pl_trainer
 ModelCheckpoint:
-  _target_: utils.callbacks.customModelCheckpoint   # Custom checkpoint Callback with a few modifications
+  _target_: src.callbacks.customModelCheckpoint   # Custom checkpoint Callback with a few modifications
   monitor: "metric/${METRIC.NAME}"        # Name of the metric during logging
   mode: "max"                             # min or max: should be metric me maximised or minimized
   filename: 'best_epoch_{epoch}__${METRIC.NAME}_{metric/${METRIC.NAME}:.4f}'

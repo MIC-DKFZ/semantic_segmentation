@@ -7,11 +7,11 @@ from pytorch_lightning import LightningDataModule
 
 import albumentations as A
 import albumentations.pytorch
-import utils.augmentations as custom_augmentations
+import src.augmentations as custom_augmentations
 import cv2
 
-from utils.utils import has_not_empty_attr
-from utils.utils import get_logger
+from src.utils import has_not_empty_attr
+from src.utils import get_logger
 
 # set number of Threads to 0 for opencv and albumentations
 cv2.setNumThreads(0)
@@ -119,7 +119,7 @@ class BaseDataModule(LightningDataModule):
         Parameters
         ----------
         dataset : DictConfig
-            config of the dataset, is called by hydra.utils.instantiate(dataset,split=.., transforms=..)
+            config of the dataset, is called by hydra.src.instantiate(dataset,split=.., transforms=..)
         batch_size : int
             batch size for train dataloader
         val_batch_size : int
@@ -197,8 +197,8 @@ class BaseDataModule(LightningDataModule):
         # acc_steps_per_gpu = int(np.ceil(steps_per_gpu / self.trainer.accumulate_grad_batches))
         # max_steps = self.trainer.max_epochs * acc_steps_per_gpu
 
-        log.info("Number of Training steps: {}".format(max_steps))
-        log.info("Number of Training steps per epoch: {}".format(max_steps_epoch))
+        log.info("Number of Training steps: {}  ({} steps per epoch)".format(max_steps,max_steps_epoch))
+
 
         max_steps_val, max_steps_epoch_val = get_max_steps(
             size_dataset=len(self.DS_val),
@@ -209,8 +209,7 @@ class BaseDataModule(LightningDataModule):
             drop_last=False,
         )
 
-        log.info("Number of Validation steps: {}".format(max_steps_val))
-        log.info("Number of Validation steps per epoch: {}".format(max_steps_epoch_val))
+        log.info("Number of Validation steps: {}  ({} steps per epoch)".format(max_steps_val,max_steps_epoch_val))
         return max_steps
 
     def get_augmentations_from_config(self, augmentations: DictConfig) -> list:

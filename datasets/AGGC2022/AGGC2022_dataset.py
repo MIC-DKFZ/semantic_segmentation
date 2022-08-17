@@ -6,7 +6,7 @@ import os
 import zarr
 import json
 import pickle as pkl
-from utils.utils import get_logger
+from src.utils import get_logger
 from numcodecs import blosc
 from threadpoolctl import threadpool_limits
 import cv2

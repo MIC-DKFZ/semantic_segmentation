@@ -12,13 +12,13 @@ from pytorch_lightning import loggers as pl_loggers
 
 # from Segmentation_Model import SegModel
 from Segmentation_Model_AGGC import SegModel_AGGC as SegModel
-from utils.utils import has_not_empty_attr, has_true_attr, log_hyperparameters, get_logger
+from src.utils import has_not_empty_attr, has_true_attr, log_hyperparameters, get_logger
 
 
 log = get_logger(__name__)
 
 
-@hydra.main(config_path="config", config_name="testing")
+@hydra.main(config_path="config", config_name="testing",version_base="1.2")
 def testing(cfg: DictConfig) -> None:
     """
     Running the Testing/Validation

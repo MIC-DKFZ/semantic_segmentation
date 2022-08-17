@@ -22,7 +22,7 @@ import torch.nn as nn
 import torch._utils
 import torch.nn.functional as F
 
-from utils.utils import get_logger
+from src.utils import get_logger
 
 log = get_logger(__name__)
 
@@ -544,6 +544,8 @@ class HighResolutionNet(nn.Module):
             self.load_state_dict(model_dict)
             del model_dict, pretrained_dict
             log.info("Weights successfully loaded")
+        else:
+            raise NotImplementedError("No Pretrained Weights found for {}".format_map(pretrained))
 
 
 def get_seg_model(cfg):

@@ -15,7 +15,7 @@ import numpy as np
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
-from utils.utils import has_not_empty_attr
+from src.utils import has_not_empty_attr
 
 
 def get_mask_stats(dataloader: DataLoader, num_classes: int):

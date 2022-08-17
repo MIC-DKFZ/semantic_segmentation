@@ -3,7 +3,7 @@
 Code slightly adapted and mainly from:
 https://github.com/milesial/Pytorch-UNet
 - model         https://github.com/milesial/Pytorch-UNet/blob/master/unet/unet_model.py
-- model utils   https://github.com/milesial/Pytorch-UNet/blob/master/unet/unet_parts.py
+- model src   https://github.com/milesial/Pytorch-UNet/blob/master/unet/unet_parts.py
 ------------------------------------------------------------------------------
 """
 

@@ -1,17 +1,14 @@
 #@package _global_
 CALLBACKS:
   time_callback:
-    _target_: utils.callbacks.TimeCallback
+    _target_: src.callbacks.TimeCallback
   lr_monitor:
     _target_: pytorch_lightning.callbacks.LearningRateMonitor
     logging_interval: 'step'
   tqdm_progressbar:
     #_target_: pytorch_lightning.callbacks.progress.TQDMProgressBar
-    _target_: utils.callbacks.customTQDMProgressBar
+    _target_: src.callbacks.customTQDMProgressBar
     refresh_rate: 1
   model_summary:
     _target_: pytorch_lightning.callbacks.ModelSummary
     max_depth: 2
-  #gpu_stats_monitor:
-    #_target_: pytorch_lightning.callbacks.GPUStatsMonitor
-    #_target_: pytorch_lightning.callbacks.DeviceStatsMonitor

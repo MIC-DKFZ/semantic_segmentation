@@ -5,7 +5,7 @@ METRIC:
   METRIC_CALL: stepwise
   METRICS:
     mIoU:
-      _target_: utils.metric.IoU
+      _target_: src.metric.IoU
       num_classes: ${DATASET.NUM_CLASSES}
       per_class: True
       ignore_class: 0

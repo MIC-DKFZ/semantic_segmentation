@@ -20,7 +20,7 @@ from torch.utils.data import Dataset
 
 from Segmentation_Model import SegModel
 
-from utils.utils import has_not_empty_attr, get_logger
+from src.utils import has_not_empty_attr, get_logger
 from datasets.DataModules import get_augmentations_from_config
 
 log = get_logger(__name__)
@@ -239,7 +239,7 @@ def show_prediction(overrides_cl: list) -> None:
             break
 
     # instantiate dataset
-    # dataset = hydra.utils.instantiate(cfg.dataset, split="train", transforms=transforms)
+    # dataset = hydra.src.instantiate(cfg.dataset, split="train", transforms=transforms)
     dataset = hydra.utils.instantiate(cfg.dataset, split="test", transforms=transforms)
 
     # define colormap

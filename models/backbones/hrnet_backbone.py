@@ -25,7 +25,7 @@ import torch.nn as nn
 import torch._utils
 import torch.nn.functional as F
 
-from utils.utils import get_logger
+from src.utils import get_logger
 
 log = get_logger(__name__)
 

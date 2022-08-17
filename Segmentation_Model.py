@@ -1,17 +1,15 @@
 import hydra
-import torchmetrics
 from omegaconf import DictConfig
 
 import torch
 import torch.nn.functional as F
 from pytorch_lightning import LightningModule
 from matplotlib import cm
-import numpy as np
 
-from utils.metric import MetricModule
-from utils.loss_function import get_loss_function_from_cfg
-from utils.utils import has_not_empty_attr, has_true_attr
-from utils.utils import get_logger
+from src.metric import MetricModule
+from src.loss_function import get_loss_function_from_cfg
+from src.utils import has_not_empty_attr, has_true_attr
+from src.utils import get_logger
 
 log = get_logger(__name__)
 
@@ -57,8 +55,7 @@ class SegModel(LightningModule):
             self.metric_train = self.metric.clone()
             self.register_buffer("best_metric_train", torch.as_tensor(0), persistent=False)
 
-        # create colormap for visualizing the example predictions and also define number of example
-        # predictions
+        # create colormap for visualizing the example predictions and also define number of example predictions
         self.cmap = torch.tensor(
             cm.get_cmap("viridis", self.config.DATASET.NUM_CLASSES).colors * 255, dtype=torch.uint8
         )[:, 0:3]
@@ -98,15 +95,6 @@ class SegModel(LightningModule):
         log.info(
             "Loss Functions with Weights: %s", list(zip(self.loss_functions, self.loss_weights))
         )
-
-        # self.val_loss = torch.nn.CrossEntropyLoss(
-        #    weight=self.cfg.DATASET.WEIGHTS.cuda()
-        #    if has_not_empty_attr(self.cfg.DATASET, "WEIGHTS")
-        #    else None,
-        #    ignore_index=self.cfg.DATASET.IGNORE_INDEX
-        #    if has_not_empty_attr(self.cfg.DATASET, "IGNORE_INDEX")
-        #    else -100,
-        # )
 
         # instantiate optimizer
         self.optimizer = hydra.utils.instantiate(self.config.optimizer, self.parameters())
@@ -267,8 +255,9 @@ class SegModel(LightningModule):
             log.info("EPOCH: %s", self.current_epoch)
 
             # compute and log global validation metric to tensorboard
-            metric = self.metric.compute()
-            self.log_dict_epoch(metric, prefix="metric/", on_step=False, on_epoch=True)
+            if self.metric_call in ["global","global_and_stepwise"]:
+                metric = self.metric.compute()
+                self.log_dict_epoch(metric, prefix="metric/", on_step=False, on_epoch=True)
 
             # log validation metric to console
             self.metric_logger(

@@ -3,7 +3,7 @@
 </p>
 
 
-#Tools
+# Tools
 
 The ``tools/`` folder contains some useful tools for developing and experimenting. 
 It is not guaranteed that these tools will work for all kind of use-cases, datasets and datatypes but even then
@@ -54,7 +54,7 @@ The output will be saved in *dataset_stats/dataset_name/*. If no output is wante
 ### lr_finder.py 
 Implementation to use pytorch lightning's [Learning Rate Finder](https://pytorch-lightning.readthedocs.io/en/1.4.0/advanced/lr_finder.html)
 to get some guidance when choosing an optimal initial lr (Should be used with caution, especially if random augmentations are used).
-    - --num_training_samples: number of batches which are used from the lr finder (100 by default)
+- --num_training_samples: number of batches which are used from the lr finder (100 by default)
 ````shell
 python tools/lr_finder.py
 pyhton tools/lr_finder.py dataset=Cityscapes model=hrnet --num_training=300

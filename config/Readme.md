@@ -577,17 +577,17 @@ python main hyperparameters=my_hparams
 <p>
 
 Currently [Stochastic Gradient Descent (SGD)](https://pytorch.org/docs/stable/generated/torch.optim.SGD.html)
-is the only supported optimizer.
-SGD can be adapted by changing the following parameters in the *baseline.yaml* of from the command
-line.
+and [MadGrad](https://github.com/facebookresearch/madgrad) are only supported optimizers.
 Since the pytorch implementation of SGD is used also other parameters of the SGB class, like
-nesterov, can be passed:
+nesterov, can be passed (similar for Madgrad):
 
 - **weight_decay:** default = 0.0005
 - **momentum:** default = 0.9
 
 ````shell
-python main weight_decay=0.0001 momentum=0.8 +optimizer.nesterov=True
+python main optimizer=SGD weight_decay=0.0001 momentum=0.8 +optimizer.nesterov=True
+python main optimizer=MADGRAD
+
 ````
 
 </p>
@@ -845,7 +845,7 @@ TRAIN:
 <details><summary>Configure</summary>
 <p>
 
-In this repository the Intersection over Union (*mean_IoU*) and the Dice score (mean_Dice) is provided.
+In this repository the Intersection over Union (**mean_IoU**) and the Dice score (**mean_Dice**) is provided.
 Both metric update a confusion matrix in each step and compute a final scores at the end of each epoch.
 The final score is composed of first calculating the score for each class and then taking the class wise mean.
 By default only this final score is returned and logged, if additionally the score for each class is required use  **mean_IoU_Class** or **mean_Dice_Class**.

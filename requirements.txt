@@ -6,6 +6,9 @@ torchvision>=0.13.1+cu113
 torchmetrics>=0.9.3
 pytorch-lightning>=1.7.1
 
+# Madgrad optimizer
+madgrad>=1.2
+
 # Hydra
 hydra-core>=1.2.0
 hydra-colorlog>=1.2.0

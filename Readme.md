@@ -398,8 +398,8 @@ python main.py model.pretrained=True            # (Default) Pretrained on Coco
 ### Selecting a Dataset
 
 In the same way as the model, also the dataset can be changed from the commandline. 
-For these provided datasets, the corresponding hyperaparmeters (from config/hyperparameters/) and 
-data augmentations (from config/data_augmentation/) are adapted automatically.\
+For these provided datasets, the corresponding hyperaparmeters (from *config/hyperparameters/*) and 
+data augmentations (from *config/data_augmentation/*) are adapted automatically (see *config/dataset/DatasetName.ymla*). \
 **Available options for 'dataset' are: Cityscapes, Cityscapes_coarse, Cityscapes_fine_coarse, VOC2010_Context, VOC2010_Context_60**.
 
 ````shell
@@ -551,7 +551,7 @@ metrics.
   pyhton tools/dataset_stats.py dataset=Cityscapes
   ````
 
-- **lr_finder.py**: Implementation to use pytorch lightning's [Learning Rate Finder](https://pytorch-lightning.readthedocs.io/en/1.4.0/advanced/lr_finder.html)
+- **lr_finder.py**: Script to use pytorch lightning's [Learning Rate Finder](https://pytorch-lightning.readthedocs.io/en/1.4.0/advanced/lr_finder.html)
 to get some guidance when choosing an optimal initial lr (Should be used with caution, especially if random augmentations are used).
   ````shell
   python tools/lr_finder.py
@@ -662,7 +662,7 @@ python main.py batch_size=14 epochs=468
 The use
 of [Mixed Precision](https://pytorch-lightning.readthedocs.io/en/latest/advanced/mixed_precision.html#mixed-precision)
 reduces the training time of the models by 20% to 30%.
-In addition, Mixed Precision was able to improve the results in these experiments.
+In addition, Mixed Precision was able to improve the results in these experiments (no generality).
 Since Mixed Precision drastically reduces the training time, Mixed Precision is used as default for
 further experiments.
 

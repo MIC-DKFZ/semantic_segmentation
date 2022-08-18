@@ -18,5 +18,8 @@ albumentations>=1.2.1
 pillow>=9.2.0
 matplotlib>=3.5.3
 
+# Code Formatter
+black>=22.6.0
+
 # Needed for loading .mat files for processing VOC2010_Context Dataset
 scipy>=1.9.0

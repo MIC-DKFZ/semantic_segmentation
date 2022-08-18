@@ -143,6 +143,7 @@ You may want to familiarize yourself with their basic use beforehand.
   metrics and with a good integrity in Pytorch Lightning.
   Using torchmetrics makes it possible to use custom or predefined metrics and synchronization these
   between multiple devices.
+- **[Black](https://black.readthedocs.io/en/stable/)**: Code Formatter used in this Repo. Check out the [official docs](https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html) on how to use Black or [here](https://akshay-jain.medium.com/pycharm-black-with-formatting-on-auto-save-4797972cf5de) on how to integrate Black into PyCharm.
 
 ## Setting up the Data
 
@@ -521,9 +522,10 @@ parameter(``python testing.py ckpt_dir=<some.dir> environment=some_env``).
 
 ### Additional Tools
 
-The ``tools/`` folder contains some useful tools for developing and experimenting. 
+The [tools/](/tools) folder contains some additional and useful tools for developing and experimenting. 
 It is not guaranteed that these tools will work for all kind of use-cases, datasets and datatypes but even then
-they can be used as a starting point and can be adapted with a few changes.
+they can be used as a starting point and can be adapted with a few changes. 
+The Scripts and tools are shortly listed in the following and explained in more detail in [tools/](/tools).
 
 - **show_data.py**: Load and Visualize the pytorch dataset which is defined in the dataset config.
   - dataset: Name of the dataset config (see [here](#selecting-a-dataset))
@@ -534,18 +536,14 @@ they can be used as a starting point and can be adapted with a few changes.
 
 - **show_prediction.py**: Show the predictions of a trained model. Basically has the same syntax 
 as the [validation/testing](#run-validationtesting), but visualizes the result instead of calculating 
-metrics. The Test Dataset is used for predicting together with the train data-augmentations. For a 
-nicer appearance the normalization operation is inverted during visualization (not for prediction). 
-(Note, depending on the size of the input, the inference time of the model and the available hardware, 
-there might be a delay when sliding through the images)
+metrics.
   - ckpt_dir: path to the checkpoint which should be used
   ````shell
   python tools/show_prediction.py ckpt_dir=<path>
   python tools/show_prediction.py ckpt_dir=ckpt_dir="/../Semantic_Segmentation/logs/VOC2010_Context/hrnet/baseline_/2022-02-15_13-51-42"
   ````
 
-- **dataset_stats.py**: Getting some basic stats about the dataset like: mean and std for each channel, ratio
-of classes and potential class weights. 
+- **dataset_stats.py**: Getting some basic stats and visualizations about the dataset like: mean and std for each channel, appearances and ratio of classes and potential class weights.  
   - dataset: Name of the dataset config (see [here](#selecting-a-dataset))
   ````shell
   python tools/dataset_stats.py dataset=<dataset.name>
@@ -554,10 +552,9 @@ of classes and potential class weights.
 
 - **lr_finder.py**: Implementation to use pytorch lightning's [Learning Rate Finder](https://pytorch-lightning.readthedocs.io/en/1.4.0/advanced/lr_finder.html)
 to get some guidance when choosing an optimal initial lr (Should be used with caution, especially if random augmentations are used).
-  - +num_training: number of batches which are used from the lr finder (100 by default)
   ````shell
   python tools/lr_finder.py
-  pyhton tools/lr_finder.py dataset=Cityscapes model=hrnet +num_training=300
+  pyhton tools/lr_finder.py dataset=Cityscapes model=hrnet
   ````
 
 

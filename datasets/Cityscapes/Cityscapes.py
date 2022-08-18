@@ -200,49 +200,6 @@ class Cityscapes_dataset(torch.utils.data.Dataset):
         return len(self.imgs)
 
 
-def viz_color_encoding():
-    # litte helper function to visualize the color-class encoding
-    width = 700
-    height = 60
-
-    def sub_viz(classes):
-        num = len(classes)
-        img = np.zeros((num * height, width, 3), np.uint8)
-
-        for index, c in enumerate(classes):
-            img[index * height : (height + 1) * height, :] = c.color
-            cv2.putText(
-                img,
-                str(index) + ".",
-                (10, (index) * height + int(height * 0.75)),
-                cv2.FONT_HERSHEY_COMPLEX,
-                1.5,
-                (255, 255, 255),
-                2,
-            )
-            cv2.putText(
-                img,
-                c.name,
-                (150, (index) * height + int(height * 0.75)),
-                cv2.FONT_HERSHEY_COMPLEX,
-                1.5,
-                (255, 255, 255),
-                2,
-            )
-            print(c.name, c.color)
-        for index in range(1, num):
-            cv2.line(img, (0, index * height), (width, index * height), (255, 255, 255))
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        return img
-
-    img_full = sub_viz(classes_34)
-    classes_eval = [c for c in classes_34 if c.ignore_in_eval == False]
-    img_eval = sub_viz(classes_eval)
-
-    cv2.imwrite("Cityscape_color_encoding_full.png", img_full)
-    cv2.imwrite("Cityscape_color_encoding.png", img_eval)
-
-
 if __name__ == "__main__":
     # define some transforms
     transforms = A.Compose(

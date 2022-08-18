@@ -16,7 +16,8 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
 from src.utils import has_not_empty_attr
-
+import cv2
+from matplotlib import cm
 
 def get_mask_stats(dataloader: DataLoader, num_classes: int):
     pixel_count = torch.zeros(num_classes, dtype=int)
@@ -108,6 +109,30 @@ def get_mean_std_sample(dataloader: DataLoader) -> tuple:
     std = (elements_squared / num_batches - mean**2) ** 0.5
     return mean, std
 
+def viz_color_encoding(labels:list[str]):
+    # litte helper function to visualize the color-class encoding
+    width = 700
+    height = 60
+    num = len(labels)
+    img = np.zeros((num * height, width, 3), np.uint8)
+    cmap = np.array(cm.get_cmap("viridis", num).colors * 255,dtype=np.uint8)[:, 0:3]
+    # Opencv requires colors in BGR format
+    cmap=[c[::-1] for c in cmap]
+
+    for i, label in enumerate(labels):
+        img[i * height : (height + 1) * height, :] = cmap[i]
+        cv2.putText(
+            img,
+            str(i) + ".   "+label,
+            (10, (i) * height + int(height * 0.75)),
+            cv2.FONT_HERSHEY_COMPLEX,
+            1.5,
+            (255, 255, 255),
+            2,
+        )
+    for index in range(1, num):
+        cv2.line(img, (0, index * height), (width, index * height), (255, 255, 255))
+    return img
 
 def get_dataset_stats(
     overrides_cl: list,
@@ -131,7 +156,7 @@ def get_dataset_stats(
     input_channels : int, optional
         number of input channels in the dataset
     """
-    hydra.initialize(config_path="../config")
+    hydra.initialize(config_path="../config",version_base="1.1")
     cfg = hydra.compose(config_name="baseline", overrides=overrides_cl)
 
     num_classes = cfg.DATASET.NUM_CLASSES
@@ -181,6 +206,12 @@ def get_dataset_stats(
         output_dir = os.path.join(os.getcwd(), "dataset_stats", cfg.DATASET.NAME)
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
+        print("Output Directory: {}".format(output_dir))
+        '''
+        Save Color Encoding of Classes
+        '''
+        class_color_encoding=viz_color_encoding(cfg.DATASET.CLASS_LABELS)
+        cv2.imwrite(os.path.join(output_dir,"Class_color_encoding.png"),class_color_encoding)
         """
         Save Stats to txt file
         """
@@ -322,7 +353,7 @@ if __name__ == "__main__":
         "--name",
         type=str,
         default=None,
-        help="Name of the sub folder to save the results in",
+        help="Prefix for naming the results",
     )
     parser.add_argument(
         "--split",

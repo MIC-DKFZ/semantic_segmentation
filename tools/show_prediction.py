@@ -12,6 +12,7 @@ from omegaconf import OmegaConf
 import torch
 import numpy as np
 import albumentations as A
+from albumentations.pytorch import ToTensorV2
 import cv2
 from matplotlib import cm
 
@@ -109,6 +110,32 @@ class Visualizer:
 
         return img_np.astype(np.uint8)
 
+    def viz_correctness(self, pred: torch.Tensor, mask: torch.Tensor) -> np.ndarray:
+        """
+        visualizing the correctness of the prediction (where pred is qual to mask)
+
+        Parameters
+        ----------
+        pred : torch.Tensor
+        mask: torch.Tensor
+
+        Returns
+        -------
+        np.ndarray :
+        """
+        print(type(pred),type(mask))
+        cor = np.zeros(self.mask_np.shape, dtype=np.uint8)
+        # where prediction and gt are equal
+        x, y = np.where(pred == mask)
+        # pixel which dont belong to a class (ignore index)
+        x_ign, y_ign = np.where(mask > len(self.cmap))
+
+        cor[:, :] = [255, 0, 0] # Red for not equal pixel
+        cor[x, y] = [0, 255, 0] # Green for equal pixel
+        cor[x_ign, y_ign] = [0, 0, 0] # Black for ignored pixel
+        return cor
+
+
     def update_window(self, *arg, **kwargs) -> None:
         """
         Update the opencv Window when another image should be displayed (another img_id)
@@ -128,9 +155,12 @@ class Visualizer:
             pred = torch.argmax(list(pred.values())[0].squeeze(), dim=0).detach().cpu()
             self.pred = self.color_mask(np.array(pred))
 
+            # Show Correctness of prediction
+            self.cor=self.viz_correctness(pred,mask)
+
+
         # update the the channel and alpha parameter and show the window
         self.update_channel_and_alpha()
-        # self.update_alpha()
 
     def update_channel_and_alpha(self, *arg, **kwargs) -> None:
         """
@@ -164,17 +194,39 @@ class Visualizer:
             # Blend the image with prediction
             if hasattr(self, "pred"):
                 img_np = cv2.addWeighted(self.img_np_chan, 1 - alpha, self.pred, alpha, 0.0)
+                img_np = self.update_corrects(img_np)
             else:
                 img_np = cv2.addWeighted(self.img_np_chan, 1 - alpha, self.mask_np, alpha, 0.0)
             # concat blended image and mask
             fig = np.concatenate((img_np, self.mask_np), 1)
             # transform from RGB to BGR to match the cv2 order
-            fig = cv2.cvtColor(fig, cv2.COLOR_RGB2BGR)
+            self.fig = cv2.cvtColor(fig, cv2.COLOR_RGB2BGR)
             # show image
-            cv2.imshow("Window", fig)
+            cv2.imshow("Window", self.fig)
+
+    def update_corrects(self, img) -> None:
+        """
+        Display the image blended with the mask or prediction on the left, on the right the gt mask
+        Alpha defines the weight of the blending
+        Afterwards update the opencv image
+        """
+        alpha_cor = cv2.getTrackbarPos("correctness", "Window") / 100
+        if alpha_cor>0:
+            #print(self.pred.shape,self.mask_np.shape,(self.pred[:,:]==self.mask_np[:,:]).shape)
+            #x,y=np.where(self.pred[:,:]==self.mask_np[:,:])
+            #print(x.shape,y.shape)
+            #cor=np.zeros(self.mask_np.shape)
+            #cor[:,:]=[255,0,0]
+            #cor[x,y]=[0,255,0,]
+
+            #cor=cor.astype(np.uint8)
+
+            img=cv2.addWeighted(img, 1 - alpha_cor, self.cor, alpha_cor, 0.0)
+        return img
 
 
-def show_prediction(overrides_cl: list) -> None:
+
+def show_prediction(overrides_cl: list,augmentation:str,split:str) -> None:
     """
     Show Model Predictions
     Load Model and Dataset from the checkpoint(ckpt_dir)
@@ -186,7 +238,7 @@ def show_prediction(overrides_cl: list) -> None:
         arguments from the commandline to overwrite the config
     """
     # initialize hydra
-    hydra.initialize(config_path="../config")
+    hydra.initialize(config_path="../config",version_base="1.1")
 
     # change working dir to checkpoint dir
     ckpt_dir = None
@@ -219,19 +271,29 @@ def show_prediction(overrides_cl: list) -> None:
     # load the best checkpoint and load the model
     cfg.ORG_CWD = os.getcwd()
     ckpt_file = glob.glob(os.path.join("checkpoints", "best_*"))[0]
+    if hasattr(cfg.MODEL,"PRETRAINED"):
+        cfg.MODEL.PRETRAINED = False
     model = SegModel.load_from_checkpoint(ckpt_file, config=cfg, strict=False).cuda()
+    #model = SegModel.load_from_checkpoint(ckpt_file, config=cfg).cuda()
+    #print(cfg)
+    #print(cfg.model)
+
+    #model=hydra.utils.instantiate(cfg.model).cuda()
 
     OmegaConf.set_struct(cfg, False)
-    if has_not_empty_attr(cfg.AUGMENTATIONS, "TEST"):
-        # print("T")
-        transforms = get_augmentations_from_config(cfg.datamodule.augmentations.TEST)[0]
-    else:
+    if augmentation == "train":
+        transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TRAIN)[0]
+    elif augmentation == "val":
         transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.VALIDATION)[0]
+    elif augmentation == "test":
+        transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TEST)[0]
+    else:
+        transforms = A.Compose([ToTensorV2()])
+
 
     # check if data is normalized, if yes redo this during visualization of the image
     mean = None
     std = None
-    print(transforms.transforms[0])
     for t in transforms.transforms:  # .transforms:
         if isinstance(t, A.Normalize):
             mean = t.mean
@@ -239,8 +301,7 @@ def show_prediction(overrides_cl: list) -> None:
             break
 
     # instantiate dataset
-    # dataset = hydra.src.instantiate(cfg.dataset, split="train", transforms=transforms)
-    dataset = hydra.utils.instantiate(cfg.dataset, split="test", transforms=transforms)
+    dataset = hydra.utils.instantiate(cfg.dataset, split=split, transforms=transforms)
 
     # define colormap
     color_map = "viridis"
@@ -259,6 +320,7 @@ def show_prediction(overrides_cl: list) -> None:
     cv2.createTrackbar("Image ID", "Window", 0, len(dataset) - 1, visualizer.update_window)
 
     cv2.createTrackbar("alpha", "Window", 50, 100, visualizer.update_alpha)
+    cv2.createTrackbar("correctness", "Window", 0, 100, visualizer.update_alpha)
 
     # look at the first image to get the number of channels
     img, _ = dataset[0]
@@ -285,9 +347,21 @@ def show_prediction(overrides_cl: list) -> None:
 
 
 if __name__ == "__main__":
-    torch.cuda.empty_cache()
     parser = argparse.ArgumentParser()
-
+    parser.add_argument(
+        "--augmentation",
+        type=str,
+        default="test",
+        help="Which augmentations to use: train, val or test (by default)",
+    )
+    parser.add_argument(
+        "--split",
+        type=str,
+        default="test",
+        help="which split to use: train, val or test (by default)",
+    )
     args, overrides = parser.parse_known_args()
+    augmentation = args.augmentation
+    split = args.split
 
-    show_prediction(overrides)
+    show_prediction(overrides,augmentation,split)

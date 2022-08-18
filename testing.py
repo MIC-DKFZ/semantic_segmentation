@@ -10,8 +10,7 @@ from omegaconf import OmegaConf, DictConfig, ListConfig
 from pytorch_lightning import Trainer
 from pytorch_lightning import loggers as pl_loggers
 
-# from Segmentation_Model import SegModel
-from Segmentation_Model_AGGC import SegModel_AGGC as SegModel
+from Segmentation_Model import SegModel
 from src.utils import has_not_empty_attr, has_true_attr, log_hyperparameters, get_logger
 
 

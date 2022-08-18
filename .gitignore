@@ -3,7 +3,6 @@
 *.sh
 *.ckpt
 *.pth
-*.toml
 *__pycache__*
 time/
 logs/

@@ -20,23 +20,7 @@ from tools.show_prediction import Visualizer
 
 log = get_logger(__name__)
 
-# OmegaConf resolver for preventing problems in the output path
-OmegaConf.register_new_resolver(
-    "path_formatter",
-    lambda s: s.replace("[", "")
-    .replace("]", "")
-    .replace("}", "")
-    .replace("{", "")
-    .replace(")", "")
-    .replace("(", "")
-    .replace(",", "_")
-    .replace("=", "_")
-    .replace("/", ".")
-    .replace("+", ""),
-)
-
-
-def show_data(overrides_cl: list) -> None:
+def show_data(overrides_cl: list,augmentation:str,split:str) -> None:
     """
     Visualizing a Dataset
     initializing the dataset defined in the config
@@ -48,7 +32,7 @@ def show_data(overrides_cl: list) -> None:
         arguments from commandline to overwrite hydra config
     """
     # Init and Compose Hydra to get the config
-    hydra.initialize(config_path="../config")
+    hydra.initialize(config_path="../config",version_base="1.1")
     cfg = hydra.compose(config_name="baseline", overrides=overrides_cl)
 
     # Define Colormap and basic Transforms and instantiate the dataset
@@ -57,19 +41,28 @@ def show_data(overrides_cl: list) -> None:
         :, 0:3
     ]
 
-    transforms = A.Compose([ToTensorV2()])
-    # dataset = hydra.src.instantiate(cfg.dataset, split="train", transforms=transforms)
-    dataset = hydra.utils.instantiate(cfg.dataset, split="train", transforms=transforms)
-    # transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TRAIN)
-    # print("Done")
-    # get_augmentations_from_config(self.augmentations.TRAIN)[0]
+    OmegaConf.set_struct(cfg, False)
+    if augmentation is None:
+        transforms = A.Compose([ToTensorV2()])
+    elif augmentation == "train":
+        transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TRAIN)[0]
+    elif augmentation == "val":
+        transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.VALIDATION)[0]
+    elif augmentation == "test":
+        transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TEST)[0]
 
-    #
-    # dataModule = hydra.src.instantiate(cfg.datamodule, _recursive_=False)
-    # dataModule.setup(stage="fit")
-    # dataset = dataModule.DS_train
+    dataset = hydra.utils.instantiate(cfg.dataset, split=split, transforms=transforms)
 
-    visualizer = Visualizer(dataset, cmap)
+    # check if data is normalized, if yes redo this during visualization of the image
+    mean = None
+    std = None
+    for t in transforms.transforms:  # .transforms:
+        if isinstance(t, A.Normalize):
+            mean = t.mean
+            std = t.std
+            break
+
+    visualizer = Visualizer(dataset, cmap,mean=mean, std=std)
 
     # Create the cv2 Window
     cv2.namedWindow("Window", cv2.WINDOW_NORMAL)
@@ -102,7 +95,21 @@ def show_data(overrides_cl: list) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-
+    parser.add_argument(
+        "--augmentation",
+        type=str,
+        default=None,
+        help="Which augmentations to use: None (by default), train, val or test",
+    )
+    parser.add_argument(
+        "--split",
+        type=str,
+        default="train",
+        help="which split to use: train (by default), val or test",
+    )
     args, overrides = parser.parse_known_args()
+    augmentation=args.augmentation
+    split=args.split
 
-    show_data(overrides)
+
+    show_data(overrides,augmentation,split)

@@ -22,7 +22,7 @@ from src.utils import has_true_attr, has_not_empty_attr, get_logger, num_gpus
 log = get_logger(__name__)
 
 
-def find_lr(overrides_cl: list) -> None:
+def find_lr(overrides_cl: list,num_training_samples:int) -> None:
     """
     Implementation for using Pytorch Lightning learning rate finder
 
@@ -30,9 +30,11 @@ def find_lr(overrides_cl: list) -> None:
     ----------
     overrides_cl : list of strings
         arguments from the commandline to overwrite the config
+    num_training_samples: int
+        how many samples to use for lr finding
     """
     # initialize hydra
-    hydra.initialize(config_path="../config")
+    hydra.initialize(config_path="../config",version_base="1.1")
 
     overrides_cl.append("ORG_CWD=./")
     cfg = hydra.compose(config_name="baseline", overrides=overrides_cl)
@@ -53,11 +55,11 @@ def find_lr(overrides_cl: list) -> None:
 
     # Logging information about gpu setup
     avail_GPUS = torch.cuda.device_count()
-    selected_GPUS = cfg.pl_trainer.gpus
+    selected_GPUS = cfg.pl_trainer.devices
     number_gpus = num_gpus(avail_GPUS, selected_GPUS)
 
     log.info("Available GPUs: %s - %s", avail_GPUS, torch.cuda.get_device_name())
-    log.info("Number of used GPUs: %s    Selected GPUs: %s", number_gpus, cfg.pl_trainer.gpus)
+    log.info("Number of used GPUs: %s    Selected GPUs: %s", number_gpus, cfg.pl_trainer.devices)
     log.info("CUDA version: %s", torch._C._cuda_getCompiledVersion())
 
     # Defining the datamodule
@@ -87,7 +89,7 @@ def find_lr(overrides_cl: list) -> None:
     lr_finder = trainer.tuner.lr_find(
         model=model,
         datamodule=dataModule,
-        num_training=cfg.num_training if has_not_empty_attr(cfg, "num_training") else 100,
+        num_training=num_training_samples,
     )
     print("lr suggestion: ", lr_finder.suggestion())
 
@@ -97,7 +99,12 @@ def find_lr(overrides_cl: list) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-
+    parser.add_argument(
+        "--num_training_samples",
+        type=int,
+        default=100,
+        help="how many samples to use for lr finding",
+    )
     args, overrides = parser.parse_known_args()
-
-    find_lr(overrides)
+    num_training_samples=args.num_training_samples
+    find_lr(overrides,num_training_samples)

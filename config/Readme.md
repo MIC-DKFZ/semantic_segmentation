@@ -1032,6 +1032,8 @@ Example to change the config during testing. One way is to add *TESTING* somewhe
 to overwrite arguments from the commandline. If none of both is used the same config used for 
 training is also used for testing.
 
+For The VOC Dataset and the hrnet_ocr_ms model already some test settings are defined. See the corresponding .yaml file for more details.
+
 ````yaml
 config/somewhere/xxx.yaml
 ─────────────────────────────

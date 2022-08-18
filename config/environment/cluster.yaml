@@ -2,7 +2,7 @@
 CALLBACKS:
   tqdm_progressbar: ~
 pl_trainer:
-    enable_progress_bar: False
+    enable_progress_bar: False    # Discable Progressbar in this environment
     enable_checkpointing: True
 
 LOGDIR: /dkfz/cluster/gpu/checkpoints/OE0441/l727r

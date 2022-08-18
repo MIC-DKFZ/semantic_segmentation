@@ -66,4 +66,3 @@ def get_loss_function_from_cfg(name_lf: str, cfg: DictConfig) -> list:
     else:
         raise NotImplementedError("No Lossfunction found for {}".format(name_lf))
     return loss_function
-

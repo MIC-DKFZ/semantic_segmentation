@@ -21,5 +21,3 @@ def RandomJPEGcompression(image):
 class JPEGcompressor(ImageOnlyTransform):
     def apply(self, img, **params):
         return RandomJPEGcompression(img)
-
-

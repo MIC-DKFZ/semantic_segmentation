@@ -16,7 +16,7 @@
 
 This repository contains an easy-to-use and flexibly customizable framework for training semantic
 segmentation models.
-The focus was put on being usable out of the box, but also on giving the possibility to be adapted to individual projects.
+The focus was put on being usable out of the box, without being a black box and giving the possibility to be adapted to individual projects.
 Therefore, this repository is designed to be extended with additional models and datasets, as well as other optimizers, schedulers,
 metrics, loss functions and data augmentation pipelines.
 In addition, new and popular packages such as Pytorch Lightning, Hydra and Albumentations were used 

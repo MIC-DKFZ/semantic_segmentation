@@ -20,7 +20,8 @@ from tools.show_prediction import Visualizer
 
 log = get_logger(__name__)
 
-def show_data(overrides_cl: list,augmentation:str,split:str) -> None:
+
+def show_data(overrides_cl: list, augmentation: str, split: str) -> None:
     """
     Visualizing a Dataset
     initializing the dataset defined in the config
@@ -32,7 +33,7 @@ def show_data(overrides_cl: list,augmentation:str,split:str) -> None:
         arguments from commandline to overwrite hydra config
     """
     # Init and Compose Hydra to get the config
-    hydra.initialize(config_path="../config",version_base="1.1")
+    hydra.initialize(config_path="../config", version_base="1.1")
     cfg = hydra.compose(config_name="baseline", overrides=overrides_cl)
 
     # Define Colormap and basic Transforms and instantiate the dataset
@@ -62,7 +63,7 @@ def show_data(overrides_cl: list,augmentation:str,split:str) -> None:
             std = t.std
             break
 
-    visualizer = Visualizer(dataset, cmap,mean=mean, std=std)
+    visualizer = Visualizer(dataset, cmap, mean=mean, std=std)
 
     # Create the cv2 Window
     cv2.namedWindow("Window", cv2.WINDOW_NORMAL)
@@ -108,8 +109,7 @@ if __name__ == "__main__":
         help="which split to use: train (by default), val or test",
     )
     args, overrides = parser.parse_known_args()
-    augmentation=args.augmentation
-    split=args.split
+    augmentation = args.augmentation
+    split = args.split
 
-
-    show_data(overrides,augmentation,split)
+    show_data(overrides, augmentation, split)

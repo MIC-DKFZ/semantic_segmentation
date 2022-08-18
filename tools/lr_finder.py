@@ -22,7 +22,7 @@ from src.utils import has_true_attr, has_not_empty_attr, get_logger, num_gpus
 log = get_logger(__name__)
 
 
-def find_lr(overrides_cl: list,num_training_samples:int) -> None:
+def find_lr(overrides_cl: list, num_training_samples: int) -> None:
     """
     Implementation for using Pytorch Lightning learning rate finder
 
@@ -34,7 +34,7 @@ def find_lr(overrides_cl: list,num_training_samples:int) -> None:
         how many samples to use for lr finding
     """
     # initialize hydra
-    hydra.initialize(config_path="../config",version_base="1.1")
+    hydra.initialize(config_path="../config", version_base="1.1")
 
     overrides_cl.append("ORG_CWD=./")
     cfg = hydra.compose(config_name="baseline", overrides=overrides_cl)
@@ -106,5 +106,5 @@ if __name__ == "__main__":
         help="how many samples to use for lr finding",
     )
     args, overrides = parser.parse_known_args()
-    num_training_samples=args.num_training_samples
-    find_lr(overrides,num_training_samples)
+    num_training_samples = args.num_training_samples
+    find_lr(overrides, num_training_samples)

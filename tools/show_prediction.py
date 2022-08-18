@@ -123,18 +123,17 @@ class Visualizer:
         -------
         np.ndarray :
         """
-        print(type(pred),type(mask))
+        print(type(pred), type(mask))
         cor = np.zeros(self.mask_np.shape, dtype=np.uint8)
         # where prediction and gt are equal
         x, y = np.where(pred == mask)
         # pixel which dont belong to a class (ignore index)
         x_ign, y_ign = np.where(mask > len(self.cmap))
 
-        cor[:, :] = [255, 0, 0] # Red for not equal pixel
-        cor[x, y] = [0, 255, 0] # Green for equal pixel
-        cor[x_ign, y_ign] = [0, 0, 0] # Black for ignored pixel
+        cor[:, :] = [255, 0, 0]  # Red for not equal pixel
+        cor[x, y] = [0, 255, 0]  # Green for equal pixel
+        cor[x_ign, y_ign] = [0, 0, 0]  # Black for ignored pixel
         return cor
-
 
     def update_window(self, *arg, **kwargs) -> None:
         """
@@ -156,8 +155,7 @@ class Visualizer:
             self.pred = self.color_mask(np.array(pred))
 
             # Show Correctness of prediction
-            self.cor=self.viz_correctness(pred,mask)
-
+            self.cor = self.viz_correctness(pred, mask)
 
         # update the the channel and alpha parameter and show the window
         self.update_channel_and_alpha()
@@ -211,22 +209,21 @@ class Visualizer:
         Afterwards update the opencv image
         """
         alpha_cor = cv2.getTrackbarPos("correctness", "Window") / 100
-        if alpha_cor>0:
-            #print(self.pred.shape,self.mask_np.shape,(self.pred[:,:]==self.mask_np[:,:]).shape)
-            #x,y=np.where(self.pred[:,:]==self.mask_np[:,:])
-            #print(x.shape,y.shape)
-            #cor=np.zeros(self.mask_np.shape)
-            #cor[:,:]=[255,0,0]
-            #cor[x,y]=[0,255,0,]
+        if alpha_cor > 0:
+            # print(self.pred.shape,self.mask_np.shape,(self.pred[:,:]==self.mask_np[:,:]).shape)
+            # x,y=np.where(self.pred[:,:]==self.mask_np[:,:])
+            # print(x.shape,y.shape)
+            # cor=np.zeros(self.mask_np.shape)
+            # cor[:,:]=[255,0,0]
+            # cor[x,y]=[0,255,0,]
 
-            #cor=cor.astype(np.uint8)
+            # cor=cor.astype(np.uint8)
 
-            img=cv2.addWeighted(img, 1 - alpha_cor, self.cor, alpha_cor, 0.0)
+            img = cv2.addWeighted(img, 1 - alpha_cor, self.cor, alpha_cor, 0.0)
         return img
 
 
-
-def show_prediction(overrides_cl: list,augmentation:str,split:str) -> None:
+def show_prediction(overrides_cl: list, augmentation: str, split: str) -> None:
     """
     Show Model Predictions
     Load Model and Dataset from the checkpoint(ckpt_dir)
@@ -238,7 +235,7 @@ def show_prediction(overrides_cl: list,augmentation:str,split:str) -> None:
         arguments from the commandline to overwrite the config
     """
     # initialize hydra
-    hydra.initialize(config_path="../config",version_base="1.1")
+    hydra.initialize(config_path="../config", version_base="1.1")
 
     # change working dir to checkpoint dir
     ckpt_dir = None
@@ -271,14 +268,14 @@ def show_prediction(overrides_cl: list,augmentation:str,split:str) -> None:
     # load the best checkpoint and load the model
     cfg.ORG_CWD = os.getcwd()
     ckpt_file = glob.glob(os.path.join("checkpoints", "best_*"))[0]
-    if hasattr(cfg.MODEL,"PRETRAINED"):
+    if hasattr(cfg.MODEL, "PRETRAINED"):
         cfg.MODEL.PRETRAINED = False
     model = SegModel.load_from_checkpoint(ckpt_file, config=cfg, strict=False).cuda()
-    #model = SegModel.load_from_checkpoint(ckpt_file, config=cfg).cuda()
-    #print(cfg)
-    #print(cfg.model)
+    # model = SegModel.load_from_checkpoint(ckpt_file, config=cfg).cuda()
+    # print(cfg)
+    # print(cfg.model)
 
-    #model=hydra.utils.instantiate(cfg.model).cuda()
+    # model=hydra.utils.instantiate(cfg.model).cuda()
 
     OmegaConf.set_struct(cfg, False)
     if augmentation == "train":
@@ -289,7 +286,6 @@ def show_prediction(overrides_cl: list,augmentation:str,split:str) -> None:
         transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TEST)[0]
     else:
         transforms = A.Compose([ToTensorV2()])
-
 
     # check if data is normalized, if yes redo this during visualization of the image
     mean = None
@@ -364,4 +360,4 @@ if __name__ == "__main__":
     augmentation = args.augmentation
     split = args.split
 
-    show_prediction(overrides,augmentation,split)
+    show_prediction(overrides, augmentation, split)

@@ -67,37 +67,3 @@ def get_loss_function_from_cfg(name_lf: str, cfg: DictConfig) -> list:
         raise NotImplementedError("No Lossfunction found for {}".format(name_lf))
     return loss_function
 
-
-"""
-# Some testing with weighting Batch samples
-class CrossEntropyLoss_AGGC(torch.nn.CrossEntropyLoss):
-    def __init__(self, **kwargs):
-        self.subset_weights = {"Subset1": 1.0, "Subset2": 0.33, "Subset3": 0.33}
-        # self.subset_weights = {"Subset1": 1, "Subset2": 1, "Subset3": 1}
-        super().__init__(**kwargs)
-
-    def forward(self, input: Tensor, target: Tensor, subset: [str] = None) -> Tensor:
-        loss = super(CrossEntropyLoss_AGGC, self).forward(input, target)
-        # loss = torch.mean(loss, dim=1)
-        # print(sum(self.weight))
-        # loss.sum() / self.weight[target].sum()
-        if self.weight is not None:
-            weights = (
-                torch.tensor([self.subset_weights[s] for s in subset], device=loss.device)
-                .unsqueeze(1)
-                .unsqueeze(2)
-            )
-            loss *= weights
-            loss = loss.sum() / self.weight[target].sum()
-
-        else:
-            weights = (
-                torch.tensor([self.subset_weights[s] for s in subset], device=loss.device)
-                .unsqueeze(1)
-                .unsqueeze(2)
-            )
-            loss *= weights
-            loss = loss[target != self.ignore_index].mean()
-
-        return loss
-"""

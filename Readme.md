@@ -43,7 +43,29 @@ For an advanced use of this framework, the [***config/*
 folder**](/config#walkthrough-the-config-jungle) contains a full explanation of all available
 configurations and how to customize the code to your needs.
 
-### Overview
+## Table of Contents
+- [Overview](#overview)
+- [How To Run](#how-to-run)
+  - [Requirements](#requirements)
+  - [Setting up the Data](#setting-up-the-data)
+    - [Cityscapes](#cityscapes)
+    - [Cityscapes_Coarse](#cityscapes_coarse)
+    - [PASCAL Context](#pascal-context)
+  - [Download Pretrained Weights](#download-pretrained-weights)
+  - [Running Code](#running-code)
+    - [Baseline](#baseline)
+    - [Selecting a Model](#selecting-a-model)
+    - [Selecting a Dataset](#selecting-a-dataset)
+    - [Changing Hyperparmeters](#changing-hyperparmeters)
+    - [Changing Loss Function(s)](#changing-loss-functions)
+    - [Logging and Checkpointing](#logging-and-checkpointing)
+    - [Run Testing/Validation](#run-testingvalidation)
+    - [Additional Tools](#additional-tools)
+- [Experiments](#experiments)
+  - [Cityscapes](#cityscapes-1)
+  - [Pascal VOC2010 Context](#pascal-voc2010-context)
+
+# Overview
 
 **Cityscapes**
 

@@ -15,6 +15,22 @@ or datasets (and more) without changing the base code.
 Since Hydra uses the [OmegaConf](https://omegaconf.readthedocs.io/en/2.1_branch/) package to
 handle *.yaml* files, Omegaconf and YAML are also briefly introduced.
 
+### Table of Contents
+- [Basics](#basics)
+- [OmegaConf in a Nutshell](#omegaconf-in-a-nutshell)
+- [YAML in a Nutshell](#yaml-in-a-nutshell)
+- [Configure the Configuration](#configure-the-configuration)
+  - [Model](#model)
+  - [Dataset](#dataset)
+  - [Hyperparameters and Pytorch Lightning Trainer](#hyperparameters-and-pytorch-lightning-trainer)
+  - [Optimizer](#optimizer)
+  - [LR Scheduler](#lr-scheduler)
+  - [Loss Function](#loss-function)
+  - [Data Augmentations](#data-augmentations)
+  - [Metric](#metric)
+  - [Environment](#environment)
+  - [Testing](#testing)
+
 ## Basics
 
 [Hydra](https://hydra.cc/) automatically loads and composes different configuration files and allows

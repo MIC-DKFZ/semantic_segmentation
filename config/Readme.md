@@ -727,8 +727,7 @@ python main.py lossfunction=[RMI, CE] lossweight=[1,0.4]        # Two outputs li
 python main.py lossfunction=[wRMI, wCE, wCE, wCE] lossweight=[1, 0.5, 0.1, 0.05]  # Four outputs like OCR+MS
 ```
 
-Consider the number of outputs of each model for **defining the correct number of losses in the
-right order**.
+Consider the number of outputs of each model for **defining the correct number of losses in the right order**.
 If the number of given loss functions/lossweights is higher than the number of model outputs that's
 no problem and only the first corresponding lossfunctions/lossweights are used.
 For the supported models the number of outputs is listed [here](../config#loss-function)
@@ -788,10 +787,10 @@ give [here](https://albumentations.ai/docs/getting_started/mask_augmentation/)
 and an overview about all transformations which are supported by Albumentations is
 given [here](https://albumentations.ai/docs/getting_started/transforms_and_targets/).
 Thereby this repository provides a simple API for defining data augmentations.
-To define custom data augmentations adopt the following example and put it into *
-config/data_augmentations/custom_augmentation.yaml*.
-Train and Test transformations are defined separately using *AUGMENTATIONS.TEST* and *
-AUGMENTATIONS.TRAIN* (see example).
+To define custom data augmentations adopt the following example and put it into 
+*config/data_augmentations/custom_augmentation.yaml*.
+Train and Test transformations are defined separately using *AUGMENTATIONS.TEST* and 
+*AUGMENTATIONS.TRAIN* (see example).
 Thereby different Albumentations transformations are listed in list format, while there parameters
 are given as dicts.
 Some transformations like *Compose()* or *OneOf()* need other transformations as input.

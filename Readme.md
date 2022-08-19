@@ -181,8 +181,8 @@ Moreover, the [customization section](/config#dataset) gives advice on adding fu
 <p>
 
 Download the Cityscapes dataset from [here](https://www.cityscapes-dataset.com/downloads/).
-You have to create an account and afterward download: *leftImg8bit_trainvaltest.zip* (11GB)  and *
-gtFine_trainvaltest.zip* (241MB).
+You have to create an account and afterward download: *leftImg8bit_trainvaltest.zip* (11GB)  and 
+*gtFine_trainvaltest.zip* (241MB).
 Unzip them and put them into a folder, the structure of the folder should now look like this:
 
 ````
@@ -219,8 +219,8 @@ python datasets/Cityscapes/process_Cityscapes.py home/.../Datasets/cityscapes
 
 After downloading and setting up the data, the last step is to adjust the path in the configuration.
 Open the file of the environment you are using (by default *config/environment/local.yaml*) and
-adopt the cityscapes path to the location of the folder where your *gtFine_trainvaltest* and *
-leftImg8bit_trainvaltest* are.
+adopt the cityscapes path to the location of the folder where your *gtFine_trainvaltest* and 
+*leftImg8bit_trainvaltest* are.
 For this example this would look like this:
 
 ````yaml
@@ -283,8 +283,8 @@ Click [here](https://cs.stanford.edu/~roozbeh/pascal-context/trainval.tar.gz) fo
 downloading the labels or do it manually by downloading the file *trainval.tar.gz (30.7 MB file)*
 from [PASCAL-Context](https://cs.stanford.edu/~roozbeh/pascal-context/#download).
 Click [here](http://host.robots.ox.ac.uk/pascal/VOC/voc2010/VOCtrainval_03-May-2010.tar) for
-directly downloading the images or do it manually by downloading the file *training/validation
-data (1.3GB tar file)*
+directly downloading the images or do it manually by downloading the file 
+*training/validation data (1.3GB tar file)*
 from [PASCAL VOC](http://host.robots.ox.ac.uk/pascal/VOC/voc2010/index.html#devkit).
 Unzip both files and put them into a folder.
 The structure of you folders should look like this:

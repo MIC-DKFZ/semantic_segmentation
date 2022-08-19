@@ -551,15 +551,17 @@ class HighResolutionNet(nn.Module):
 
             # log info about weights which are not found and weights which have a shape mismatch
             if len(no_match):
-                if len(no_match) >= 5:
+                num = len(no_match)
+                if num >= 5:
                     no_match = list(no_match)[:5]
                     no_match.append("...")
-                log.info("No pretrained Weights found for: {}".format(no_match))
+                log.warning("No pretrained Weights found for {} layers: {}".format(num, no_match))
             if len(shape_mismatch):
-                if len(shape_mismatch) >= 5:
+                num = len(shape_mismatch)
+                if num >= 5:
                     shape_mismatch = list(shape_mismatch)[:5]
                     shape_mismatch.append("...")
-                log.info("Shape Mismatch for: {}".format(shape_mismatch))
+                log.warning("Shape Mismatch for {} layers: {}".format(num, shape_mismatch))
 
             # load weights
             model_dict.update(pretrained_dict)

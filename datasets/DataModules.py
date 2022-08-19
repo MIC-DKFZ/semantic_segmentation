@@ -13,7 +13,7 @@ import cv2
 from src.utils import has_not_empty_attr
 from src.utils import get_logger
 
-# set number of Threads to 0 for opencv and albumentations
+# set number of Threads to 0 for opencv and albumentations for cleaner dataloader
 cv2.setNumThreads(0)
 # import logger
 log = get_logger(__name__)
@@ -195,11 +195,6 @@ class BaseDataModule(LightningDataModule):
             num_epochs=self.trainer.max_epochs,
             drop_last=True,
         )
-        # base_size = len(self.DS_train)
-        # steps_per_epoch = base_size // self.batch_size
-        # steps_per_gpu = int(np.ceil(steps_per_epoch / self.trainer.num_devices))
-        # acc_steps_per_gpu = int(np.ceil(steps_per_gpu / self.trainer.accumulate_grad_batches))
-        # max_steps = self.trainer.max_epochs * acc_steps_per_gpu
 
         log.info(
             "Number of Training steps: {}  ({} steps per epoch)".format(max_steps, max_steps_epoch)

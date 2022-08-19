@@ -1,6 +1,6 @@
 #@package _global_
 model:
-  _target_: models.DeepLabv3.get_seg_model #torchvision.models.segmentation.deeplabv3_resnet101
+  _target_: models.DeepLabv3.get_seg_model
   num_classes: ${DATASET.NUM_CLASSES}
   pretrained: True
   aux_loss: True

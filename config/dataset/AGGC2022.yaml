@@ -16,9 +16,9 @@ dataset:
   sampling: point
   RandomProb: 0.0
   NumSamplesPerSubject: 500 #1000
-  PatchSize: 512
+  PatchSize: 2024
   sampling_strategy: 0
-  #Subset: None
+  Subset: Subset1
 # DATASET is used to store information about the dataset which are needed during training
 DATASET:
   # Required dataser arguments

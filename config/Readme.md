@@ -462,7 +462,7 @@ afterwards setting up its config file.
    dataset:
      _target_: datasets.MyDataset.Custom_dataset 
      root: /home/.../Datasets/my_dataset     #the root to the data as an example input
-     #root: ${path.my_dataset}               #the root if defined in config/environment/used_env.yaml
+     #root: ${paths.my_dataset}               #the root if defined in config/environment/used_env.yaml
      input1: ...                    #All your other input arguments
      input2: ...
    # DATASET is used to store information about the dataset which are needed during training

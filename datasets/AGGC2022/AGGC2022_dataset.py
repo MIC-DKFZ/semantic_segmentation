@@ -425,7 +425,7 @@ class ChallengeDataset_Validation(Dataset):
             subset = subject.rsplit("/", 1)[1].split("_", 1)[0]
             # print(subset)
             # print(Extracted_Patch.shape, Extracted_Mask.shape, subset)
-        return Extracted_Patch, Extracted_Mask, subset
+        return Extracted_Patch, Extracted_Mask  # , subset
 
 
 class ChallengeDataset_point_sampling(Dataset):
@@ -528,7 +528,7 @@ class ChallengeDataset_point_sampling(Dataset):
             Extracted_Mask = Extracted_Mask.type(torch.long)
 
         subset = WSIPath.rsplit("/", 1)[1].split("_", 1)[0]
-        return Extracted_Patch, Extracted_Mask, subset
+        return Extracted_Patch, Extracted_Mask  # , subset
 
 
 class ChallengeDataset_point_sampling_new(Dataset):
@@ -654,7 +654,7 @@ class ChallengeDataset_point_sampling_new(Dataset):
 
         subset = ImgPath.rsplit("/", 1)[1].split("_", 1)[0]
         # if Extracted_Patch.shape!=[512,512,3
-        return Extracted_Patch, Extracted_Mask, subset
+        return Extracted_Patch, Extracted_Mask  # , subset
 
 
 class ChallengeDataset_box_point_sampling(Dataset):

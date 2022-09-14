@@ -33,7 +33,7 @@ class MetricModule(MetricCollection):
 class ConfusionMatrix(Metric):
     full_state_update = False
 
-    def __init__(self, num_classes: int, labels: list[str] = None) -> None:
+    def __init__(self, num_classes: int, labels: list = None) -> None:
         """
         Create an empty confusion matrix
 

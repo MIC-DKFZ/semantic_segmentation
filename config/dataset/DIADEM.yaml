@@ -1,4 +1,7 @@
 #@package _global_
+defaults:
+  - override /data_augmentation: DIADEM
+  #- override /hyperparameters: Cityscapes
 # dataset is used to initialize your custom dataset,
 # _target_: should point to your dataset class
 # afterwards you can handle your custom input arguments which are used to initialize the dataset
@@ -11,7 +14,7 @@ DATASET:
   NAME: DIADEM            # Used for the logging directory
   NUM_CLASSES: 2    # Needed for defining the model and the metrics
   # (Optional) but needed if ignore index should be used
-  #IGNORE_INDEX:    # Needed for the loss function, if no ignore indes set to 255 or another number
+  IGNORE_INDEX: 255   # Needed for the loss function, if no ignore indes set to 255 or another number
                    # which do no occur in your dataset
   # (Optional) needed if weighted lossfunctions are used
   #CLASS_WEIGHTS: [ 0.9, 1.1, ...]

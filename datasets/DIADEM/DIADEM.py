@@ -9,21 +9,22 @@ from albumentations.pytorch import ToTensorV2
 from src.visualization_utils import show_data
 from src.utils import get_logger
 from PIL import Image
+import json
 
 log = get_logger(__name__)
 
 
 class DIADEM_dataset(torch.utils.data.Dataset):
-    def __init__(self, root, split, transforms):
+    def __init__(self, root, split, transforms, fold=0):
         # get your data for the corresponding split
-        # if split == "train":
-        self.imgs = glob.glob(os.path.join(root, "imagesTr", "*.png"))
-        self.masks = glob.glob(os.path.join(root, "labelsTr", "*.png"))
-        self.imgs.sort()
-        self.masks.sort()
-        # if split == "val" or split == "test":  # if you have dont have a test set use the validation set
-        #    self.imgs = ...
-        #    self.masks = ...
+        if split == "test":
+            split = "val"
+
+        with open(os.path.join(root, "splits_final.json")) as f:
+            splits = json.load(f)[fold][split]
+
+        self.imgs = [os.path.join(root, "imagesTr", name + "_0000.png") for name in splits]
+        self.masks = [os.path.join(root, "labelsTr", name + ".png") for name in splits]
 
         # save the transformations
         self.transforms = transforms
@@ -32,15 +33,15 @@ class DIADEM_dataset(torch.utils.data.Dataset):
         # reading images and masks as numpy arrays
         img = cv2.imread(self.imgs[idx])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # cv2 reads images in BGR order
-        print(img.shape)
+
         mask = cv2.imread(self.masks[idx], -1)
 
         # thats how you apply Albumentations transformations
         transformed = self.transforms(image=img, mask=mask)
         img = transformed["image"]
         mask = transformed["mask"]
-        print(img.shape)
-        return img, mask  # .long()
+
+        return img, mask.long()
 
     def __len__(self):
         return len(self.imgs)
@@ -91,26 +92,28 @@ if __name__ == "__main__":
     ###################
     bins = 10
 
-    min_a = 0
-    max_a = 1.9
+    min_a = 10
+    max_a = 0
     range_a = np.linspace(min_a, max_a, bins)
 
     min_t = 0
-    max_t = 1
+    max_t = 1.9
     range_t = np.linspace(min_t, max_t, bins)
     ###################
 
     for val in range_a:
         transforms = A.Compose(
-            A.Blur
-            # [A.Sharpen(lightness=(val, val), p=1)]
-            [A.UnsharpMask(blur_limit=(3, 7), sigma_limit=(val, val), alpha=1, p=1)]
+            [A.Blur(blur_limit=3, p=1)]
+            # [A.Sharpen(lightness=(val, val), alpha=(1, 1), p=1)]
+            # [A.UnsharpMask(sigma_limit=val, alpha=(0.2, np.clip(val, 0.2, 1)), p=1)]
             # [A.ColorJitter(brightness=(val, val), contrast=0, saturation=0, hue=0, p=1)]
             # [A.Solarize(threshold=(val, 255), p=1)]
             # [c]
         )
         # print(A.Sharpen(lightness=(val, val), p=1).get_params())
+
         im_a = transforms(image=img.copy())["image"]
+        print(im_a == img)
         cv2.putText(
             im_a,
             str(val)[0:8],

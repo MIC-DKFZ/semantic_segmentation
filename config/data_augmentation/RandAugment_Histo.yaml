@@ -4,7 +4,7 @@ AUGMENTATIONS:
   TRAIN:
     - Compose:
         transforms:
-          - RandAugment:
+          - RandAugment_Histo:
               N: 3
               M: 3
               mode: 2

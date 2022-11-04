@@ -5,13 +5,13 @@ logging.basicConfig(level=logging.INFO)
 import os
 import glob
 import hydra
-from omegaconf import OmegaConf, DictConfig, ListConfig
+from omegaconf import OmegaConf, DictConfig
 
 from pytorch_lightning import Trainer
 from pytorch_lightning import loggers as pl_loggers
 
-from Segmentation_Model import SegModel
-from src.utils import has_not_empty_attr, has_true_attr, log_hyperparameters, get_logger
+from trainers.Semantic_Segmentation_Trainer import SegModel
+from src.utils import has_not_empty_attr, log_hyperparameters, get_logger
 
 
 log = get_logger(__name__)
@@ -79,7 +79,7 @@ def testing(cfg: DictConfig) -> None:
         save_dir="testing", name="", version="", default_hp_metric=False
     )
 
-    # Parsing the pl_trainer args and instantiate the trainer
+    # Parsing the pl_trainer args and instantiate the trainers
     trainer_args = getattr(cfg, "pl_trainer") if has_not_empty_attr(cfg, "pl_trainer") else {}
     trainer = Trainer(callbacks=callbacks, logger=tb_logger, **trainer_args)
 

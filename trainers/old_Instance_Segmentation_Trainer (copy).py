@@ -10,6 +10,8 @@ from src.metric import MetricModule
 from src.loss_function import get_loss_function_from_cfg
 from src.utils import has_not_empty_attr, has_true_attr
 from src.utils import get_logger
+import numpy as np
+import cv2
 
 log = get_logger(__name__)
 
@@ -29,29 +31,22 @@ class SegModel(LightningModule):
 
         # instantiate model from config
         self.model = hydra.utils.instantiate(self.config.model)
-
+        # print(self.model)
+        # print(self.model)
+        # quit()
         # instantiate metric from config and metric related parameters
         self.metric_name = config.METRIC.NAME
+        # When to Call the Metric
+        self.metric_call_global = config.METRIC.call_global
+        self.metric_call_stepwise = config.METRIC.call_stepwise
+        self.metric_call_per_img = config.METRIC.call_per_img
         # instantiate validation metric from config and save best_metric parameter
         self.metric = MetricModule(config.METRIC.METRICS)  # ,persistent=False)
         self.register_buffer("best_metric_val", torch.as_tensor(0), persistent=False)
 
-        # define when metric should be called
-        self.metric_call = (
-            config.METRIC.METRIC_CALL
-            if has_not_empty_attr(config.METRIC, "METRIC_CALL")
-            else "global"
-        )
-        if self.metric_call not in ["global", "stepwise", "global_and_stepwise"]:
-            log.warning(
-                "Metric_Call %s is not in [global,stepwise,global_and_stepwise]: Metric_Call will"
-                " be set to global",
-                self.metric_call,
-            )
-            self.metric_call = "global"
-
-        # (optional) instantiate training metric from config and save best_metric parameter
-        if has_true_attr(config.METRIC, "DURING_TRAIN"):
+        # instantiate train metric from config and save best_metric parameter if wanted
+        self.train_metric = config.METRIC.train_metric
+        if self.train_metric:
             self.metric_train = self.metric.clone()
             self.register_buffer("best_metric_train", torch.as_tensor(0), persistent=False)
 
@@ -99,7 +94,8 @@ class SegModel(LightningModule):
         )
 
         # instantiate optimizer
-        self.optimizer = hydra.utils.instantiate(self.config.optimizer, self.parameters())
+        params = [p for p in self.parameters() if p.requires_grad]
+        self.optimizer = hydra.utils.instantiate(self.config.optimizer, params)
 
         # instantiate lr scheduler
         max_steps = self.trainer.datamodule.max_steps()
@@ -113,7 +109,7 @@ class SegModel(LightningModule):
 
         return {"optimizer": self.optimizer, "lr_scheduler": lr_scheduler_config}
 
-    def forward(self, x: torch.Tensor) -> dict:
+    def forward(self, x: torch.Tensor, gt=None) -> dict:
         """
         forward the input to the model
         if model prediction is not a dict covert the output into a dict
@@ -128,15 +124,19 @@ class SegModel(LightningModule):
         dict of {str:torch.Tensor} :
             prediction of the model which a separate key for each model output
         """
-        x = self.model(x)
+        if self.training:
+            x = self.model(x, gt)
+        else:
+            x = self.model(x)
         # covert output to dict if output is list, tuple or tensor
-        if not isinstance(x, dict):
-            if isinstance(x, list) or isinstance(x, tuple):
-                keys = ["out" + str(i) for i in range(len(x))]
-                x = dict(zip(keys, x))
-            elif isinstance(x, torch.Tensor):
-                x = {"out": x}
-
+        # if not isinstance(x, dict):
+        #     if isinstance(x, list) or isinstance(x, tuple):
+        #         keys = ["out" + str(i) for i in range(len(x))]
+        #         x = dict(zip(keys, x))
+        #     elif isinstance(x, torch.Tensor):
+        #         x = {"out": x}
+        # if torch.isnan(x["out"]).any():
+        #     print("NAN Predicted")
         return x
 
     def training_step(self, batch: list, batch_idx: int) -> torch.Tensor:
@@ -158,10 +158,12 @@ class SegModel(LightningModule):
         """
         # predict batch
         x, y_gt = batch
-        y_pred = self(x)
+        loss_dict = self(x, y_gt)
+
+        loss = sum(l for l in loss_dict.values())
 
         # compute and log loss
-        loss = self.get_loss(y_pred, y_gt)
+        # loss = self.get_loss(y_pred, y_gt)
         self.log(
             "Loss/training_loss",
             loss,
@@ -172,20 +174,10 @@ class SegModel(LightningModule):
         )
 
         # (optional) update train metric
-        if hasattr(self, "metric_train"):
-            if self.metric_call in ["stepwise", "global_and_stepwise"]:
-                # update global metric and log stepwise metric
-                metric_step = self.metric_train(list(y_pred.values())[0], y_gt)
-                self.log_dict_epoch(
-                    metric_step,
-                    prefix="metric_train/",
-                    postfix="_stepwise",
-                    on_step=False,
-                    on_epoch=True,
-                )
-            elif self.metric_call in ["global"]:
-                # update only global metric
-                self.metric_train.update(list(y_pred.values())[0], y_gt)
+        if self.train_metric:
+            self.update_metric(
+                list(y_pred.values())[0], y_gt, self.metric_train, prefix="metric_train/"
+            )
 
         return loss
 
@@ -210,44 +202,39 @@ class SegModel(LightningModule):
         # predict batch
         x, y_gt = batch
         y_pred = self(x)
-
+        # print(len(y_pred))
+        # y_pred = [{k: v.detach().cpu() for k, v in t.items()} for t in y_pred]
+        # y_pred = [round_prediction(y_pred_i) for y_pred_i in y_pred]
+        # print(len(y_pred))
+        # quit()
+        # y_gt = [{k: v.detach().cpu() for k, v in t.items()} for t in y_gt]
         # compute and log loss to tensorboard
-        val_loss = self.get_loss(y_pred, y_gt)
-        self.log(
-            name="Loss/validation_loss",
-            value=val_loss,
-            on_step=True,
-            on_epoch=True,
-            logger=True,
-            sync_dist=True if self.trainer.num_devices > 1 else False,
-        )  # ,prog_bar=True)
+        # val_loss = self.get_loss(y_pred, y_gt)
+        # self.log(
+        #     name="Loss/validation_loss",
+        #     value=val_loss,
+        #     on_step=True,
+        #     on_epoch=True,
+        #     logger=True,
+        #     sync_dist=True if self.trainer.num_devices > 1 else False,
+        # )  # ,prog_bar=True)
 
         # update validation metric
 
-        if self.metric_call in ["stepwise", "global_and_stepwise"]:
-            # update global metric and log stepwise metric to tensorboard
-            metric_step = self.metric(list(y_pred.values())[0], y_gt)
-            self.log_dict_epoch(
-                metric_step,
-                prefix="metric/",
-                postfix="_stepwise",
-                on_step=False,
-                on_epoch=True,
-            )
-        elif self.metric_call in ["global"]:
-            # update only global metric
-            self.metric.update(list(y_pred.values())[0], y_gt)
+        self.update_metric(y_pred, y_gt, self.metric, prefix="metric/")
 
         # log some example predictions to tensorboard
         # ensure that exactly self.num_example_predictions examples are taken
-        batch_size = y_gt.shape[0]
+        # print(len(x))
+        batch_size = len(x)
         if (
             (batch_size * batch_idx) < self.num_example_predictions
             and self.global_rank == 0
             and not self.trainer.sanity_checking
         ):
             self.log_batch_prediction(
-                y_pred["out"],
+                x,
+                y_pred,
                 y_gt,
                 batch_idx,
                 self.num_example_predictions - (batch_size * batch_idx),
@@ -262,7 +249,8 @@ class SegModel(LightningModule):
             log.info("EPOCH: %s", self.current_epoch)
 
             # compute and log global validation metric to tensorboard
-            if self.metric_call in ["global", "global_and_stepwise"]:
+            # if self.metric_call in ["global", "global_and_stepwise"]:
+            if self.metric_call_global:
                 metric = self.metric.compute()
                 self.log_dict_epoch(metric, prefix="metric/", on_step=False, on_epoch=True)
 
@@ -284,12 +272,14 @@ class SegModel(LightningModule):
         """
         # (optional) compute and log global validation metric to tensorboard
         if hasattr(self, "metric_train"):
-            metric_train = self.metric_train.compute()
+            if self.metric_call_global:
+                metric_train = self.metric_train.compute()
 
-            # log train metric to tensorboard
-            self.log_dict_epoch(metric_train, prefix="metric_train/", on_step=False, on_epoch=True)
-            # reset metric manually
-            self.metric_train.reset()
+                # log train metric to tensorboard
+                self.log_dict_epoch(
+                    metric_train, prefix="metric_train/", on_step=False, on_epoch=True
+                )
+                # reset metric manually
 
             # log train metric to console
             self.metric_logger(
@@ -298,6 +288,7 @@ class SegModel(LightningModule):
                 stage="Train",
                 save_metric_state=False,
             )
+            self.metric_train.reset()
 
     def on_test_start(self) -> None:
         """
@@ -369,19 +360,20 @@ class SegModel(LightningModule):
                 total_pred += y_pred  # .detach()
 
         # update the metric with the aggregated prediction
-        if self.metric_call in ["stepwise", "global_and_stepwise"]:
-            # update global metric and log stepwise metric to tensorboard
-            metric_step = self.metric(total_pred, y_gt)
-            self.log_dict_epoch(
-                metric_step,
-                prefix="metric_test/",
-                postfix="_stepwise",
-                on_step=False,
-                on_epoch=True,
-            )
-        elif self.metric_call in ["global"]:
-            # update only global metric
-            self.metric.update(total_pred, y_gt)
+        self.update_metric(total_pred, y_gt, self.metric, prefix="metric_test/")
+        # if self.metric_call in ["stepwise", "global_and_stepwise"]:
+        #     # update global metric and log stepwise metric to tensorboard
+        #     metric_step = self.metric(total_pred, y_gt)
+        #     self.log_dict_epoch(
+        #         metric_step,
+        #         prefix="metric_test/",
+        #         postfix="_stepwise",
+        #         on_step=False,
+        #         on_epoch=True,
+        #     )
+        # elif self.metric_call in ["global"]:
+        #     # update only global metric
+        #     self.metric.update(total_pred, y_gt)
 
         # compute and return loss of final prediction
         test_loss = F.cross_entropy(total_pred, y_gt, ignore_index=self.config.DATASET.IGNORE_INDEX)
@@ -425,6 +417,35 @@ class SegModel(LightningModule):
 
         # reset metric manually
         self.metric.reset()
+
+    def update_metric(
+        self, y_pred: torch.Tensor, y_gt: torch.Tensor, metric: MetricModule, prefix: str = ""
+    ):
+        if self.metric_call_stepwise:
+            # Log the metric result for each step
+            metric_step = metric(y_pred, y_gt)
+            self.log_dict_epoch(
+                metric_step,
+                prefix=prefix,
+                postfix="_stepwise",
+                on_step=False,
+                on_epoch=True,
+            )
+        elif self.metric_call_per_img:
+            # If metric should be called per img, iterate through the batch to compute and log the
+            # metric for each img separately
+            for yi_pred, yi_gt in zip(y_pred, y_gt):
+                metric_step = metric(yi_pred.unsqueeze(0), yi_gt.unsqueeze(0))
+                self.log_dict_epoch(
+                    metric_step,
+                    prefix=prefix,
+                    postfix="_per_img",
+                    on_step=False,
+                    on_epoch=True,
+                )
+        elif self.metric_call_global:
+            # Just update the metric
+            metric.update(y_pred, y_gt)
 
     def get_loss(self, y_pred: dict, y_gt: torch.Tensor) -> torch.Tensor:
         """
@@ -486,7 +507,6 @@ class SegModel(LightningModule):
             if the metric_state should be saved, currently not used
         """
         logged_metrics = self.trainer.logged_metrics
-
         metrics = {
             k.replace(metric_group, ""): v for k, v in logged_metrics.items() if metric_group in k
         }
@@ -554,6 +574,7 @@ class SegModel(LightningModule):
 
     def log_batch_prediction(
         self,
+        img: torch.Tensor,
         pred: torch.Tensor,
         gt: torch.Tensor,
         batch_idx: int = 0,
@@ -571,48 +592,94 @@ class SegModel(LightningModule):
         max_number : int, optional
             number of example predictions
         """
-        pred = pred.argmax(1).detach().cpu()
-        gt = gt.detach().cpu()
 
-        # go to each batch in sample but max max_number times
-        batche_size, w, h = gt.shape
-        # limit the max size of an image to keep file size small
-        max_size = 1024
-        if max(w, h) > max_size:
-            s = max_size / max(w, h)
-            w_s, h_s = int(w * s), int(h * s)
+        def show_data(img, target, alpha=0.5):
+            masks = target["masks"].detach().cpu().squeeze(1)
+            boxes = target["boxes"].detach().cpu()
+            img = np.array(img.detach().cpu()) * 255
+            img = img.transpose((1, 2, 0)).astype(np.uint8)
+            for mask, box in zip(masks, boxes):
+                color = np.random.randint(0, 255, 3)
+                x1, y1, x2, y2 = int(box[0]), int(box[1]), int(box[2]), int(box[3])
+                cv2.rectangle(
+                    img, (x1, y1), (x2, y2), [int(color[0]), int(color[1]), int(color[2])]
+                )
+                # cont,_=cv2.findContours(np.array(mask),cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+                # cv2.drawContours(img, cont, 0, [int(color[0]), int(color[1]), int(color[2])], 1)
+                x, y = np.where(np.array(mask) == 1)
+                img[x, y] = img[x, y] * alpha + color * (1 - alpha)
+            return img
 
-            gt = (
-                F.interpolate(gt.unsqueeze(1).float(), size=(w_s, h_s), mode="nearest")
-                .squeeze(1)
-                .long()
-            )
-            pred = (
-                F.interpolate(pred.unsqueeze(1).float(), size=(w_s, h_s), mode="nearest")
-                .squeeze(1)
-                .long()
-            )
+        def show_prediction(img, pred, alpha=0.5):
+            img = np.array(img.detach().cpu()) * 255  # [0]
+            img = img.transpose((1, 2, 0)).astype(np.uint8)
 
-        for i in range(min(batche_size, max_number)):
-            p = pred[i, :, :]
-            g = gt[i, :, :]
+            masks = pred["masks"].detach().cpu().squeeze(1)
+            boxes = pred["boxes"].detach().cpu()
+            scores = pred["scores"].detach().cpu()
 
+            masks = [mask for mask, score in zip(masks, scores) if score >= 0.5]
+            boxes = [box for box, score in zip(boxes, scores) if score >= 0.5]
+
+            for mask, box in zip(masks, boxes):
+                # mask = np.array(mask.detach().cpu())[0]
+                color = np.random.randint(0, 255, 3)
+
+                x1, y1, x2, y2 = int(box[0]), int(box[1]), int(box[2]), int(box[3])
+                # cv2.rectangle(img, (x1, y1), (x2, y2), [int(color[0]), int(color[1]), int(color[2])])
+
+                x, y = np.where(mask >= 0.5)
+                img[x, y] = img[x, y] * alpha + color * (1 - alpha)
+
+            return img
+
+        batch_size = len(img)
+        for i in range(min(batch_size, max_number)):
+
+            p = pred[i]
+            g = gt[i]
+            im = img[i]
+            g = show_data(im, g)  # gt.detach().cpu()
+            p = show_prediction(im, p)  # pred.argmax(1).detach().cpu()
+            p = torch.tensor(p)
+            g = torch.tensor(g)
+            # max_size = 1024
+            # w, h, c = p.shape
+            # if max(w, h) > max_size:
+            #     s = max_size / max(w, h)
+            #     w_s, h_s = int(w * s), int(h * s)
+            #     print(p.shape, g.shape)
+            #     # print(p.unsqueeze(0).shape, g.unsqueeze(0).shape)
+            #     g = (
+            #         F.interpolate(g.permute(2, 0, 1).unsqueeze(0), size=(w_s, h_s), mode="nearest")
+            #         .long()
+            #         .squeeze(0)
+            #         .permute(1, 2, 0)
+            #     )
+            #     p = (
+            #         F.interpolate(p.permute(2, 0, 1).unsqueeze(0), size=(w_s, h_s), mode="nearest")
+            #         .long()
+            #         .squeeze(0)
+            #         .permute(1, 2, 0)
+            #     )
             # concat pred and gt for better visualization
-            p = torch.cat((p, g), 1)
-
-            # colormap class labels
-            w, h = p.shape
-            fig = torch.zeros((w, h, 3), dtype=torch.uint8)
-            for class_id in torch.unique(p):
-                x, y = torch.where(p == class_id)
-                if class_id > len(self.cmap):
-                    fig[x, y] = torch.tensor([0, 0, 0], dtype=torch.uint8)
-                else:
-                    fig[x, y, :] = self.cmap[class_id]
+            fig = torch.cat((p, g), 0)
 
             self.trainer.logger.experiment.add_image(
-                "Example_Prediction/prediction_gt__sample_" + str(batch_idx * batche_size + i),
+                "Example_Prediction/prediction_gt__sample_" + str(batch_idx * batch_size + i),
                 fig,
                 self.current_epoch,
                 dataformats="HWC",
             )
+            # self.trainer.logger.experiment.add_image(
+            #     "Example_Prediction/p" + str(batch_idx * batch_size + i),
+            #     p,
+            #     self.current_epoch,
+            #     dataformats="HWC",
+            # )
+            # self.trainer.logger.experiment.add_image(
+            #     "Example_Prediction/g" + str(batch_idx * batch_size + i),
+            #     g,
+            #     self.current_epoch,
+            #     dataformats="HWC",
+            # )

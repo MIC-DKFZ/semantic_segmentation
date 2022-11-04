@@ -172,7 +172,7 @@ def RandAugment_Histo(N: int, M: int, p: float = 0.5, bins: int = 10, mode: int 
         # Posterize - F.posterize(Image.fromarray(img), int(val))
         # A.Posterize(num_bits=int(posterize[M]), p=p),
         # Equalize - equivalent to F.equalize(Image.fromarray(img))
-        A.Equalize(mode="pil", p=p),
+        # A.Equalize(mode="pil", p=p),
         # Invert - equalize to F.invert(Image.fromarray(img))
         # A.InvertImg(p=p),
         # Sharpen - no equivalent sharpen in albumentations compared to F.adjust_sharpness(Image.fromarray(img.copy()), val)
@@ -473,7 +473,7 @@ def randAugment_AGGC_strong(N, M, p=0.5):
             mode=2,
         ),
         A.AdvancedBlur(p=p),
-        JPEGcompressor(p=p),
+        # JPEGcompressor(p=p),
         # HED Augmentations
         # LightAugmentor(p=p),
         # StrongAugmentor(p=p),

@@ -19,6 +19,10 @@ cv2.setNumThreads(0)
 log = get_logger(__name__)
 
 
+def inst_collate_fn(batch):
+    return tuple(zip(*batch))
+
+
 def get_max_steps(
     size_dataset,
     batch_size,
@@ -115,6 +119,7 @@ class BaseDataModule(LightningDataModule):
         val_batch_size: int,
         num_workers: int,
         augmentations: DictConfig,
+        instance_seg: bool = False,
     ) -> None:
         """
         __init__ the LightningModule
@@ -143,6 +148,11 @@ class BaseDataModule(LightningDataModule):
         self.augmentations = augmentations
         # dataset which is defined in the config
         self.dataset = dataset
+
+        if instance_seg:
+            self.collate_fn = inst_collate_fn
+        else:
+            self.collate_fn = None
 
     def setup(self, stage: str = None) -> None:
         """
@@ -197,9 +207,9 @@ class BaseDataModule(LightningDataModule):
         )
         # base_size = len(self.DS_train)
         # steps_per_epoch = base_size // self.batch_size
-        # steps_per_gpu = int(np.ceil(steps_per_epoch / self.trainer.num_devices))
-        # acc_steps_per_gpu = int(np.ceil(steps_per_gpu / self.trainer.accumulate_grad_batches))
-        # max_steps = self.trainer.max_epochs * acc_steps_per_gpu
+        # steps_per_gpu = int(np.ceil(steps_per_epoch / self.trainers.num_devices))
+        # acc_steps_per_gpu = int(np.ceil(steps_per_gpu / self.trainers.accumulate_grad_batches))
+        # max_steps = self.trainers.max_epochs * acc_steps_per_gpu
 
         log.info(
             "Number of Training steps: {}  ({} steps per epoch)".format(max_steps, max_steps_epoch)
@@ -284,6 +294,7 @@ class BaseDataModule(LightningDataModule):
             num_workers=self.num_workers,
             drop_last=True,
             persistent_workers=True if self.num_workers > 0 else False,
+            collate_fn=self.collate_fn,
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -299,6 +310,7 @@ class BaseDataModule(LightningDataModule):
             batch_size=self.val_batch_size,
             num_workers=self.num_workers,
             persistent_workers=True if self.num_workers > 0 else False,
+            collate_fn=self.collate_fn,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -314,4 +326,5 @@ class BaseDataModule(LightningDataModule):
             batch_size=self.val_batch_size,
             num_workers=self.num_workers,
             persistent_workers=True if self.num_workers > 0 else False,
+            collate_fn=self.collate_fn,
         )

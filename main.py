@@ -18,7 +18,8 @@ from src.utils import (
 )
 from omegaconf import DictConfig, OmegaConf
 
-from Segmentation_Model import SegModel
+# from trainers.Semantic_Segmentation_Trainer import SegModel
+# from trainers.Instance_Segmentation_Trainer import InstSegModel as SegModel
 
 log = get_logger(__name__)
 
@@ -53,6 +54,9 @@ def training_loop(cfg: DictConfig):
     cfg :
         cfg given by hydra - build from config/baseline.yaml + commandline argumentss
     """
+    # for k, v in logging.Logger.manager.loggerDict.items():
+    #     if not isinstance(v, logging.PlaceHolder):
+    #         print(k, v.handlers)
     log.info("Output Directory: %s", os.getcwd())
     # Seeding if given by config
     if has_not_empty_attr(cfg, "seed"):
@@ -96,11 +100,16 @@ def training_loop(cfg: DictConfig):
     # cfg.finetune_from should be the path to a .ckpt file
     if has_not_empty_attr(cfg, "finetune_from"):
         log.info("finetune from: %s", cfg.finetune_from)
-        model = SegModel.load_from_checkpoint(cfg.finetune_from, strict=False, config=cfg)
+        cfg.trainermodule._target_ += ".load_from_checkpoint"
+        model = hydra.utils.call(
+            cfg.trainermodule, cfg.finetune_from, strict=False, model_config=cfg, _recursive_=False
+        )
+        # model = SegModel.load_from_checkpoint(cfg.finetune_from, strict=False, config=cfg)
     else:
-        model = SegModel(config=cfg)
+        # model = SegModel(config=cfg)
+        model = hydra.utils.instantiate(cfg.trainermodule, cfg, _recursive_=False)
 
-    # Initializing trainer
+    # Initializing trainers
     trainer_args = getattr(cfg, "pl_trainer") if has_not_empty_attr(cfg, "pl_trainer") else {}
 
     ddp = DDPStrategy(find_unused_parameters=False)  # if number_gpus > 1 else None
@@ -115,7 +124,14 @@ def training_loop(cfg: DictConfig):
     # Log hyperparameters, if-statement is needed to catch fast_dev_run
     if hasattr(trainer.logger, "log_dir"):
         log_hyperparameters(cfg, model, trainer)
-
+    # loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
+    # print(loggers)
+    # for k, v in logging.Logger.manager.loggerDict.items():
+    #     if not isinstance(v, logging.PlaceHolder):
+    #         # v.handlers[0].setStream(None)
+    #         if k == "mmcv":
+    #             v.handlers[0].setStream(None)
+    #         print(k, v.handlers)
     # Start training
     trainer.fit(
         model,

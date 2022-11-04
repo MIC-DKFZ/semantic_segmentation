@@ -4,6 +4,7 @@
 # defines which modules from which parameter group are used by default and in which order they are composed
 defaults:
   - _self_
+  - trainer: SemSeg
   - hyperparameters/default     # Load Default Hyperparameters
   - optional hyperparameters:   # (Optional) Overwrite defaults with the specific hyperparameter config
   - optimizer: SGD              # Optimizer
@@ -39,6 +40,8 @@ hydra:
   sweep:
     dir: multi_run_${hydra.run.dir}
     subdir: ${hydra.job.num}
+  #job_logging:
+  #  disable_existing_loggers: mmcv
   job:
     chdir: True
     config:

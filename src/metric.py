@@ -95,10 +95,12 @@ class ConfusionMatrix(Metric):
         Parameters
         ----------
         trainer : pl.Trainer
-            The trainer itself to access the logger and parameters like current epoch etc.
+            The trainers itself to access the logger and parameters like current epoch etc.
         """
 
-        def mat_to_figure(mat: np.ndarray, name: str = "Confusion matrix") -> Figure:
+        def mat_to_figure(
+            mat: np.ndarray, name: str = "Confusion matrix", normalized: bool = False
+        ) -> Figure:
             """
 
             Parameters
@@ -117,6 +119,8 @@ class ConfusionMatrix(Metric):
             plt.imshow(mat, interpolation="nearest", cmap=plt.cm.viridis)
 
             plt.title(name)
+            if normalized:
+                plt.clim(0, 1)
             plt.colorbar()
             if hasattr(self, "class_names"):
                 labels = self.class_names
@@ -146,7 +150,7 @@ class ConfusionMatrix(Metric):
         confmat_norm = np.around(
             confmat.astype("float") / confmat.sum(axis=1)[:, np.newaxis], decimals=2
         )
-        figure = mat_to_figure(confmat_norm, "Confusion Matrix (normalized)")
+        figure = mat_to_figure(confmat_norm, "Confusion Matrix (normalized)", True)
         trainer.logger.experiment.add_figure(
             "ConfusionMatrix/ConfusionMatrix_normalized", figure, trainer.current_epoch
         )

@@ -1,0 +1,31 @@
+#@package _global_
+model:
+  _target_: models.SegNeXt.get_seg_model
+  cfg:
+    pretrained: True
+    pretrained_weights: ${ORG_CWD}/pretrained/mscan_b.pth
+    #pretrained_weights: ../pretrained/mscan_b.pth
+    MSCAN:
+      embed_dims: [64, 128, 320, 512]
+      mlp_ratios: [8, 8, 4, 4]
+      drop_rate: 0.0
+      drop_path_rate: 0.1
+      depths: [3, 3, 12, 3]
+      norm_cfg:
+        type: "SyncBN"
+        requires_grad: True
+    LightHamHead:
+      in_channels: [128, 320, 512]
+      in_index: [1, 2, 3]
+      channels: 512
+      ham_channels: 512
+      dropout_ratio: 0.1
+      num_classes: ${DATASET.NUM_CLASSES}
+      norm_cfg:
+          type: "GN"
+          num_groups: 32
+          requires_grad: True
+      align_corners: False
+MODEL:
+  NAME: SegNeXT_test
+  PRETRAINED_WEIGHTS: ${ORG_CWD}/pretrained/mscan_b.pth

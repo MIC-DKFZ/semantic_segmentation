@@ -1,6 +1,5 @@
 import argparse
 import os
-import glob
 import logging
 import sys
 
@@ -14,7 +13,7 @@ from pytorch_lightning import Trainer
 import hydra
 import torch
 
-from Segmentation_Model import SegModel
+from trainers.Semantic_Segmentation_Trainer import SegModel
 
 from src.utils import has_true_attr, has_not_empty_attr, get_logger, num_gpus
 
@@ -73,7 +72,7 @@ def find_lr(overrides_cl: list, num_training_samples: int) -> None:
     else:
         model = SegModel(config=cfg)
 
-    # Initializing trainer
+    # Initializing trainers
     trainer_args = getattr(cfg, "pl_trainer") if has_not_empty_attr(cfg, "pl_trainer") else {}
 
     # ddp=DDPPlugin(find_unused_parameters=False) if number_gpus > 1 else None

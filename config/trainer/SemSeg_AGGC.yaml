@@ -1,0 +1,3 @@
+#@package _global_
+trainermodule:
+  _target_: trainers.Sematic_Segmentation_Trainer_AGGC.SegModel_AGGC

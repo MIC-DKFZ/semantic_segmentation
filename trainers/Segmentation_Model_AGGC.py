@@ -1,4 +1,4 @@
-from Segmentation_Model import SegModel
+from trainers.Semantic_Segmentation_Trainer import SegModel
 import torch
 import torch.nn.functional as F
 from src.utils import get_logger
@@ -9,7 +9,7 @@ log = get_logger(__name__)
 
 
 class SegModel_AGGC(SegModel):
-    def __init__(self, config) -> None:
+    def __init__(self, model_config) -> None:
         """
         __init__ the LightningModule
         instantiate the model and the metric(s)
@@ -18,8 +18,8 @@ class SegModel_AGGC(SegModel):
         ----------
         config : omegaconf.DictConfig
         """
-        super().__init__(config)
-        self.metric = MetricModule_AGGC(config.METRIC.METRICS)
+        super().__init__(model_config)
+        self.metric = MetricModule_AGGC(self.config.METRIC.METRICS)
 
     def training_step(self, batch: list, batch_idx: int) -> torch.Tensor:
         """

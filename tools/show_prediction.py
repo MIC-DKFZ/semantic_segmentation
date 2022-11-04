@@ -19,7 +19,7 @@ from matplotlib import cm
 from pytorch_lightning import LightningModule
 from torch.utils.data import Dataset
 
-from Segmentation_Model import SegModel
+from trainers.Semantic_Segmentation_Trainer import SegModel
 
 from src.utils import has_not_empty_attr, get_logger
 from datasets.DataModules import get_augmentations_from_config

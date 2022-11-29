@@ -10,6 +10,7 @@ from src.metric import MetricModule
 from src.loss_function import get_loss_function_from_cfg
 from src.utils import has_not_empty_attr, has_true_attr
 from src.utils import get_logger
+from src.visualization import show_mask_sem_seg
 
 log = get_logger(__name__)
 
@@ -607,14 +608,15 @@ class SegModel(LightningModule):
             p = torch.cat((p, g), 1)
 
             # colormap class labels
-            w, h = p.shape
-            fig = torch.zeros((w, h, 3), dtype=torch.uint8)
-            for class_id in torch.unique(p):
-                x, y = torch.where(p == class_id)
-                if class_id > len(self.cmap):
-                    fig[x, y] = torch.tensor([0, 0, 0], dtype=torch.uint8)
-                else:
-                    fig[x, y, :] = self.cmap[class_id]
+            fig = show_mask_sem_seg(p, self.cmap, "torch")
+            # w, h = p.shape
+            # fig = torch.zeros((w, h, 3), dtype=torch.uint8)
+            # for class_id in torch.unique(p):
+            #     x, y = torch.where(p == class_id)
+            #     if class_id >= len(self.cmap):
+            #         fig[x, y] = torch.tensor([0, 0, 0], dtype=torch.uint8)
+            #     else:
+            #         fig[x, y, :] = self.cmap[class_id]
 
             self.trainer.logger.experiment.add_image(
                 "Example_Prediction/prediction_gt__sample_" + str(batch_idx * batche_size + i),

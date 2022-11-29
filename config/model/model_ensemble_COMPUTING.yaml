@@ -1,0 +1,13 @@
+#@package _global_
+
+model:
+  _target_: models.model_ensemble.Ensemble
+  ckpts:
+    - ${LOGDIR}COMPUTING/hrnet_ocr_ms/baseline__dataset.fold_0__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-11-22_10-05-22
+    - ${LOGDIR}COMPUTING/hrnet_ocr_ms/baseline__dataset.fold_1__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-11-22_10-05-13
+    - ${LOGDIR}COMPUTING/hrnet_ocr_ms/baseline__dataset.fold_2__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-11-22_10-05-14
+    - ${LOGDIR}COMPUTING/hrnet_ocr_ms/baseline__dataset.fold_3__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-11-22_10-05-14
+    - ${LOGDIR}COMPUTING/hrnet_ocr_ms/baseline__dataset.fold_4__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-11-22_10-05-14
+
+MODEL:
+  NAME: Ensemble

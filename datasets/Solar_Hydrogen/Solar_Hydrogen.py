@@ -27,7 +27,7 @@ class Custom_dataset(torch.utils.data.Dataset):
 
         # img = cv2.imread(os.path.join(self.root, "Data", "images", file + ".tif"), -1)
         img_org = cv2.imread(os.path.join(self.root, "ground_truth", "images", file), -1)
-        img_org = (img_org - img_org.min()) / (img_org.max() - img_org.min())  # * 255
+        img_org = (img_org - img_org.min()) / (img_org.max() - img_org.min()) * 255
         img_org = np.dstack((img_org, img_org, img_org))
 
         masks = []
@@ -36,12 +36,13 @@ class Custom_dataset(torch.utils.data.Dataset):
             cv2.circle(mask, (int(x), int(y)), int(r), 1, -1)
             masks.append(mask)
         masks = np.array(masks, dtype=np.uint8)
-        img_org = img_org.astype(np.float32)
+        # img_org = img_org.astype(np.float32)
+        img_org = img_org.astype(np.uint8)
         masks1 = masks.transpose((1, 2, 0))
         while True:
             if self.transforms is not None:
                 transformed = self.transforms(image=img_org, mask=masks1)
-                img = transformed["image"]
+                img = transformed["image"] / 255
                 masks = transformed["mask"].permute(2, 0, 1)
 
             # Remove empty masks

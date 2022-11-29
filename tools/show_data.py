@@ -16,12 +16,14 @@ import numpy as np
 from matplotlib import cm
 
 from src.utils import get_logger
-from tools.show_prediction import Visualizer
+from src.visualization import Visualizer
 
 log = get_logger(__name__)
 
 
-def show_data(overrides_cl: list, augmentation: str, split: str) -> None:
+def show_data(
+    overrides_cl: list, augmentation: str, split: str, segmentation: str, axis: int
+) -> None:
     """
     Visualizing a Dataset
     initializing the dataset defined in the config
@@ -63,7 +65,7 @@ def show_data(overrides_cl: list, augmentation: str, split: str) -> None:
             std = t.std
             break
 
-    visualizer = Visualizer(dataset, cmap, mean=mean, std=std)
+    visualizer = Visualizer(dataset, cmap, mean=mean, std=std, segmentation=segmentation, axis=axis)
 
     # Create the cv2 Window
     cv2.namedWindow("Window", cv2.WINDOW_NORMAL)
@@ -108,8 +110,22 @@ if __name__ == "__main__":
         default="train",
         help="which split to use: train (by default), val or test",
     )
+    parser.add_argument(
+        "--segmentation",
+        type=str,
+        default="semantic",
+        help="semantic or instance, depending on the dataset",
+    )
+    parser.add_argument(
+        "--axis",
+        type=int,
+        default=1,
+        help="1 for displaying images side by side, 0 for displaying images on top of each other",
+    )
     args, overrides = parser.parse_known_args()
     augmentation = args.augmentation
     split = args.split
+    segmentation = args.segmentation
+    axis = args.axis
 
-    show_data(overrides, augmentation, split)
+    show_data(overrides, augmentation, split, segmentation, axis)

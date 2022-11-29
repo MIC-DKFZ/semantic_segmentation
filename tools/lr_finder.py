@@ -66,12 +66,23 @@ def find_lr(overrides_cl: list, num_training_samples: int) -> None:
 
     # Defining model and load checkpoint if wanted
     # cfg.finetune_from should be the path to a .ckpt file
+    # if has_not_empty_attr(cfg, "finetune_from"):
+    #     log.info("finetune from: %s", cfg.finetune_from)
+    #     model = SegModel.load_from_checkpoint(cfg.finetune_from, strict=False, config=cfg)
+    # else:
+    #     model = SegModel(config=cfg)
+    if hasattr(cfg, "num_example_predictions"):
+        cfg.num_example_predictions = 0
     if has_not_empty_attr(cfg, "finetune_from"):
         log.info("finetune from: %s", cfg.finetune_from)
-        model = SegModel.load_from_checkpoint(cfg.finetune_from, strict=False, config=cfg)
+        cfg.trainermodule._target_ += ".load_from_checkpoint"
+        model = hydra.utils.call(
+            cfg.trainermodule, cfg.finetune_from, strict=False, model_config=cfg, _recursive_=False
+        )
+        # model = SegModel.load_from_checkpoint(cfg.finetune_from, strict=False, config=cfg)
     else:
-        model = SegModel(config=cfg)
-
+        # model = SegModel(config=cfg)
+        model = hydra.utils.instantiate(cfg.trainermodule, cfg, _recursive_=False)
     # Initializing trainers
     trainer_args = getattr(cfg, "pl_trainer") if has_not_empty_attr(cfg, "pl_trainer") else {}
 
@@ -84,7 +95,6 @@ def find_lr(overrides_cl: list, num_training_samples: int) -> None:
         auto_lr_find="config.lr",
         **trainer_args,
     )
-
     lr_finder = trainer.tuner.lr_find(
         model=model,
         datamodule=dataModule,

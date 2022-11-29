@@ -9,15 +9,18 @@ AUGMENTATIONS:
   TRAIN:
     - Compose:
         transforms:
+          - RandAugment:
+              N: 3
+              M: 3
           - VerticalFlip:
               p: 0.5
           - HorizontalFlip:
               p: 0.5
-          - Rotate:
-              p: 0.25
-              border_mode: 0
-              value: [1,1,1]
-#          - Affine:
+#          - Rotate:
+#              p: 0.25
+#              border_mode: 0
+#              value: [1,1,1]
+#          - Affine:s
 #              p: 0.2
 #              mode: 0
 #              A.Affine(shear={"x":
@@ -25,6 +28,6 @@ AUGMENTATIONS:
 #              # Shear Y - equivalen to F.affine(Image.fromarray(img.copy()),angle=0.0,translate=[0, 0],scale=1.0,shear=[0.0, math.degrees(math.atan(val))],interpolation=torchvision.transforms.InterpolationMode.NEAREST,fill=None,center=[0, 0],)
 #              A.Affine(shear={"x":
 #                0, "y": (-shear_y[M], shear_y[M])}, p=p, mode=mode),
-          - RandomBrightnessContrast:
-              p: 0.1
+#          - RandomBrightnessContrast:
+#              p: 0.1
           - ToTensorV2:

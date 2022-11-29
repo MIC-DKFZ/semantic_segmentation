@@ -7,6 +7,8 @@ from torchmetrics.utilities.data import dim_zero_cat
 import pytorch_lightning as pl
 from torchmetrics.utilities.data import _bincount
 import matplotlib.pyplot as plt
+
+plt.switch_backend("agg")
 from matplotlib.figure import Figure
 
 
@@ -122,14 +124,14 @@ class ConfusionMatrix(Metric):
             if normalized:
                 plt.clim(0, 1)
             plt.colorbar()
-            if hasattr(self, "class_names"):
-                labels = self.class_names
-            else:
-                labels = np.arange(self.num_classes)
+            # if hasattr(self, "labels"):
+            #     labels = self.labels
+            # else:
+            #     labels = np.arange(self.num_classes)
 
-            tick_marks = np.arange(len(labels))
-            plt.xticks(tick_marks, labels, rotation=-90)  # , rotation=45)
-            plt.yticks(tick_marks, labels)
+            tick_marks = np.arange(len(self.labels))
+            plt.xticks(tick_marks, self.labels, rotation=-45)
+            plt.yticks(tick_marks, self.labels)
 
             plt.ylabel("True label")
             plt.xlabel("Predicted label")

@@ -11,7 +11,7 @@ from src.loss_function import get_loss_function_from_cfg
 from src.utils import has_not_empty_attr, has_true_attr
 from src.utils import get_logger
 from trainers.Semantic_Segmentation_Trainer import SegModel
-
+from src.visualization import show_prediction_inst_seg, show_mask_inst_seg, show_img
 import numpy as np
 import cv2
 
@@ -174,9 +174,9 @@ class InstModel(SegModel):
 
     def log_batch_prediction(
         self,
-        img: torch.Tensor,
-        pred: torch.Tensor,
-        gt: torch.Tensor,
+        imgs: torch.Tensor,
+        preds: torch.Tensor,
+        gts: torch.Tensor,
         batch_idx: int = 0,
         max_number: int = 5,
     ) -> None:
@@ -233,16 +233,35 @@ class InstModel(SegModel):
 
             return img
 
-        batch_size = len(img)
+        batch_size = len(imgs)
         for i in range(min(batch_size, max_number)):
+            img = imgs[i].detach().cpu()
 
-            p = pred[i]
-            g = gt[i]
-            im = img[i]
-            g = show_data(im, g)  # gt.detach().cpu()
-            p = show_prediction(im, p)  # pred.argmax(1).detach().cpu()
-            p = torch.tensor(p)
-            g = torch.tensor(g)
+            pred = preds[i]
+            pred = [{k: v.detach().cpu() for k, v in pred.items()}]
+
+            gt = gts[i]
+            gt = [{k: v.detach().cpu() for k, v in gt.items()}]
+
+            img_shape = img.shape[-2:]
+
+            p = show_prediction_inst_seg(pred, img_shape, output_type="torch")
+            g = show_mask_inst_seg(gt[0], img_shape, output_type="torch")
+            im = show_img(img, output_type="torch")
+
+            p = (im * 0.5 + p * 0.5).type(torch.uint8)
+            g = (im * 0.5 + g * 0.5).type(torch.uint8)
+
+            # p = torch.tensor(p.astype(np.uint8))
+            # g = torch.tensor(g.astype(np.uint8))
+            # print(p.dtype, torch.min(p), torch.max(p))
+            # p = pred[i]
+            # g = gt[i]
+            # im = img[i]
+            # g = show_data(im, g)  # gt.detach().cpu()
+            # p = show_prediction(im, p)  # pred.argmax(1).detach().cpu()
+            # p = torch.tensor(p)
+            # g = torch.tensor(g)
             # max_size = 1024
             # w, h, c = p.shape
             # if max(w, h) > max_size:

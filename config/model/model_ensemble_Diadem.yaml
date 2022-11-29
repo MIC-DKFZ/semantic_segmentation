@@ -1,0 +1,13 @@
+#@package _global_
+
+model:
+  _target_: models.model_ensemble.Ensemble
+  ckpts:
+    - ${LOGDIR}/DIADEM/hrnet_ocr_ms/folds__batch_size_6__dataset.fold_0__epochs_200__lossfunction_RMI_CE_CE_CE__lr_0.01__val_batch_size_2/2022-10-20_14-26-14
+    - ${LOGDIR}/DIADEM/hrnet_ocr_ms/folds__batch_size_6__dataset.fold_1__epochs_200__lossfunction_RMI_CE_CE_CE__lr_0.01__val_batch_size_2/2022-10-20_14-25-59
+    - ${LOGDIR}/DIADEM/hrnet_ocr_ms/folds__batch_size_6__dataset.fold_2__epochs_200__lossfunction_RMI_CE_CE_CE__lr_0.01__val_batch_size_2/2022-10-20_14-25-59
+    - ${LOGDIR}/DIADEM/hrnet_ocr_ms/folds__batch_size_6__dataset.fold_3__epochs_200__lossfunction_RMI_CE_CE_CE__lr_0.01__val_batch_size_2/2022-10-20_14-26-01
+    - ${LOGDIR}/DIADEM/hrnet_ocr_ms/folds__batch_size_6__dataset.fold_4__epochs_200__lossfunction_RMI_CE_CE_CE__lr_0.01__val_batch_size_2/2022-10-20_14-26-01
+
+MODEL:
+  NAME: Ensemble

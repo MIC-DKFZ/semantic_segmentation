@@ -10,7 +10,7 @@ from src.metric import MetricModule
 from src.loss_function import get_loss_function_from_cfg
 from src.utils import has_not_empty_attr, has_true_attr
 from src.utils import get_logger
-from src.visualization import show_mask_sem_seg
+from src.visualization import show_mask_sem_seg, show_img
 
 log = get_logger(__name__)
 
@@ -32,9 +32,6 @@ class SegModel(LightningModule):
 
         # instantiate model from config
         self.model = hydra.utils.instantiate(self.config.model)
-        # print(self.model)
-        # print(self.model)
-        # quit()
         # instantiate metric from config and metric related parameters
         self.metric_name = config.METRIC.NAME
         # When to Call the Metric
@@ -207,25 +204,14 @@ class SegModel(LightningModule):
             on_epoch=True,
             logger=True,
             sync_dist=True if self.trainer.num_devices > 1 else False,
-        )  # ,prog_bar=True)
+        )
 
         # update validation metric
         self.update_metric(list(y_pred.values())[0], y_gt, self.metric, prefix="metric/")
 
         # log some example predictions to tensorboard
-        # ensure that exactly self.num_example_predictions examples are taken
-        batch_size = y_gt.shape[0]
-        if (
-            (batch_size * batch_idx) < self.num_example_predictions
-            and self.global_rank == 0
-            and not self.trainer.sanity_checking
-        ):
-            self.log_batch_prediction(
-                y_pred["out"],
-                y_gt,
-                batch_idx,
-                self.num_example_predictions - (batch_size * batch_idx),
-            )
+        if self.global_rank == 0 and not self.trainer.sanity_checking:
+            self.log_batch_prediction(x, y_pred["out"], y_gt, batch_idx)
 
     def on_validation_epoch_end(self) -> None:
         """
@@ -348,19 +334,6 @@ class SegModel(LightningModule):
 
         # update the metric with the aggregated prediction
         self.update_metric(total_pred, y_gt, self.metric, prefix="metric_test/")
-        # if self.metric_call in ["stepwise", "global_and_stepwise"]:
-        #     # update global metric and log stepwise metric to tensorboard
-        #     metric_step = self.metric(total_pred, y_gt)
-        #     self.log_dict_epoch(
-        #         metric_step,
-        #         prefix="metric_test/",
-        #         postfix="_stepwise",
-        #         on_step=False,
-        #         on_epoch=True,
-        #     )
-        # elif self.metric_call in ["global"]:
-        #     # update only global metric
-        #     self.metric.update(total_pred, y_gt)
 
         # compute and return loss of final prediction
         test_loss = F.cross_entropy(total_pred, y_gt, ignore_index=self.config.DATASET.IGNORE_INDEX)
@@ -374,15 +347,8 @@ class SegModel(LightningModule):
         )
 
         # log some example predictions to tensorboard
-        # ensure that exactly self.num_example_predictions examples are taken
-        batch_size = y_gt.shape[0]
-        if (batch_size * batch_idx) < self.num_example_predictions and self.global_rank == 0:
-            self.log_batch_prediction(
-                total_pred,
-                y_gt,
-                batch_idx,
-                self.num_example_predictions - (batch_size * batch_idx),
-            )
+        if self.global_rank == 0:
+            self.log_batch_prediction(total_pred, y_gt, batch_idx)
 
         return test_loss
 
@@ -560,67 +526,60 @@ class SegModel(LightningModule):
             )
 
     def log_batch_prediction(
-        self,
-        pred: torch.Tensor,
-        gt: torch.Tensor,
-        batch_idx: int = 0,
-        max_number: int = 5,
+        self, imgs: torch.Tensor, preds: torch.Tensor, gts: torch.Tensor, batch_idx: int
     ) -> None:
         """
         logging example prediction and gt to tensorboard
 
         Parameters
         ----------
+        img: torch.Tensor
         pred : torch.Tensor
         gt : torch.Tensor
-        batch_idx: int, optional
+        batch_idx: int
             idx of the current batch, needed for naming of the predictions
-        max_number : int, optional
-            number of example predictions
         """
-        pred = pred.argmax(1).detach().cpu()
-        gt = gt.detach().cpu()
+        # Check if the current batch has to be logged, if yes how many images
+        val_batch_size = self.trainer.datamodule.val_batch_size
+        diff_to_show = self.num_example_predictions - (batch_idx * val_batch_size)
+        if diff_to_show > 0:
+            current_batche_size = len(imgs)
+            # log the desired number of images
+            for i in range(min(current_batche_size, diff_to_show)):
 
-        # go to each batch in sample but max max_number times
-        batche_size, w, h = gt.shape
-        # limit the max size of an image to keep file size small
-        max_size = 1024
-        if max(w, h) > max_size:
-            s = max_size / max(w, h)
-            w_s, h_s = int(w * s), int(h * s)
+                pred = preds[i].argmax(0).detach().cpu()
+                gt = gts[i].cpu()
+                img = imgs[i].cpu()
 
-            gt = (
-                F.interpolate(gt.unsqueeze(1).float(), size=(w_s, h_s), mode="nearest")
-                .squeeze(1)
-                .long()
-            )
-            pred = (
-                F.interpolate(pred.unsqueeze(1).float(), size=(w_s, h_s), mode="nearest")
-                .squeeze(1)
-                .long()
-            )
+                # colormap class labels
+                pred = show_mask_sem_seg(pred, self.cmap, "torch")
+                gt = show_mask_sem_seg(gt, self.cmap, "torch")
+                img = show_img(
+                    img, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], output_type="torch"
+                )
+                alpha = 0.5
+                gt = (img * alpha + gt * (1 - alpha)).type(torch.uint8)
+                pred = (img * alpha + pred * (1 - alpha)).type(torch.uint8)
 
-        for i in range(min(batche_size, max_number)):
-            p = pred[i, :, :]
-            g = gt[i, :, :]
+                # concat pred and gt for better visualization
+                axis = 0 if gt.shape[1] > 2 * gt.shape[0] else 1
+                fig = torch.cat((pred, gt), axis)
 
-            # concat pred and gt for better visualization
-            p = torch.cat((p, g), 1)
+                # resize fig for not getting to large tensorboard-files
+                w, h, c = fig.shape
+                max_size = 2048
+                if max(w, h) > max_size:
+                    s = max_size / max(w, h)
 
-            # colormap class labels
-            fig = show_mask_sem_seg(p, self.cmap, "torch")
-            # w, h = p.shape
-            # fig = torch.zeros((w, h, 3), dtype=torch.uint8)
-            # for class_id in torch.unique(p):
-            #     x, y = torch.where(p == class_id)
-            #     if class_id >= len(self.cmap):
-            #         fig[x, y] = torch.tensor([0, 0, 0], dtype=torch.uint8)
-            #     else:
-            #         fig[x, y, :] = self.cmap[class_id]
+                    fig = fig.permute(2, 0, 1).unsqueeze(0).float()
+                    fig = F.interpolate(fig, size=(int(w * s), int(h * s)), mode="nearest")
+                    fig = fig.squeeze(0).permute(1, 2, 0).to(torch.uint8)
 
-            self.trainer.logger.experiment.add_image(
-                "Example_Prediction/prediction_gt__sample_" + str(batch_idx * batche_size + i),
-                fig,
-                self.current_epoch,
-                dataformats="HWC",
-            )
+                # Log Figure to tensorboard
+                self.trainer.logger.experiment.add_image(
+                    "Example_Prediction/prediction_gt__sample_"
+                    + str(batch_idx * val_batch_size + i),
+                    fig,
+                    self.current_epoch,
+                    dataformats="HWC",
+                )

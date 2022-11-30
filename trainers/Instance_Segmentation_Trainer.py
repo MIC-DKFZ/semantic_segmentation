@@ -1,19 +1,11 @@
-import hydra
 from omegaconf import DictConfig
 
 import torch
 import torch.nn.functional as F
-from pytorch_lightning import LightningModule
-from matplotlib import cm
 
-from src.metric import MetricModule
-from src.loss_function import get_loss_function_from_cfg
-from src.utils import has_not_empty_attr, has_true_attr
 from src.utils import get_logger
 from trainers.Semantic_Segmentation_Trainer import SegModel
 from src.visualization import show_prediction_inst_seg, show_mask_inst_seg, show_img
-import numpy as np
-import cv2
 
 log = get_logger(__name__)
 
@@ -103,15 +95,12 @@ class InstModel(SegModel):
 
         Parameters
         ----------
-        batch : list of torch.Tensor
-            contains img (shape==[batch_size,num_classes,w,h]) and mask (shape==[batch_size,w,h])
+        batch : list of dicts
         batch_idx : int
             index of the batch
 
         Returns
         -------
-        torch.Tensor :
-            validation loss
         """
 
         # predict batch
@@ -123,20 +112,8 @@ class InstModel(SegModel):
 
         # log some example predictions to tensorboard
         # ensure that exactly self.num_example_predictions examples are taken
-        # print(len(x))
-        batch_size = len(x)
-        if (
-            (batch_size * batch_idx) < self.num_example_predictions
-            and self.global_rank == 0
-            and not self.trainer.sanity_checking
-        ):
-            self.log_batch_prediction(
-                x,
-                y_pred,
-                y_gt,
-                batch_idx,
-                self.num_example_predictions - (batch_size * batch_idx),
-            )
+        if self.global_rank == 0 and not self.trainer.sanity_checking:
+            self.log_batch_prediction(x, y_pred, y_gt, batch_idx)
 
     def on_test_start(self) -> None:
         pass
@@ -153,140 +130,68 @@ class InstModel(SegModel):
         self.update_metric(y_pred, y_gt, self.metric, prefix="metric_test/")
 
         # log some example predictions to tensorboard
-        # ensure that exactly self.num_example_predictions examples are taken
-        # print(len(x))
-        batch_size = len(x)
-        if (
-            (batch_size * batch_idx) < self.num_example_predictions
-            and self.global_rank == 0
-            and not self.trainer.sanity_checking
-        ):
-            self.log_batch_prediction(
-                x,
-                y_pred,
-                y_gt,
-                batch_idx,
-                self.num_example_predictions - (batch_size * batch_idx),
-            )
+        if self.global_rank == 0 and not self.trainer.sanity_checking:
+            self.log_batch_prediction(x, y_pred, y_gt, batch_idx)
 
     def get_loss(self, y_pred: dict, y_gt: torch.Tensor) -> torch.Tensor:
         pass
 
-    def log_batch_prediction(
-        self,
-        imgs: torch.Tensor,
-        preds: torch.Tensor,
-        gts: torch.Tensor,
-        batch_idx: int = 0,
-        max_number: int = 5,
-    ) -> None:
+    def log_batch_prediction(self, imgs: list, preds: list, gts: list, batch_idx: int) -> None:
         """
         logging example prediction and gt to tensorboard
 
         Parameters
         ----------
-        pred : torch.Tensor
-        gt : torch.Tensor
-        batch_idx: int, optional
+        imgs: [torch.Tensor]
+        pred : [dict]
+        gt : [dict]
+        batch_idx: int
             idx of the current batch, needed for naming of the predictions
-        max_number : int, optional
-            number of example predictions
         """
+        print(type(imgs[0]), type(preds[0]), type(gts[0]))
+        # Check if the current batch has to be logged, if yes how many images
+        val_batch_size = self.trainer.datamodule.val_batch_size
+        diff_to_show = self.num_example_predictions - (batch_idx * val_batch_size)
+        if diff_to_show > 0:
+            current_batche_size = len(imgs)
+            # log the desired number of images
+            for i in range(min(current_batche_size, diff_to_show)):
+                img = imgs[i].detach().cpu()
 
-        def show_data(img, target, alpha=0.5):
-            masks = target["masks"].detach().cpu().squeeze(1)
-            boxes = target["boxes"].detach().cpu()
-            img = np.array(img.detach().cpu()) * 255
-            img = img.transpose((1, 2, 0)).astype(np.uint8)
-            for mask, box in zip(masks, boxes):
-                color = np.random.randint(0, 255, 3)
-                x1, y1, x2, y2 = int(box[0]), int(box[1]), int(box[2]), int(box[3])
-                cv2.rectangle(
-                    img, (x1, y1), (x2, y2), [int(color[0]), int(color[1]), int(color[2])]
+                pred = preds[i]
+                pred = [{k: v.detach().cpu() for k, v in pred.items()}]
+
+                gt = gts[i]
+                gt = [{k: v.detach().cpu() for k, v in gt.items()}]
+
+                # colormap class labels and transform image
+                pred = show_prediction_inst_seg(pred, img.shape[-2:], output_type="torch")
+                gt = show_mask_inst_seg(gt[0], img.shape[-2:], output_type="torch")
+                img = show_img(img, output_type="torch")
+
+                alpha = 0.5
+                gt = (img * alpha + gt * (1 - alpha)).type(torch.uint8)
+                pred = (img * alpha + pred * (1 - alpha)).type(torch.uint8)
+
+                # concat pred and gt for better visualization
+                axis = 0 if gt.shape[1] > 2 * gt.shape[0] else 1
+                fig = torch.cat((pred, gt), axis)
+
+                # resize fig for not getting to large tensorboard-files
+                w, h, c = fig.shape
+                max_size = 2048
+                if max(w, h) > max_size:
+                    s = max_size / max(w, h)
+
+                    fig = fig.permute(2, 0, 1).unsqueeze(0).float()
+                    fig = F.interpolate(fig, size=(int(w * s), int(h * s)), mode="nearest")
+                    fig = fig.squeeze(0).permute(1, 2, 0).to(torch.uint8)
+
+                # Log Figure to tensorboard
+                self.trainer.logger.experiment.add_image(
+                    "Example_Prediction/prediction_gt__sample_"
+                    + str(batch_idx * val_batch_size + i),
+                    fig,
+                    self.current_epoch,
+                    dataformats="HWC",
                 )
-                # cont,_=cv2.findContours(np.array(mask),cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-                # cv2.drawContours(img, cont, 0, [int(color[0]), int(color[1]), int(color[2])], 1)
-                x, y = np.where(np.array(mask) == 1)
-                img[x, y] = img[x, y] * alpha + color * (1 - alpha)
-            return img
-
-        def show_prediction(img, pred, alpha=0.5):
-            img = np.array(img.detach().cpu()) * 255  # [0]
-            img = img.transpose((1, 2, 0)).astype(np.uint8)
-
-            masks = pred["masks"].detach().cpu().squeeze(1)
-            boxes = pred["boxes"].detach().cpu()
-            scores = pred["scores"].detach().cpu()
-
-            masks = [mask for mask, score in zip(masks, scores) if score >= 0.5]
-            boxes = [box for box, score in zip(boxes, scores) if score >= 0.5]
-
-            for mask, box in zip(masks, boxes):
-                # mask = np.array(mask.detach().cpu())[0]
-                color = np.random.randint(0, 255, 3)
-
-                x1, y1, x2, y2 = int(box[0]), int(box[1]), int(box[2]), int(box[3])
-                # cv2.rectangle(img, (x1, y1), (x2, y2), [int(color[0]), int(color[1]), int(color[2])])
-
-                x, y = np.where(mask >= 0.5)
-                img[x, y] = img[x, y] * alpha + color * (1 - alpha)
-
-            return img
-
-        batch_size = len(imgs)
-        for i in range(min(batch_size, max_number)):
-            img = imgs[i].detach().cpu()
-
-            pred = preds[i]
-            pred = [{k: v.detach().cpu() for k, v in pred.items()}]
-
-            gt = gts[i]
-            gt = [{k: v.detach().cpu() for k, v in gt.items()}]
-
-            img_shape = img.shape[-2:]
-
-            p = show_prediction_inst_seg(pred, img_shape, output_type="torch")
-            g = show_mask_inst_seg(gt[0], img_shape, output_type="torch")
-            im = show_img(img, output_type="torch")
-
-            p = (im * 0.5 + p * 0.5).type(torch.uint8)
-            g = (im * 0.5 + g * 0.5).type(torch.uint8)
-
-            # p = torch.tensor(p.astype(np.uint8))
-            # g = torch.tensor(g.astype(np.uint8))
-            # print(p.dtype, torch.min(p), torch.max(p))
-            # p = pred[i]
-            # g = gt[i]
-            # im = img[i]
-            # g = show_data(im, g)  # gt.detach().cpu()
-            # p = show_prediction(im, p)  # pred.argmax(1).detach().cpu()
-            # p = torch.tensor(p)
-            # g = torch.tensor(g)
-            # max_size = 1024
-            # w, h, c = p.shape
-            # if max(w, h) > max_size:
-            #     s = max_size / max(w, h)
-            #     w_s, h_s = int(w * s), int(h * s)
-            #     print(p.shape, g.shape)
-            #     # print(p.unsqueeze(0).shape, g.unsqueeze(0).shape)
-            #     g = (
-            #         F.interpolate(g.permute(2, 0, 1).unsqueeze(0), size=(w_s, h_s), mode="nearest")
-            #         .long()
-            #         .squeeze(0)
-            #         .permute(1, 2, 0)
-            #     )
-            #     p = (
-            #         F.interpolate(p.permute(2, 0, 1).unsqueeze(0), size=(w_s, h_s), mode="nearest")
-            #         .long()
-            #         .squeeze(0)
-            #         .permute(1, 2, 0)
-            #     )
-            # concat pred and gt for better visualization
-            fig = torch.cat((p, g), 0)
-
-            self.trainer.logger.experiment.add_image(
-                "Example_Prediction/prediction_gt__sample_" + str(batch_idx * batch_size + i),
-                fig,
-                self.current_epoch,
-                dataformats="HWC",
-            )

@@ -1,43 +1,14 @@
-import torch
-import torchvision
 from PIL import Image
-import numpy as np
-
-import argparse
-import os
-
-import logging
-import sys
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-logging.basicConfig(level=logging.INFO)
-
-
 import torch
 import numpy as np
-
 import cv2
-
 
 from pytorch_lightning import LightningModule
 from torch.utils.data import Dataset
 
-
 from src.utils import has_not_empty_attr, get_logger
 
 log = get_logger(__name__)
-
-# img_np = np.array(img)
-#
-# if len(img_np.shape) == 2:
-#     img_np = cv2.cvtColor(img_np, cv2.COLOR_GRAY2RGB)
-# else:
-#     img_np = np.moveaxis(img_np, 0, -1)
-#
-# if self.mean is not None and self.std is not None:
-#     img_np = ((img_np * self.std) + self.mean) * 255
-
-# return img_np.astype(np.uint8)
 
 
 def convert_numpy_to(img_np, output_type):
@@ -50,8 +21,7 @@ def convert_numpy_to(img_np, output_type):
 
 
 def show_img(img: torch.Tensor, mean: list = None, std: list = None, output_type: str = "numpy"):
-    if img.dtype == torch.float and torch.max(img) <= 1:
-        img = img * 255
+
     img_np = np.array(img)
     if len(img_np.shape) == 2:
         img_np = cv2.cvtColor(img_np, cv2.COLOR_GRAY2RGB)
@@ -60,7 +30,8 @@ def show_img(img: torch.Tensor, mean: list = None, std: list = None, output_type
 
     if mean is not None and std is not None:
         img_np = ((img_np * std) + mean) * 255
-
+    elif np.min(img_np) >= 0 and np.max(img_np) <= 1:
+        img_np = img_np * 255
     img_np = img_np.astype(np.uint8)
 
     return convert_numpy_to(img_np, output_type)
@@ -182,35 +153,6 @@ class Visualizer:
         elif self.segmentation == "instance":
             return show_mask_inst_seg(mask, img_shape, "numpy")
 
-    def transform_img(self, img: torch.Tensor) -> np.ndarray:
-        """
-        Transform input tensor to numpy array
-        If single channel image convert to three channels (GRAY to RGB)
-        Move axis from [3,w,h] to [w,h,3]
-        Correct mean and std if given
-
-        Parameters
-        ----------
-        img: torch.Tensor
-            input Tensor with one or three channels
-        Returns
-        -------
-        np.ndarray :
-            numpy array in RGB format and shape [w,h,3]
-        """
-        return show_img(img, self.mean, self.std, "numpy")
-        img_np = np.array(img)
-
-        if len(img_np.shape) == 2:
-            img_np = cv2.cvtColor(img_np, cv2.COLOR_GRAY2RGB)
-        else:
-            img_np = np.moveaxis(img_np, 0, -1)
-
-        if self.mean is not None and self.std is not None:
-            img_np = ((img_np * self.std) + self.mean) * 255
-
-        return img_np.astype(np.uint8)
-
     def viz_correctness(self, pred: torch.Tensor, mask: torch.Tensor) -> np.ndarray:
         """
         visualizing the correctness of the prediction (where pred is qual to mask)
@@ -245,8 +187,12 @@ class Visualizer:
 
         # Load Image and Mask, transform image and colorize the mask
         img, mask = self.dataset[img_id]
-        self.img_np = self.transform_img(img.clone())
-        self.mask_np = self.color_mask(mask, img.shape[-2:])
+
+        self.img_np = show_img(img, self.mean, self.std, "numpy")
+        if self.segmentation == "semantic":
+            self.mask_np = show_mask_sem_seg(mask, self.cmap, "numpy")
+        elif self.segmentation == "instance":
+            self.mask_np = show_mask_inst_seg(mask, img.shape[-2:], "numpy")
 
         # Predict the Image and colorize the prediction
         if self.model is not None:
@@ -315,14 +261,6 @@ class Visualizer:
         """
         alpha_cor = cv2.getTrackbarPos("correctness", "Window") / 100
         if alpha_cor > 0:
-            # print(self.pred.shape,self.mask_np.shape,(self.pred[:,:]==self.mask_np[:,:]).shape)
-            # x,y=np.where(self.pred[:,:]==self.mask_np[:,:])
-            # print(x.shape,y.shape)
-            # cor=np.zeros(self.mask_np.shape)
-            # cor[:,:]=[255,0,0]
-            # cor[x,y]=[0,255,0,]
-
-            # cor=cor.astype(np.uint8)
 
             img = cv2.addWeighted(img, 1 - alpha_cor, self.cor, alpha_cor, 0.0)
         return img

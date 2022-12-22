@@ -63,6 +63,7 @@ def show_prediction(
     overrides_ckpt = OmegaConf.load(os.path.join("hydra", "overrides.yaml"))
     # compose config by override with overrides_ckpt, afterwards override with overrides_cl
     cfg = hydra.compose(config_name="testing", overrides=overrides_ckpt + overrides_cl)
+
     # Get the TESTING.OVERRIDES to check if additional parameters should be changed
     if has_not_empty_attr(cfg, "TESTING"):
         if has_not_empty_attr(cfg.TESTING, "OVERRIDES"):

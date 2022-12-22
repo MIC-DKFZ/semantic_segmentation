@@ -148,7 +148,6 @@ class InstModel(SegModel):
         batch_idx: int
             idx of the current batch, needed for naming of the predictions
         """
-        print(type(imgs[0]), type(preds[0]), type(gts[0]))
         # Check if the current batch has to be logged, if yes how many images
         val_batch_size = self.trainer.datamodule.val_batch_size
         diff_to_show = self.num_example_predictions - (batch_idx * val_batch_size)
@@ -167,7 +166,7 @@ class InstModel(SegModel):
                 # colormap class labels and transform image
                 pred = show_prediction_inst_seg(pred, img.shape[-2:], output_type="torch")
                 gt = show_mask_inst_seg(gt[0], img.shape[-2:], output_type="torch")
-                img = show_img(img, output_type="torch")
+                img = show_img(img, mean=self.viz_mean, std=self.viz_std, output_type="torch")
 
                 alpha = 0.5
                 gt = (img * alpha + gt * (1 - alpha)).type(torch.uint8)
@@ -179,14 +178,14 @@ class InstModel(SegModel):
 
                 # resize fig for not getting to large tensorboard-files
                 w, h, c = fig.shape
-                max_size = 2048
+                max_size = 1024
                 if max(w, h) > max_size:
                     s = max_size / max(w, h)
 
                     fig = fig.permute(2, 0, 1).unsqueeze(0).float()
                     fig = F.interpolate(fig, size=(int(w * s), int(h * s)), mode="nearest")
                     fig = fig.squeeze(0).permute(1, 2, 0).to(torch.uint8)
-
+                fig = fig.to(torch.uint8)
                 # Log Figure to tensorboard
                 self.trainer.logger.experiment.add_image(
                     "Example_Prediction/prediction_gt__sample_"

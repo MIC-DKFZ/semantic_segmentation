@@ -151,6 +151,10 @@ def num_gpus(avail_GPUS: int, selected_GPUS: Any) -> int:
     return num_gpus
 
 
+def first_from_dict(dictionary):
+    return list(dictionary.values())[0]
+
+
 def has_true_attr(obj: Any, attr: str) -> bool:
     """
     return True if obj contains attr and attr is true, else returns False

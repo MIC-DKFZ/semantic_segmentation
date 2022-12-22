@@ -1,12 +1,18 @@
 #@package _global_
 #DEFINING THE DEFAULT DATA AUGMENTATION FOR THIS DATASET
 defaults:
-  - override /data_augmentation: Cityscapes
+  - override /data_augmentation: scale_and_crop
   - override /hyperparameters: Cityscapes
 #SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
 dataset:
   _target_: datasets.Cityscapes.Cityscapes.Cityscapes_dataset
   root:     ${paths.Cityscapes}
+
+AUGMENTATIONS:
+  scale_limit: [-0.5, 1.0]
+  crop_size: [512, 1024]
+  mean: [ 0.485, 0.456, 0.406 ]
+  std: [ 0.229, 0.224, 0.225 ]
 
 DATASET:
   ##NEEDED PARAMETERS

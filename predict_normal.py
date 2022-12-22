@@ -7,24 +7,16 @@ import os
 import hydra
 import argparse
 import numpy as np
-from samplify.sampler import GridSampler
-from samplify.aggregator import Aggregator
-from tqdm import tqdm
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
 import torch
+import torch.nn.functional as F
 
 os.environ["OPENCV_IO_MAX_IMAGE_PIXELS"] = pow(2, 40).__str__()
 import cv2
 
 cv2.setNumThreads(0)
 
-from src.utils import (
-    has_true_attr,
-    has_not_empty_attr,
-    get_logger,
-    num_gpus,
-    log_hyperparameters,
-)
+from src.utils import get_logger
 
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
@@ -62,6 +54,7 @@ def predict_img(
     # chunk_size=None,
     test_time_augmentation=True,
     no_tqdm=False,
+    save_probabilities=False,
 ):
     spatial_size = image.shape[-2:]
     # Init GridSampler
@@ -83,13 +76,18 @@ def predict_img(
             patch_prediction /= 4
 
         patch_prediction = patch_prediction.cpu().numpy()
-    patch_prediction = patch_prediction.argmax(1)
-    patch_prediction = patch_prediction.squeeze(0)
-    # quit()
-    return patch_prediction
+    patch_prediction_argmax = patch_prediction.argmax(1).squeeze(0)
+    if not save_probabilities:
+        return patch_prediction_argmax
+    else:
+        patch_prediction_softmax = np.array(
+            F.softmax(torch.tensor(patch_prediction.squeeze(0)), -3, _stacklevel=5)
+        )
+
+        return patch_prediction_argmax, patch_prediction_softmax
 
 
-def predict(input_dir, output_dir, overrides, use_tta, no_tqdm=False):
+def predict(input_dir, output_dir, overrides, use_tta, no_tqdm=False, save_probabilities=False):
     hydra.initialize(config_path="config", version_base="1.1")
     cfg = hydra.compose(config_name="baseline", overrides=overrides)
     model = hydra.utils.instantiate(cfg.model)
@@ -113,10 +111,31 @@ def predict(input_dir, output_dir, overrides, use_tta, no_tqdm=False):
         )
         image = transform(image=image)["image"]
         # image = image.transpose(2, 0, 1)
-
-        prediction = predict_img(image, model, test_time_augmentation=use_tta, no_tqdm=no_tqdm)
-        # log.info("classes", np.unique(prediction))
-        cv2.imwrite(os.path.join(output_dir, file_name + ".png"), np.array(prediction))
+        if not save_probabilities:
+            prediction = predict_img(
+                image,
+                model,
+                test_time_augmentation=use_tta,
+                no_tqdm=no_tqdm,
+                save_probabilities=save_probabilities,
+            )
+            cv2.imwrite(os.path.join(output_dir, file_name + ".png"), np.array(prediction))
+        elif save_probabilities:
+            prediction, sm = predict_img(
+                image,
+                model,
+                test_time_augmentation=use_tta,
+                no_tqdm=no_tqdm,
+                save_probabilities=save_probabilities,
+            )
+            cv2.imwrite(os.path.join(output_dir, file_name + ".png"), np.array(prediction))
+            np.savez(
+                os.path.join(
+                    output_dir,
+                    file_name + ".npz",
+                ),
+                probabilities=sm,
+            )
 
 
 if __name__ == "__main__":
@@ -140,6 +159,13 @@ if __name__ == "__main__":
         action="store_true",
         help="No TQDM",
     )
+    parser.add_argument(
+        "--save_probabilities",
+        action="store_true",
+        help="Store Softmax probabilities",
+    )
 
     args, overrides = parser.parse_known_args()
-    predict(args.input, args.output, overrides, not args.no_tta, args.no_tqdm)
+    predict(
+        args.input, args.output, overrides, not args.no_tta, args.no_tqdm, args.save_probabilities
+    )

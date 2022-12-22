@@ -8,8 +8,7 @@ from matplotlib import cm
 
 from src.metric import MetricModule
 from src.loss_function import get_loss_function_from_cfg
-from src.utils import has_not_empty_attr, has_true_attr
-from src.utils import get_logger
+from src.utils import get_logger, has_not_empty_attr, has_true_attr, first_from_dict
 from src.visualization import show_mask_sem_seg, show_img
 
 log = get_logger(__name__)
@@ -58,6 +57,12 @@ class SegModel(LightningModule):
             if has_not_empty_attr(config, "num_example_predictions")
             else 0
         )
+        self.viz_mean = (
+            config.AUGMENTATIONS.mean if has_not_empty_attr(config.AUGMENTATIONS, "mean") else None
+        )
+        self.viz_std = (
+            config.AUGMENTATIONS.std if has_not_empty_attr(config.AUGMENTATIONS, "std") else None
+        )
 
     def configure_optimizers(self) -> dict:
         """
@@ -101,7 +106,8 @@ class SegModel(LightningModule):
         lr_scheduler_config["scheduler"] = hydra.utils.instantiate(
             self.config.lr_scheduler.scheduler,
             optimizer=self.optimizer,
-            max_steps=max_steps,
+            # max_steps=max_steps,
+            total_iters=max_steps,
         )
 
         return {"optimizer": self.optimizer, "lr_scheduler": lr_scheduler_config}
@@ -132,6 +138,83 @@ class SegModel(LightningModule):
         if torch.isnan(x["out"]).any():
             print("NAN Predicted")
         return x
+
+    def forward_tta(
+        self, x: torch.Tensor, scales: list = [1], flip: bool = False, binary_flip: bool = False
+    ):
+        """
+        forward the input to the model and use test time augmentation (tta)
+        scaling and flipping is used for augmentation (both optional)
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            input to predict
+        scales: list, optional
+            List of scales for tta
+        flip: bool, optional
+            If True the image is flipped 4x and the predictions are averages
+        binary_flip: bool, optional
+            If True the image is flipped 2x(left and right) and the predictions are averages
+
+        Returns
+        -------
+        dict of {str:torch.Tensor} :
+            prediction of the model
+        """
+        x_size = x.size(2), x.size(3)
+        total_pred = None
+
+        # Iterate through the scales and sum the predictions up
+        for scale in scales:
+            s_size = int(x_size[0] * scale), int(x_size[1] * scale)
+
+            # Scale input to the target scale
+            if scale == 1:
+                x_scaled = x.clone()
+            else:
+                x_scaled = F.interpolate(x, s_size, mode="bilinear", align_corners=True)
+
+            # Prediction of current scaled image
+            y_prediction = first_from_dict(self(x_scaled))
+
+            # Flip the image and take the average of all predicctions
+            if flip:
+                # Take all 4 possible flips
+                y_prediction += torch.flip(
+                    first_from_dict(self(torch.flip(x_scaled.clone(), [2]))), [2]
+                )
+                y_prediction += torch.flip(
+                    first_from_dict(self(torch.flip(x_scaled.clone(), [3]))), [3]
+                )
+                y_prediction += torch.flip(
+                    first_from_dict(self(torch.flip(x_scaled.clone(), [2, 3]))), [2, 3]
+                )
+                y_prediction /= 4
+
+            elif binary_flip:
+                # Only take the left and right flip
+                y_prediction += torch.flip(
+                    first_from_dict(self(torch.flip(x_scaled.clone(), [3]))), [3]
+                )
+                y_prediction /= 2
+
+            # Scale prediction back to the original scale
+            if scale != 1:
+                y_prediction = F.interpolate(
+                    y_prediction, x_size, mode="bilinear", align_corners=True
+                )
+
+            # Summing the predictions up
+            if total_pred == None:
+                total_pred = y_prediction
+            else:
+                total_pred += y_prediction
+
+        # Average the prediciotn over all scales
+        total_pred /= len(scales)
+
+        return {"out": total_pred}
 
     def training_step(self, batch: list, batch_idx: int) -> torch.Tensor:
         """
@@ -207,11 +290,11 @@ class SegModel(LightningModule):
         )
 
         # update validation metric
-        self.update_metric(list(y_pred.values())[0], y_gt, self.metric, prefix="metric/")
+        self.update_metric(first_from_dict(y_pred), y_gt, self.metric, prefix="metric/")
 
         # log some example predictions to tensorboard
         if self.global_rank == 0 and not self.trainer.sanity_checking:
-            self.log_batch_prediction(x, y_pred["out"], y_gt, batch_idx)
+            self.log_batch_prediction(x, first_from_dict(y_pred), y_gt, batch_idx)
 
     def on_validation_epoch_end(self) -> None:
         """
@@ -268,13 +351,36 @@ class SegModel(LightningModule):
         Set the different scales, if no ms testing is used only scale 1 is used
         if not defined also no flipping is done
         """
-        self.test_scales = [1]
-        self.test_flip = False
-        if has_not_empty_attr(self.config, "TESTING"):
-            if has_not_empty_attr(self.config.TESTING, "SCALES"):
-                self.test_scales = self.config.TESTING.SCALES
-            if has_true_attr(self.config.TESTING, "FLIP"):
-                self.test_flip = True
+        # Configure Test Loss
+        ignore_index = (
+            self.config.DATASET.IGNORE_INDEX
+            if has_not_empty_attr(self.config.DATASET, "IGNORE_INDEX")
+            else -100
+        )
+        self.loss_function_test = torch.nn.CrossEntropyLoss(ignore_index=ignore_index)
+
+        # Configure TTA behaviour during Testing
+        # Scaling
+        if has_not_empty_attr(self.config, "TESTING") and has_not_empty_attr(
+            self.config.TESTING, "SCALES"
+        ):
+            self.test_scales = self.config.TESTING.SCALES
+        else:
+            self.test_scales = [1]
+        # Flipping x4
+        if has_not_empty_attr(self.config, "TESTING") and has_not_empty_attr(
+            self.config.TESTING, "FLIP"
+        ):
+            self.test_flip = self.config.TESTING.FLIP
+        else:
+            self.test_flip = False
+        # Flipping x2
+        if has_not_empty_attr(self.config, "TESTING") and has_not_empty_attr(
+            self.config.TESTING, "BINARY_FLIP"
+        ):
+            self.test_binary_flip = self.config.TESTING.BINARY_FLIP
+        else:
+            self.test_binary_flip = False
 
     def test_step(self, batch: list, batch_idx: int) -> torch.Tensor:
         """
@@ -299,44 +405,14 @@ class SegModel(LightningModule):
             validation loss
         """
         x, y_gt = batch
-        x_size = x.size(2), x.size(3)
-        total_pred = None
-
-        # iterate through the scales and sum the predictions up
-        for scale in self.test_scales:
-            s_size = int(x_size[0] * scale), int(x_size[1] * scale)
-            x_s = F.interpolate(
-                x, s_size, mode="bilinear", align_corners=True
-            )  # self.config.MODEL.ALIGN_CORNERS)
-            y_pred = self(x_s)  # ["out"]
-            y_pred = list(y_pred.values())[0]
-            y_pred = F.interpolate(
-                y_pred, x_size, mode="bilinear", align_corners=True
-            )  # =self.config.MODEL.ALIGN_CORNERS)
-
-            # if flipping is used the average over the predictions from the flipped and not flipped image is taken
-            if self.test_flip:
-                x_flip = torch.flip(x_s, [3])  #
-
-                y_flip = self(x_flip)  # ["out"]
-                y_pred = list(y_pred.values())[0]
-                y_flip = torch.flip(y_flip, [3])
-                y_flip = F.interpolate(y_flip, x_size, mode="bilinear", align_corners=True)
-                # align_corners=self.config.MODEL.ALIGN_CORNERS)
-                y_pred += y_flip
-                y_pred /= 2
-
-            # summing the predictions up
-            if total_pred == None:
-                total_pred = y_pred  # .detach()
-            else:
-                total_pred += y_pred  # .detach()
+        y_pred = self.forward_tta(x, self.test_scales, self.test_flip, self.test_binary_flip)
 
         # update the metric with the aggregated prediction
-        self.update_metric(total_pred, y_gt, self.metric, prefix="metric_test/")
+        self.update_metric(first_from_dict(y_pred), y_gt, self.metric, prefix="metric_test/")
 
         # compute and return loss of final prediction
-        test_loss = F.cross_entropy(total_pred, y_gt, ignore_index=self.config.DATASET.IGNORE_INDEX)
+        test_loss = self.loss_function_test(first_from_dict(y_pred), y_gt)
+
         self.log(
             "Loss/Test_loss",
             test_loss,
@@ -348,7 +424,7 @@ class SegModel(LightningModule):
 
         # log some example predictions to tensorboard
         if self.global_rank == 0:
-            self.log_batch_prediction(total_pred, y_gt, batch_idx)
+            self.log_batch_prediction(x, first_from_dict(y_pred), y_gt, batch_idx)
 
         return test_loss
 
@@ -421,7 +497,9 @@ class SegModel(LightningModule):
         torch.Tenor
             weighted sum of the losses of the individual model outputs
         """
-
+        # loss_f = torch.nn.CrossEntropyLoss()
+        # loss = loss_f(first_from_dict(y_pred), y_gt)
+        # return loss
         if self.training:
             loss = sum(
                 [
@@ -554,9 +632,7 @@ class SegModel(LightningModule):
                 # colormap class labels
                 pred = show_mask_sem_seg(pred, self.cmap, "torch")
                 gt = show_mask_sem_seg(gt, self.cmap, "torch")
-                img = show_img(
-                    img, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], output_type="torch"
-                )
+                img = show_img(img, mean=self.viz_mean, std=self.viz_std, output_type="torch")
                 alpha = 0.5
                 gt = (img * alpha + gt * (1 - alpha)).type(torch.uint8)
                 pred = (img * alpha + pred * (1 - alpha)).type(torch.uint8)
@@ -567,14 +643,14 @@ class SegModel(LightningModule):
 
                 # resize fig for not getting to large tensorboard-files
                 w, h, c = fig.shape
-                max_size = 2048
+                max_size = 1024
                 if max(w, h) > max_size:
                     s = max_size / max(w, h)
 
                     fig = fig.permute(2, 0, 1).unsqueeze(0).float()
                     fig = F.interpolate(fig, size=(int(w * s), int(h * s)), mode="nearest")
-                    fig = fig.squeeze(0).permute(1, 2, 0).to(torch.uint8)
-
+                    fig = fig.squeeze(0).permute(1, 2, 0)
+                fig = fig.to(torch.uint8)
                 # Log Figure to tensorboard
                 self.trainer.logger.experiment.add_image(
                     "Example_Prediction/prediction_gt__sample_"

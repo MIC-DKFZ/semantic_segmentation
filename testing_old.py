@@ -39,6 +39,12 @@ def testing(cfg: DictConfig) -> None:
     # Load overrides from the experiment in the checkpoint dir
     overrides_ckpt = OmegaConf.load(os.path.join("hydra", "overrides.yaml"))
 
+    # overrides_ckpt = ListConfig(
+    #    ["++" + override for override in overrides_ckpt if override.split("=")[0]]
+    # )
+    # print(type(overrides_ckpt))
+    # print(overrides_ckpt)
+    # quit(())
     # Compose config by override with overrides_ckpt, afterwards override with overrides_cl
     cfg = hydra.compose(config_name="testing", overrides=overrides_ckpt + overrides_cl)
 
@@ -57,7 +63,7 @@ def testing(cfg: DictConfig) -> None:
     ckpt_file = glob.glob(os.path.join("checkpoints", "best_*"))[0]
     log.info("Checkpoint Directory: %s", ckpt_file)
 
-    model = SegModel.load_from_checkpoint(ckpt_file, model_config=cfg, strict=False)
+    model = SegModel.load_from_checkpoint(ckpt_file, config=cfg, strict=False)
 
     # Load the datamodule
     dataModule = hydra.utils.instantiate(cfg.datamodule, _recursive_=False)

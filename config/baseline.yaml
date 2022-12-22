@@ -10,7 +10,7 @@ defaults:
   - optimizer: SGD              # Optimizer
   - lr_scheduler: polynomial    # Learning rate scheduler
   - callbacks: default          # Callbacks
-  - data_augmentation: default  # Data Augmentation
+  - data_augmentation: only_norm  # Data Augmentation
   - metric: mean_IoU            # Metric configuration
   - dataset: Cityscapes         # Dataset
   - model: hrnet                # Model
@@ -25,37 +25,6 @@ experiment: "baseline"          # Possibility for naming the experiment
 LOGDIR: logs/                   # Default logging directory
 num_example_predictions: 5      # Save some example predictions during validation/testing
                                 # Just for visualization/inspection, set to 0 if not wanted
-
-
-
-
-# Customizations of Hydra
-
-hydra:
-  output_subdir: hydra
-  run:
-    dir: ${LOGDIR}/${DATASET.NAME}/${MODEL.NAME}/${experiment}__${path_formatter:${hydra.job.override_dirname}}/${now:%Y-%m-%d_%H-%M-%S}
-    # Example Dir: /.../Semantic_Segmentation/logs/Cityscapes/hrnet/baseline__lossfunction_CE/2022-02-14_15-42-43/<ouputs>
-    # using path_formatter with is defined in main.py to resolve problems which may occur with characters like [,],",or ',' in paths
-  sweep:
-    dir: multi_run_${hydra.run.dir}
-    subdir: ${hydra.job.num}
-  #job_logging:
-  #  disable_existing_loggers: mmcv
-  job:
-    chdir: True
-    config:
-      override_dirname:
-        kv_sep: "_"         # do not use "=" to prevent problems when parsing paths
-        item_sep: "__"
-        exclude_keys:       # excluding some key from ${hydra.job.override_dirname}
-          - model           # already used in the path
-          - dataset         # already used in the path
-          - environment     # no needed information for the experiments
-          - finetune_from   # to long
-          - continue_from   # to long
-          - experiment      # already used in the path
-          - LOGDIR          # no needed information for the experiments
 
 # Defining the datamodule
 datamodule:
@@ -74,3 +43,28 @@ ModelCheckpoint:
   filename: 'best_epoch_{epoch}__${METRIC.NAME}_{metric/${METRIC.NAME}:.4f}'
   auto_insert_metric_name: False          # Needs to be false for better naming of checkpoint
   save_last: True                         # If the last checkpoint should be saved too
+
+# Customizations of Hydra
+hydra:
+  output_subdir: hydra
+  run:
+    dir: ${LOGDIR}/${DATASET.NAME}/${MODEL.NAME}/${experiment}__${path_formatter:${hydra.job.override_dirname}}/${now:%Y-%m-%d_%H-%M-%S}
+    # Example Dir: /.../Semantic_Segmentation/logs/Cityscapes/hrnet/baseline__lossfunction_CE/2022-02-14_15-42-43/<ouputs>
+    # using path_formatter with is defined in main.py to resolve problems which may occur with characters like [,],",or ',' in paths
+  sweep:
+    dir: multi_run_${hydra.run.dir}
+    subdir: ${hydra.job.num}
+  job:
+    chdir: True
+    config:
+      override_dirname:
+        kv_sep: "_"         # do not use "=" to prevent problems when parsing paths
+        item_sep: "__"
+        exclude_keys:       # excluding some key from ${hydra.job.override_dirname}
+          - model           # already used in the path
+          - dataset         # already used in the path
+          - environment     # no needed information for the experiments
+          - finetune_from   # to long
+          - continue_from   # to long
+          - experiment      # already used in the path
+          - LOGDIR          # no needed information for the experiments

@@ -12,6 +12,8 @@ import cv2
 
 from src.utils import has_not_empty_attr
 from src.utils import get_logger
+import torch
+import random
 
 # set number of Threads to 0 for opencv and albumentations
 cv2.setNumThreads(0)
@@ -19,7 +21,22 @@ cv2.setNumThreads(0)
 log = get_logger(__name__)
 
 
+def seed_worker(worker_id):
+    """
+    from: https://github.com/MIC-DKFZ/image_classification/blob/master/base_model.py
+        https://pytorch.org/docs/stable/notes/randomness.html#dataloader
+        to fix https://tanelp.github.io/posts/a-bug-that-plagues-thousands-of-open-source-ml-projects/
+        ensures different random numbers each batch with each worker every epoch while keeping reproducibility
+    """
+    worker_seed = torch.initial_seed() % 2**32
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
+
+
 def inst_collate_fn(batch):
+    """
+    For using Instance Segmentation Datasets in DataLoader
+    """
     return tuple(zip(*batch))
 
 
@@ -295,6 +312,7 @@ class BaseDataModule(LightningDataModule):
             drop_last=True,
             persistent_workers=True if self.num_workers > 0 else False,
             collate_fn=self.collate_fn,
+            worker_init_fn=seed_worker,
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -311,6 +329,7 @@ class BaseDataModule(LightningDataModule):
             num_workers=self.num_workers,
             persistent_workers=True if self.num_workers > 0 else False,
             collate_fn=self.collate_fn,
+            # worker_init_fn=seed_worker,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -327,4 +346,5 @@ class BaseDataModule(LightningDataModule):
             num_workers=self.num_workers,
             persistent_workers=True if self.num_workers > 0 else False,
             collate_fn=self.collate_fn,
+            # worker_init_fn=seed_worker,
         )

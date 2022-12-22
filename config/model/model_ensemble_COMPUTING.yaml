@@ -2,12 +2,21 @@
 
 model:
   _target_: models.model_ensemble.Ensemble
+  # Iteration 1
   ckpts:
-    - ${LOGDIR}COMPUTING/hrnet_ocr_ms/baseline__dataset.fold_0__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-11-22_10-05-22
-    - ${LOGDIR}COMPUTING/hrnet_ocr_ms/baseline__dataset.fold_1__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-11-22_10-05-13
-    - ${LOGDIR}COMPUTING/hrnet_ocr_ms/baseline__dataset.fold_2__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-11-22_10-05-14
-    - ${LOGDIR}COMPUTING/hrnet_ocr_ms/baseline__dataset.fold_3__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-11-22_10-05-14
-    - ${LOGDIR}COMPUTING/hrnet_ocr_ms/baseline__dataset.fold_4__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-11-22_10-05-14
+    - ${LOGDIR}Ensembles_COMPUTING/hrnet_ocr_ms_it1/it1__dataset.fold_0__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-12-02_15-43-14
+    - ${LOGDIR}Ensembles_COMPUTING/hrnet_ocr_ms_it1/it1__dataset.fold_1__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-12-02_15-54-58
+    - ${LOGDIR}Ensembles_COMPUTING/hrnet_ocr_ms_it1/it1__dataset.fold_2__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-12-02_16-01-50
+    - ${LOGDIR}Ensembles_COMPUTING/hrnet_ocr_ms_it1/it1__dataset.fold_3__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-12-02_16-11-16
+    - ${LOGDIR}Ensembles_COMPUTING/hrnet_ocr_ms_it1/it1__dataset.fold_4__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-12-02_16-10-58
+
+  # Iteration 0
+#  ckpts:
+#    - ${LOGDIR}COMPUTING/hrnet_ocr_ms/baseline__dataset.fold_0__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-11-22_10-05-22
+#    - ${LOGDIR}COMPUTING/hrnet_ocr_ms/baseline__dataset.fold_1__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-11-22_10-05-13
+#    - ${LOGDIR}COMPUTING/hrnet_ocr_ms/baseline__dataset.fold_2__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-11-22_10-05-14
+#    - ${LOGDIR}COMPUTING/hrnet_ocr_ms/baseline__dataset.fold_3__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-11-22_10-05-14
+#    - ${LOGDIR}COMPUTING/hrnet_ocr_ms/baseline__dataset.fold_4__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-11-22_10-05-14
 
 MODEL:
   NAME: Ensemble

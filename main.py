@@ -111,12 +111,13 @@ def training_loop(cfg: DictConfig):
 
     # Initializing trainers
     trainer_args = getattr(cfg, "pl_trainer") if has_not_empty_attr(cfg, "pl_trainer") else {}
-
+    print(trainer_args)
     ddp = DDPStrategy(find_unused_parameters=False)  # if number_gpus > 1 else None
     trainer = Trainer(
         callbacks=callbacks,
         logger=tb_logger,
         strategy=ddp if number_gpus > 1 else None,
+        # strategy="ddp_find_unused_parameters_false" if number_gpus > 1 else None,
         sync_batchnorm=True if number_gpus > 1 else False,
         **trainer_args
     )

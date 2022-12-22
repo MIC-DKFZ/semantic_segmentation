@@ -11,15 +11,15 @@ momentum: 0.9                   # momentum for optimizer
 weight_decay: 0.0005            # wd for optimizer
 lossfunction: [ "CE", "CE", "CE", "CE"]     # list of lossfunctions
 lossweight:   [1.0, 0.4, 0.05, 0.05]        # corresponding weights for each loss function
-# seed: 1234                    # seed everything
+#seed: 1234                    # seed everything
 pl_trainer:                     # parameters for the pytorch lightning trainers
   accelerator: 'gpu'            # train on GPU
   devices: -1                   # using all available GPUs
   max_epochs: ${epochs}         # parsing the number of epochs which is defined as a hyperparameter
   precision: 16                 # using Mixed Precision
   benchmark: True               # using benchmark for faster training
+  deterministic: False          # deterministic does not work because of not deterministc CrossEntropyLoss Error - use "warn" instead
   enable_checkpointing: True    # Enable/Disable Checkpointing
-  #deterministic: True
   # Some usefull pl parameters for debugging
   #limit_train_batches: 0.1
   #limit_val_batches: 0.5

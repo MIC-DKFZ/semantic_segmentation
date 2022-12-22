@@ -845,7 +845,7 @@ suitable.
 For this case you can define your augmentation pipeline with Albumentations and output the pipeline
 as dict or save it as .json. This dict (or the content of the .json file) can then be inserted under
 the argument FROM_DICT.
-An example can be seen below and in the *data_augmentations/autoaugment_.yaml* files.
+An example can be seen below and in the *data_augmentations/autoaugment.yaml* files.
 
 ````yaml
 TRAIN:
@@ -866,18 +866,16 @@ The final score is composed of first calculating the score for each class and th
 By default only this final score is returned and logged, if additionally the score for each class is required use  **mean_IoU_Class** or **mean_Dice_Class**.
 Some additional configurations are provided, adopt them in the config files or override them from
 commandline:
-
-- **METRIC.METRIC_CALL**: Defines when the metric should be computed and should be one
-  of ["global", "stepwise", "global_and_stepwise"] (global by default).
-  For *global* the metric is updated in each step and computed once at the end of each epoch.
-  For *stepwise* the metric is computed in each step and averaged at the end of each epoch.
-  For *global_and_stepwise* both is done separately.
-  If *stepwise* is used the name of the logged metric will have a "_stepwise" postfix.
-  A short example when using the IoU: With using *METRIC.METRIC_CALL=global* the confusio nmatrix is
-  updated in each step and the IoU is computed once at the end of the epoch.
-  With using *METRIC.METRIC_CALL=stepwise* the IoU is computed for each sample and these IoUs are
-  averaged at the end of the epoch.
-- **METRIC.DURING_TRAIN**: True or False (False by default), provides the possibility to have a separate metric during
+- **METRIC.NAME**: Name of the metric that should be optimized. The name has to be one the metrics which is logged to tensorboard.
+If a step-wise or image-wise computed metric should be optimized, the "_stepwise" or "_per_image" postfix has to be used (e.g. meanDice_stepwise).
+If the metric should be optimized for a single class, add the class name (for mean_Dice_Class and mean_IoU_Class) e.g. meanDice_class1. 
+- **METRIC.call_global**: The metric is updated in each step and computed once at the end of each epoch. 
+True by default.
+- **METRIC.call_stepwise**: The metric is computed in each step and averaged at the end of each epoch (avg. over all batches).
+False by default. Can be combined with *METRIC.call_global* but only one of *METRIC.call_stepwise* and *METRIC.call_per_img* can be True.
+- **METRIC.call_per_img**: The metric is computed for each image and averaged at the end of each epoch (avg. over all images).
+False by default. Can be combined with *METRIC.call_global* but only one of *METRIC.call_stepwise* and *METRIC.call_per_img* can be True.
+- **METRIC.train_metric**: True or False (False by default), provides the possibility to have a separate metric during
   training.
 
 ````shell
@@ -885,7 +883,7 @@ python main.py metric=mean_IoU         # mean Intersection over Onion (IoU)
 python main.py metric=mean_Dice        # mean Dice score
 python main.py metric=mean_IoU_Class   # mean IoU with additionally logging scores for each class
 python main.py metric=mean_Dice_Class  # mean Dice with additionally logging scores for each class
-python main.py METRIC.METRIC_CALL=global_and_stepwise METRIC.DURING_TRAIN=True  # change metric settings
+python main.py METRIC.call_stepwise=True METRIC.train_metric=True  # change metric settings
 ````
 
 </p>
@@ -949,11 +947,12 @@ config/metric/my_metric.yaml
 ─────────────────────────────
 #@package _global_
 METRIC:
-  NAME: mymetric_name # Name of the target metric should be on of the names defined in METRIC.METRICS
-  #NAME: mymetric_name_stepwise   # if a stepwise metric is used add a _stepwise postfix
-  DURING_TRAIN: False
-  METRIC_CALL: global             # one of ["global", "stepwise", "global_and_stepwise"]. 
-                                  # Defines if the metric is computed stepwise or/and global
+  NAME: mymetric_name          # which metric to optimize - should be on of the names defined in METRIC.METRICS
+  train_metric: False    # If also a train metric is wanted (in addition to a validation metric)
+  call_global: True      # If True metric is updated in each step and computed once at the end of the epoch
+  call_stepwise: False   # If True metric is computed in each step (usually one batch) and averaged over all steps - exclusively with call_per_img but can be combined with call_global.
+  call_per_img: False    # If True metric is computed for each image and averaged over all images - exclusively with call_stepwise but can be combined with call_global.
+
   METRICS:
     mymetric_name: # define the name of the metric, needed for logging and to find the target metric
       _target_: src.metric.myMetricClass  # path to the metric Class

@@ -7,9 +7,7 @@ import cv2
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import pickle
-from src.visualization_utils import show_data
 from src.utils import get_logger
-from tqdm import tqdm
 
 log = get_logger(__name__)
 

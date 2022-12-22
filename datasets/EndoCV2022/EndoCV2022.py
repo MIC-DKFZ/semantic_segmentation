@@ -7,7 +7,6 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import pandas as pd
 
-from src.visualization_utils import show_data
 from src.utils import get_logger
 
 log = get_logger(__name__)
@@ -87,12 +86,3 @@ if __name__ == "__main__":
     print(len(EndoCV))
 
     img, mask = EndoCV[150]
-    out = show_data(
-        img,
-        mask,
-        alpha=0.5,
-        color_mapping=[[0, 0, 0], [255, 0, 0]],
-        mean=[0.485, 0.456, 0.406],
-        std=[0.229, 0.224, 0.225],
-    )
-    out.show()

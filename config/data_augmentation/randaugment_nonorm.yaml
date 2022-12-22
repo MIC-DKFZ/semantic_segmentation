@@ -1,18 +1,22 @@
 #@package _global_
 AUGMENTATIONS:
+  N: 3
+  M: 3
   TRAIN:
     - Compose:
         transforms:
-          - randAugment_AGGC_strong:
+          - RandAugment:
               N: 3
-              M: 5
+              M: 3
+              mode: 2
+              p: 0.5
+          - VerticalFlip:
+              p: 0.5
+          - HorizontalFlip:
               p: 0.5
           - ToTensorV2:
   VALIDATION:
     - Compose:
         transforms:
           - ToTensorV2:
-  TEST:
-    - Compose:
-        transforms:
-          - ToTensorV2:
+  TEST: ${AUGMENTATIONS.VALIDATION}

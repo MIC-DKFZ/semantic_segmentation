@@ -190,7 +190,7 @@ class Cityscapes_dataset(torch.utils.data.Dataset):
         img = transformed["image"]
         mask = transformed["mask"]
 
-        return img, mask.long()
+        return img, mask  # .long()
 
     def __len__(self):
         return len(self.imgs)

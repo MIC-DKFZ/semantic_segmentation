@@ -1,6 +1,6 @@
 #@package _global_
 defaults:
-  - override /data_augmentation: scale_and_crop
+  - override /data_augmentation: scale_crop_flip
   - override /metric: Dice_DIADEM
   #- override /hyperparameters: Cityscapes
 # dataset is used to initialize your custom dataset,

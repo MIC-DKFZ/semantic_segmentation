@@ -2,7 +2,7 @@
 
 #DEFINING THE DEFAULT DATA AUGMENTATION FOR THIS DATASET
 defaults:
-  - override /data_augmentation: scale_and_crop_VOC2010
+  - override /data_augmentation: scale_crop_VOC2010
   - override /hyperparameters: VOC2010_Context
 #SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
 dataset:

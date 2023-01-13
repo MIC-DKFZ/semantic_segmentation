@@ -1,8 +1,10 @@
 import os
-import torch
+
+# import torch
 from mmseg.models import build_segmentor
 from mmcv.utils import Config
-import mmcv
+
+# import mmcv
 from mmcv.cnn.utils import revert_sync_batchnorm
 
 import torch.nn as nn
@@ -45,8 +47,8 @@ class MMSeg_Model(nn.Module):
         y = self.mmseg_model.decode_head(feat)
         y = F.interpolate(y, size=x_size, mode="bilinear", align_corners=self.align_corners)
 
-        if torch.isnan(y).any():
-            print("NAN prediction")
+        # if torch.isnan(y).any():
+        #     print("NAN prediction")
         y = {"out": y}
         if self.mmseg_model.with_auxiliary_head:
             y_aux = self.mmseg_model.auxiliary_head(feat)

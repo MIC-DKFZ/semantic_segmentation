@@ -11,6 +11,15 @@ from src.utils import has_not_empty_attr, get_logger
 log = get_logger(__name__)
 
 
+def convert_torch_to(img_torch, output_type):
+    if output_type == "numpy":
+        return np.array(img_torch)
+    elif output_type == "PIL":
+        return Image.fromarray(np.array(img_torch))
+    elif output_type == "torch":
+        return img_torch
+
+
 def convert_numpy_to(img_np, output_type):
     if output_type == "numpy":
         return img_np

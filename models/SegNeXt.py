@@ -298,14 +298,14 @@ class MMSeg_Model(nn.Module):
         x = self.backbone(x)
 
         x = self.decode_head(x)
-        if torch.isnan(x).any():
-            print("NAN prediction Head")
+        # if torch.isnan(x).any():
+        #    print("NAN prediction Head")
         x = F.interpolate(
             x, size=x_size, mode="bilinear", align_corners=self.decode_head.align_corners
         )
-        if torch.isnan(x).any():
-            print("NAN prediction")
-            # quit()
+        # if torch.isnan(x).any():
+        #    print("NAN prediction")
+        # quit()
         x = {"out": x}
         return x
 

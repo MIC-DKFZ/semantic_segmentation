@@ -25,24 +25,23 @@ class SegModel(LightningModule):
         config : omegaconf.DictConfig
         """
         super().__init__()
-        # print(config_i)
-        config = model_config
-        self.config = config
+        # config = model_config
+        self.config = model_config
 
         # instantiate model from config
         self.model = hydra.utils.instantiate(self.config.model)
         # instantiate metric from config and metric related parameters
-        self.metric_name = config.METRIC.NAME
+        self.metric_name = self.config.METRIC.NAME
         # When to Call the Metric
-        self.metric_call_global = config.METRIC.call_global
-        self.metric_call_stepwise = config.METRIC.call_stepwise
-        self.metric_call_per_img = config.METRIC.call_per_img
+        self.metric_call_global = self.config.METRIC.call_global
+        self.metric_call_stepwise = self.config.METRIC.call_stepwise
+        self.metric_call_per_img = self.config.METRIC.call_per_img
         # instantiate validation metric from config and save best_metric parameter
-        self.metric = MetricModule(config.METRIC.METRICS)  # ,persistent=False)
+        self.metric = MetricModule(self.config.METRIC.METRICS)  # ,persistent=False)
         self.register_buffer("best_metric_val", torch.as_tensor(0), persistent=False)
 
         # instantiate train metric from config and save best_metric parameter if wanted
-        self.train_metric = config.METRIC.train_metric
+        self.train_metric = self.config.METRIC.train_metric
         if self.train_metric:
             self.metric_train = self.metric.clone()
             self.register_buffer("best_metric_train", torch.as_tensor(0), persistent=False)
@@ -53,15 +52,19 @@ class SegModel(LightningModule):
             dtype=torch.uint8,
         )[:, 0:3]
         self.num_example_predictions = (
-            config.num_example_predictions
-            if has_not_empty_attr(config, "num_example_predictions")
+            self.config.num_example_predictions
+            if has_not_empty_attr(self.config, "num_example_predictions")
             else 0
         )
         self.viz_mean = (
-            config.AUGMENTATIONS.mean if has_not_empty_attr(config.AUGMENTATIONS, "mean") else None
+            self.config.AUGMENTATIONS.mean
+            if has_not_empty_attr(self.config.AUGMENTATIONS, "mean")
+            else None
         )
         self.viz_std = (
-            config.AUGMENTATIONS.std if has_not_empty_attr(config.AUGMENTATIONS, "std") else None
+            self.config.AUGMENTATIONS.std
+            if has_not_empty_attr(self.config.AUGMENTATIONS, "std")
+            else None
         )
 
     def configure_optimizers(self) -> dict:
@@ -135,8 +138,8 @@ class SegModel(LightningModule):
                 x = dict(zip(keys, x))
             elif isinstance(x, torch.Tensor):
                 x = {"out": x}
-        if torch.isnan(x["out"]).any():
-            print("NAN Predicted")
+        # if torch.isnan(x["out"]).any():
+        #     print("NAN Predicted")
         return x
 
     def forward_tta(
@@ -279,7 +282,7 @@ class SegModel(LightningModule):
         y_pred = self(x)
 
         # compute and log loss to tensorboard
-        val_loss = self.get_loss(y_pred, y_gt)
+        val_loss = self.get_loss(y_pred, y_gt.long())
         self.log(
             name="Loss/validation_loss",
             value=val_loss,
@@ -411,7 +414,7 @@ class SegModel(LightningModule):
         self.update_metric(first_from_dict(y_pred), y_gt, self.metric, prefix="metric_test/")
 
         # compute and return loss of final prediction
-        test_loss = self.loss_function_test(first_from_dict(y_pred), y_gt)
+        test_loss = self.loss_function_test(first_from_dict(y_pred), y_gt.long())
 
         self.log(
             "Loss/Test_loss",
@@ -503,14 +506,14 @@ class SegModel(LightningModule):
         if self.training:
             loss = sum(
                 [
-                    self.loss_functions[i](y, y_gt) * self.loss_weights[i]
+                    self.loss_functions[i](y, y_gt.long()) * self.loss_weights[i]
                     for i, y in enumerate(y_pred.values())
                 ]
             )
         else:
             loss = sum(
                 [
-                    F.cross_entropy(y, y_gt, ignore_index=self.config.DATASET.IGNORE_INDEX)
+                    F.cross_entropy(y, y_gt.long(), ignore_index=self.config.DATASET.IGNORE_INDEX)
                     * self.loss_weights[i]
                     for i, y in enumerate(y_pred.values())
                 ]

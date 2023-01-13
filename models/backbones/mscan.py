@@ -144,28 +144,28 @@ class SpatialAttention(nn.Module):
     def forward(self, x):
         # print("IN", x.dtype)
         shorcut = x.clone()
-        if torch.isnan(shorcut).any():
-            print("NAN SPA short")
+        # if torch.isnan(shorcut).any():
+        #     print("NAN SPA short")
         x = self.proj_1(x)
-        if torch.isnan(x).any():
-            print("NAN SPA proj1")
+        # if torch.isnan(x).any():
+        #     print("NAN SPA proj1")
         x = self.activation(x)
-        if torch.isnan(x).any():
-            print("NAN SPA act")
+        # if torch.isnan(x).any():
+        #     print("NAN SPA act")
         # print("B", torch.min(x), torch.max(x))
         x = self.spatial_gating_unit(x)
-        if torch.isnan(x).any():
-            print("NAN SPA sgu")
+        # if torch.isnan(x).any():
+        #     print("NAN SPA sgu")
         # print(x)
         # print("I", torch.min(x), torch.max(x))
         # x_org = x.clone()
         x = self.proj_2(x)
         # print("O", torch.min(x), torch.max(x))
         # print("Out", x.dtype)
-        if torch.isnan(x).any():
-            print("NAN SPA proj2")
-            # print(x_org)
-            # print(x)
+        # if torch.isnan(x).any():
+        #     print("NAN SPA proj2")
+        # print(x_org)
+        # print(x)
         x = x + shorcut
         return x
 
@@ -206,25 +206,25 @@ class Block(nn.Module):
         #     self.layer_scale_1.unsqueeze(-1).unsqueeze(-1) * self.attn(self.norm1(x))
         # )
         l1 = self.layer_scale_1.unsqueeze(-1).unsqueeze(-1)
-        if torch.isnan(l1).any():
-            print("NAN Block l1")
+        # if torch.isnan(l1).any():
+        #     print("NAN Block l1")
         n = self.norm1(x)
-        if torch.isnan(n).any():
-            print("NAN Block n")
+        # if torch.isnan(n).any():
+        #     print("NAN Block n")
         at = self.attn(n)
-        if torch.isnan(at).any():
-            print("NAN Block At")
+        # if torch.isnan(at).any():
+        #     print("NAN Block At")
         dr = self.drop_path(l1 * at)
-        if torch.isnan(dr).any():
-            print("NAN Block dr")
+        # if torch.isnan(dr).any():
+        #     print("NAN Block dr")
         x = x + dr
-        if torch.isnan(x).any():
-            print("NAN Block Drop1")
+        # if torch.isnan(x).any():
+        #     print("NAN Block Drop1")
         x = x + self.drop_path(
             self.layer_scale_2.unsqueeze(-1).unsqueeze(-1) * self.mlp(self.norm2(x))
         )
-        if torch.isnan(x).any():
-            print("NAN Block Drop2")
+        # if torch.isnan(x).any():
+        #     print("NAN Block Drop2")
         x = x.view(B, C, N).permute(0, 2, 1)
         return x
 
@@ -337,17 +337,17 @@ class MSCAN(nn.Module):
             norm = getattr(self, f"norm{i + 1}")
             x, H, W = patch_embed(x)
             # print("Korrekt", patch_embed)
-            for x_i in x:
-                if torch.isnan(x_i).any():
-                    print("NAN in enb", i)
-                    # print(patch_embed)
+            # for x_i in x:
+            #     if torch.isnan(x_i).any():
+            #         print("NAN in enb", i)
+            # print(patch_embed)
 
             for blk in block:
                 x = blk(x, H, W)
-            for x_i in x:
-                if torch.isnan(x_i).any():
-                    print("NAN in block", i)
-                    # print(block)
+            # for x_i in x:
+            #     if torch.isnan(x_i).any():
+            # print("NAN in block", i)
+            # print(block)
             x = norm(x)
             x = x.reshape(B, H, W, -1).permute(0, 3, 1, 2).contiguous()
             outs.append(x)

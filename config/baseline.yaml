@@ -23,7 +23,7 @@ defaults:
 ORG_CWD: ${hydra:runtime.cwd}   # Saving the original working dir
 experiment: "baseline"          # Possibility for naming the experiment
 LOGDIR: logs/                   # Default logging directory
-num_example_predictions: 5      # Save some example predictions during validation/testing
+num_example_predictions: 2      # Save some example predictions during validation/testing
                                 # Just for visualization/inspection, set to 0 if not wanted
 
 # Defining the datamodule
@@ -42,7 +42,7 @@ ModelCheckpoint:
   mode: "max"                             # min or max: should be metric me maximised or minimized
   filename: 'best_epoch_{epoch}__${METRIC.NAME}_{metric/${METRIC.NAME}:.4f}'
   auto_insert_metric_name: False          # Needs to be false for better naming of checkpoint
-  save_last: True                         # If the last checkpoint should be saved too
+  save_last: False                         # If the last checkpoint should be saved too
 
 # Customizations of Hydra
 hydra:

@@ -41,13 +41,9 @@ class SamplerDataset(Dataset):
         output = self.sampler.__getitem__(idx)
         if not self.is_chunked:
             patch, patch_indices = output
-            # print(patch.dtype)
-            # patch = patch.astype(np.float32)
             return patch, patch_indices
         else:
             patch, patch_indices, chunk_id = output
-            # print(patch.dtype)
-            # patch = patch.astype(np.float32)
             return patch, patch_indices, chunk_id
 
     def __len__(self):
@@ -59,9 +55,9 @@ def predict_img(
     model,
     patch_size=(512, 512),
     patch_overlap=(256, 256),
+    chunk_size=None,
     # chunk_size=(700, 700),
     # chunk_size=(4096, 4096),
-    chunk_size=None,
     test_time_augmentation=True,
     no_tqdm=False,
     num_classes=8,
@@ -131,7 +127,7 @@ def predict_img(
 
 
 def predict(input_dir, output_dir, overrides, use_tta, no_tqdm=False):
-    hydra.initialize(config_path="config", version_base="1.1")
+    hydra.initialize(config_path="../config", version_base="1.1")
     cfg = hydra.compose(config_name="baseline", overrides=overrides)
     model = hydra.utils.instantiate(cfg.model)
     model.eval().to("cuda")

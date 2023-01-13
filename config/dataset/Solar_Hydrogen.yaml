@@ -1,6 +1,6 @@
 #@package _global_
 defaults:
-  - override /data_augmentation: randaugment_nonorm
+  - override /data_augmentation: randaugment_nonorm_flip
   - override /metric: MAP
 num_example_predictions: 7
 # dataset is used to initialize your custom dataset,

@@ -9,18 +9,21 @@ AUGMENTATIONS:
   TRAIN:
     - Compose:
         transforms:
+          - RandomScale:
+              scale_limit: ${AUGMENTATIONS.scale_limit}
+              p: 1.0
           - RandomCrop:
               height: ${AUGMENTATIONS.crop_size[0]}
               width: ${AUGMENTATIONS.crop_size[1]}
           - RandAugment:
-              N: 3
-              M: 3
+              N: ${AUGMENTATIONS.N}
+              M: ${AUGMENTATIONS.M}
               mode: 2
               p: 0.5
           - VerticalFlip:
-              p: 0.5
+              p: 0.25
           - HorizontalFlip:
-              p: 0.5
+              p: 0.25
           - Normalize:
               mean: ${AUGMENTATIONS.mean}
               std: ${AUGMENTATIONS.std}

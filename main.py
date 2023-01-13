@@ -111,7 +111,6 @@ def training_loop(cfg: DictConfig):
 
     # Initializing trainers
     trainer_args = getattr(cfg, "pl_trainer") if has_not_empty_attr(cfg, "pl_trainer") else {}
-    print(trainer_args)
     ddp = DDPStrategy(find_unused_parameters=False)  # if number_gpus > 1 else None
     trainer = Trainer(
         callbacks=callbacks,
@@ -125,14 +124,7 @@ def training_loop(cfg: DictConfig):
     # Log hyperparameters, if-statement is needed to catch fast_dev_run
     if hasattr(trainer.logger, "log_dir"):
         log_hyperparameters(cfg, model, trainer)
-    # loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
-    # print(loggers)
-    # for k, v in logging.Logger.manager.loggerDict.items():
-    #     if not isinstance(v, logging.PlaceHolder):
-    #         # v.handlers[0].setStream(None)
-    #         if k == "mmcv":
-    #             v.handlers[0].setStream(None)
-    #         print(k, v.handlers)
+
     # Start training
     trainer.fit(
         model,

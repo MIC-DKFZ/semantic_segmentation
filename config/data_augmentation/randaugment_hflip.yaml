@@ -14,8 +14,6 @@ AUGMENTATIONS:
               M: 3
               mode: 2
               p: 0.5
-          - VerticalFlip:
-              p: 0.5
           - HorizontalFlip:
               p: 0.5
           - Normalize:

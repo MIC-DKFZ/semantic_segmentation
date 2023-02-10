@@ -160,7 +160,12 @@ class ConfusionMatrix(Metric):
 
 class IoU(ConfusionMatrix):
     def __init__(
-        self, per_class: bool = False, name: str = "IoU", replace_nan: bool = True, **kwargs
+        self,
+        per_class: bool = False,
+        name: str = "IoU",
+        replace_nan: bool = True,
+        ignore_bg: bool = False,
+        **kwargs,
     ):
         """
         Init the IoU Class as subclass of ConfusionMatrix
@@ -183,6 +188,7 @@ class IoU(ConfusionMatrix):
         self.per_class = per_class
         self.name = name
         self.replace_nan = replace_nan
+        self.ignore_bg = ignore_bg
 
     def get_iou_from_mat(self, confmat: torch.Tensor) -> torch.Tensor:
         """
@@ -218,9 +224,13 @@ class IoU(ConfusionMatrix):
             IoU is returned
         """
         IoU = self.get_iou_from_mat(self.mat.clone())
-        if self.replace_nan:
-            IoU[IoU.isnan()] = 0.0
-        mIoU = IoU.mean()
+        # if self.replace_nan:
+        #     IoU[IoU.isnan()] = 0.0
+
+        if self.ignore_bg:
+            mIoU = torch.nanmean(IoU[1:])  # .mean()
+        else:
+            mIoU = torch.nanmean(IoU)  # .mean()
 
         if self.per_class:
             IoU = {self.name + "_" + self.labels[i]: IoU[i] for i in range(len(IoU))}
@@ -232,7 +242,12 @@ class IoU(ConfusionMatrix):
 
 class Dice(ConfusionMatrix):
     def __init__(
-        self, per_class: bool = False, name: str = "Dice", replace_nan: bool = True, **kwargs
+        self,
+        per_class: bool = False,
+        name: str = "Dice",
+        replace_nan: bool = True,
+        ignore_bg: bool = False,
+        **kwargs,
     ):
         """
         Init the Dice Class as subclass of ConfusionMatrix
@@ -256,6 +271,7 @@ class Dice(ConfusionMatrix):
         self.per_class = per_class
         self.name = name
         self.replace_nan = replace_nan
+        self.ignore_bg = ignore_bg
 
     def get_dice_from_mat(self, confmat: torch.Tensor) -> torch.Tensor:
         """
@@ -293,9 +309,13 @@ class Dice(ConfusionMatrix):
         """
         Dice = self.get_dice_from_mat(self.mat.clone())
 
-        if self.replace_nan:
-            Dice[Dice.isnan()] = 0.0
-        mDice = Dice.mean()
+        # if self.replace_nan:
+        #     Dice[Dice.isnan()] = 0.0
+
+        if self.ignore_bg:
+            mDice = torch.nanmean(Dice[1:])  # .mean()
+        else:
+            mDice = torch.nanmean(Dice)  # mean()
 
         if self.per_class:
             Dice = {self.name + "_" + self.labels[i]: Dice[i] for i in range(len(Dice))}

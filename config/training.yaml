@@ -15,12 +15,14 @@ defaults:
   - dataset: Cityscapes         # Dataset
   - model: hrnet                # Model
   - environment: local          # Environment
+  - logger: tensorboard
 
   - override hydra/hydra_logging: colorlog    # Using colorlog plugin of hydra for logging
   - override hydra/job_logging: colorlog
 
 # Logging Related Parameters
 ORG_CWD: ${hydra:runtime.cwd}   # Saving the original working dir
+OUTPUT_DIR: ${hydra:runtime.output_dir}
 experiment: "baseline"          # Possibility for naming the experiment
 LOGDIR: logs/                   # Default logging directory
 num_example_predictions: 2      # Save some example predictions during validation/testing
@@ -50,7 +52,7 @@ hydra:
   run:
     dir: ${LOGDIR}/${DATASET.NAME}/${MODEL.NAME}/${experiment}__${path_formatter:${hydra.job.override_dirname}}/${now:%Y-%m-%d_%H-%M-%S}
     # Example Dir: /.../Semantic_Segmentation/logs/Cityscapes/hrnet/baseline__lossfunction_CE/2022-02-14_15-42-43/<ouputs>
-    # using path_formatter with is defined in main.py to resolve problems which may occur with characters like [,],",or ',' in paths
+    # using path_formatter with is defined in training.py to resolve problems which may occur with characters like [,],",or ',' in paths
   sweep:
     dir: multi_run_${hydra.run.dir}
     subdir: ${hydra.job.num}

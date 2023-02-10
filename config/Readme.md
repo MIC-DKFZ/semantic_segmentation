@@ -60,7 +60,7 @@ they are composed.
 The default list in this repository is defined in *config/baseline.yaml* and looks like this:
 
 ````yaml
-baseline.yaml
+training.yaml
   ─────────────────────────────
 defaults:
   - _self_
@@ -91,11 +91,11 @@ All available options to change for parameters and config groups are shown below
 the [Configure the Configuration](#configure-the-configuration) part.
 
 ````shell
-python main.py  parameter_to_change=<new_value>  +parameter_to_add=<a_value>  ~parameter_to_delete
+python training.py  parameter_to_change=<new_value>  +parameter_to_add=<a_value>  ~parameter_to_delete
 #Example for single parameters
-python main.py  batch_size=3 +extra_lr=0.001 ~momentum
+python training.py  batch_size=3 +extra_lr=0.001 ~momentum
 #Example for config groups
-python main.py  model=hrnet_ocr +parameter_group=default ~environment   
+python training.py  model=hrnet_ocr +parameter_group=default ~environment   
 ````
 
 Another important concept of Hydra is the ability
@@ -365,7 +365,7 @@ MODEL:
 ````
 3. **Train your model**
    ````shell
-    python main.py model=custom_model     # to select config/model/custom_model.yaml
+    python training.py model=custom_model     # to select config/model/custom_model.yaml
     ````
 
 </p>
@@ -482,7 +482,7 @@ afterwards setting up its config file.
    ````
 3. **Train on your Dataset**
    ````shell
-    python main.py dataset=custom_dataset     # to select config/dataset/custom_dataset.yaml
+    python training.py dataset=custom_dataset     # to select config/dataset/custom_dataset.yaml
     ````
 
 
@@ -532,11 +532,11 @@ pl_trainer:                     # parameters for the pytorch lightning trainer
 
 ````shell
 # Overwriting
-python main.py pl_trainer.precision=32 pl_trainer.benchmark=false
+python training.py pl_trainer.precision=32 pl_trainer.benchmark=false
 # Adding
-python main.py +fast_dev_run=True +pl_trainer.reload_dataloaders_every_n_epochs=2 
+python training.py +fast_dev_run=True +pl_trainer.reload_dataloaders_every_n_epochs=2 
 # Removing
-python main.py ~pl_trainer.precision 
+python training.py ~pl_trainer.precision 
 ````
 
 A full list of all available options of the Pytorch Lightning Trainer class can be seen in
@@ -722,9 +722,9 @@ shown below:
   By default ``lossweight=[1, 0.4, 0.05, 0.05]`` is used.
 
 ```shell
-python main.py lossfunction=wCE lossweight=1                    # For one output like for HRNet
-python main.py lossfunction=[RMI, CE] lossweight=[1,0.4]        # Two outputs like OCR and OCR+ASPP
-python main.py lossfunction=[wRMI, wCE, wCE, wCE] lossweight=[1, 0.5, 0.1, 0.05]  # Four outputs like OCR+MS
+python training.py lossfunction=wCE lossweight=1                    # For one output like for HRNet
+python training.py lossfunction=[RMI, CE] lossweight=[1,0.4]        # Two outputs like OCR and OCR+ASPP
+python training.py lossfunction=[wRMI, wCE, wCE, wCE] lossweight=[1, 0.5, 0.1, 0.05]  # Four outputs like OCR+MS
 ```
 
 Consider the number of outputs of each model for **defining the correct number of losses in the right order**.
@@ -771,8 +771,8 @@ For the provided datasets the augmentation with the corresponding name is used b
 The data augmentations can be selected by the following command.
 
 ````shell
-python main.py data_augmentation=VOC2010_Context
-python main.py data_augmentation=Custom_augmentation
+python training.py data_augmentation=VOC2010_Context
+python training.py data_augmentation=Custom_augmentation
 ````
 
 </p>
@@ -879,11 +879,11 @@ False by default. Can be combined with *METRIC.call_global* but only one of *MET
   training.
 
 ````shell
-python main.py metric=mean_IoU         # mean Intersection over Onion (IoU)
-python main.py metric=mean_Dice        # mean Dice score
-python main.py metric=mean_IoU_Class   # mean IoU with additionally logging scores for each class
-python main.py metric=mean_Dice_Class  # mean Dice with additionally logging scores for each class
-python main.py METRIC.call_stepwise=True METRIC.train_metric=True  # change metric settings
+python training.py metric=mean_IoU         # mean Intersection over Onion (IoU)
+python training.py metric=mean_Dice        # mean Dice score
+python training.py metric=mean_IoU_Class   # mean IoU with additionally logging scores for each class
+python training.py metric=mean_Dice_Class  # mean Dice with additionally logging scores for each class
+python training.py METRIC.call_stepwise=True METRIC.train_metric=True  # change metric settings
 ````
 
 </p>
@@ -961,7 +961,7 @@ METRIC:
 `````
 
 ````shell
-python main.py metric=my_metric
+python training.py metric=my_metric
 ````
 
 </p>
@@ -980,8 +980,8 @@ following way.
 To add you own environment look at the customization chapter. By default ``environment=local``.
 
 ````shell
-python main.py environment=cluster
-python main.py environment=local
+python training.py environment=cluster
+python training.py environment=local
 ````
 
 </p>
@@ -1016,7 +1016,7 @@ Some_Parameter: ...
 ````
 
 ````shell
-python main.py environment=custom_env
+python training.py environment=custom_env
 ````
 
 </p>

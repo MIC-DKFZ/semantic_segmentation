@@ -97,6 +97,7 @@ class TimeCallback(Callback):
                 train_time,
                 logger=True,
                 sync_dist=True if trainer.num_devices > 1 else False,
+                prog_bar=True,
             )
             self.log(
                 "Time/mTrainTime",
@@ -121,6 +122,7 @@ class TimeCallback(Callback):
                 val_time,
                 logger=True,
                 sync_dist=True if trainer.num_devices > 1 else False,
+                prog_bar=True,
             )
             self.log(
                 "Time/mValTime",

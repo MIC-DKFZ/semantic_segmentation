@@ -17,7 +17,7 @@ from src.utils import has_not_empty_attr, log_hyperparameters, get_logger
 log = get_logger(__name__)
 
 
-@hydra.main(config_path="config", config_name="testing", version_base="1.2")
+@hydra.main(config_path="config", config_name="testing", version_base="1.3")
 def testing(cfg: DictConfig) -> None:
     """
     Running the Testing/Validation

@@ -2,9 +2,9 @@
 
 #DEFINING THE DEFAULT DATA AUGMENTATION FOR THIS DATASET
 defaults:
-  - override /data_augmentation: EndoCV2022
+  #- override /data_augmentation: EndoCV2022
   - override /hyperparameters: EndoCV2022
-  - override /metric: binary_Dice
+  #- override /metric: binary_Dice
 #SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
 dataset:
   _target_: datasets.EndoCV2022.EndoCV2022.EndoCV2022_dataset

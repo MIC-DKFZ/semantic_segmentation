@@ -251,12 +251,12 @@ class Visualizer:
 
             # Blend the image with prediction
             if hasattr(self, "pred"):
-                img_np = cv2.addWeighted(self.img_np_chan, 1 - alpha, self.pred, alpha, 0.0)
-                img_np = self.update_corrects(img_np)
+                self.img_np = cv2.addWeighted(self.img_np_chan, 1 - alpha, self.pred, alpha, 0.0)
+                self.img_np = self.update_corrects(self.img_np)
             else:
-                img_np = cv2.addWeighted(self.img_np_chan, 1 - alpha, self.mask_np, alpha, 0.0)
+                self.img_np = cv2.addWeighted(self.img_np_chan, 1 - alpha, self.mask_np, alpha, 0.0)
             # concat blended image and mask
-            fig = np.concatenate((img_np, self.mask_np), self.axis)
+            fig = np.concatenate((self.img_np, self.mask_np), self.axis)
             # transform from RGB to BGR to match the cv2 order
             self.fig = cv2.cvtColor(fig, cv2.COLOR_RGB2BGR)
             # show image

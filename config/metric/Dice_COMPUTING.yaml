@@ -11,3 +11,4 @@ METRIC:
       num_classes: ${DATASET.NUM_CLASSES}      # Number if Classes in the Dataset
       labels: ${DATASET.CLASS_LABELS}          # Class Labels in the Dataset
       per_class: True    # Return the mean Metric with or without the Metric for each Class
+      ignore_bg: True

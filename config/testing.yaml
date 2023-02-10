@@ -1,7 +1,7 @@
 #@package _global_
 
 # Default List
-# Use baseline.yaml and only change/override a few parts
+# Use training.yaml and only change/override a few parts
 defaults:
   - baseline
   - _self_

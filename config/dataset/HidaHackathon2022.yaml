@@ -2,9 +2,9 @@
 
 #DEFINING THE DEFAULT DATA AUGMENTATION FOR THIS DATASET
 defaults:
-  - override /data_augmentation: HidaHackathon2022
+  #- override /data_augmentation: HidaHackathon2022
   - override /hyperparameters: HidaHackathon2022
-  - override /metric: IoU_HidaHackathon2022
+  #- override /metric: IoU_HidaHackathon2022
 
 #SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
 dataset:

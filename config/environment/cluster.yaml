@@ -17,4 +17,4 @@ paths:
   AGGC2022: /dkfz/cluster/gpu/data/OE0441/l727r/AGGC2022
   DIADEM: /dkfz/cluster/gpu/data/OE0441/l727r/Dataset101_DIADEM
   #COMPUTING: /dkfz/cluster/gpu/data/OE0441/l727r/Dataset250_COMPUTING_it0
-  COMPUTING: /dkfz/cluster/gpu/data/OE0441/l727r/Dataset251_COMPUTING_it1
+  COMPUTING: /dkfz/cluster/gpu/data/OE0441/l727r/nnUNet_raw/Dataset253_COMPUTING_it3

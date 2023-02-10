@@ -456,6 +456,8 @@ class SegModel(LightningModule):
         if self.metric_call_stepwise:
             # Log the metric result for each step
             metric_step = metric(y_pred, y_gt)
+            # exclude nan since pl uses torch.mean for reduction, this way torch.nanmean is simulated
+            metric_step = {k: v for k, v in metric_step.items() if not torch.isnan(v)}
             self.log_dict_epoch(
                 metric_step,
                 prefix=prefix,
@@ -468,6 +470,8 @@ class SegModel(LightningModule):
             # metric for each img separately
             for yi_pred, yi_gt in zip(y_pred, y_gt):
                 metric_step = metric(yi_pred.unsqueeze(0), yi_gt.unsqueeze(0))
+                # exclude nan since pl uses torch.mean for reduction, this way torch.nanmean is simulated
+                metric_step = {k: v for k, v in metric_step.items() if not torch.isnan(v)}
                 self.log_dict_epoch(
                     metric_step,
                     prefix=prefix,
@@ -603,7 +607,7 @@ class SegModel(LightningModule):
                 },
                 logger=True,
                 sync_dist=True if self.trainer.num_devices > 1 else False,
-                **kwargs
+                **kwargs,
             )
 
     def log_batch_prediction(
@@ -630,15 +634,17 @@ class SegModel(LightningModule):
 
                 pred = preds[i].argmax(0).detach().cpu()
                 gt = gts[i].cpu()
-                img = imgs[i].cpu()
+                # img = imgs[i].cpu()
 
                 # colormap class labels
                 pred = show_mask_sem_seg(pred, self.cmap, "torch")
                 gt = show_mask_sem_seg(gt, self.cmap, "torch")
-                img = show_img(img, mean=self.viz_mean, std=self.viz_std, output_type="torch")
-                alpha = 0.5
-                gt = (img * alpha + gt * (1 - alpha)).type(torch.uint8)
-                pred = (img * alpha + pred * (1 - alpha)).type(torch.uint8)
+
+                # Overlay mask with images, disabled since tensorboard logfiles get to large
+                # img = show_img(img, mean=self.viz_mean, std=self.viz_std, output_type="torch")
+                # alpha = 0.5
+                # gt = (img * alpha + gt * (1 - alpha)).type(torch.uint8)
+                # pred = (img * alpha + pred * (1 - alpha)).type(torch.uint8)
 
                 # concat pred and gt for better visualization
                 axis = 0 if gt.shape[1] > 2 * gt.shape[0] else 1

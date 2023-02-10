@@ -41,7 +41,7 @@ OmegaConf.register_new_resolver(
 )
 
 
-@hydra.main(config_path="config", config_name="baseline", version_base="1.2")
+@hydra.main(config_path="config", config_name="training", version_base="1.3")
 def training_loop(cfg: DictConfig):
     """
     Running Training
@@ -52,7 +52,7 @@ def training_loop(cfg: DictConfig):
     Parameters
     ----------
     cfg :
-        cfg given by hydra - build from config/baseline.yaml + commandline argumentss
+        cfg given by hydra - build from config/training.yaml + commandline argumentss
     """
     # for k, v in logging.Logger.manager.loggerDict.items():
     #     if not isinstance(v, logging.PlaceHolder):
@@ -73,9 +73,10 @@ def training_loop(cfg: DictConfig):
         callbacks.append(hydra.utils.instantiate(cfg.ModelCheckpoint))
 
     # Using tensorboard logger
-    tb_logger = pl_loggers.TensorBoardLogger(
-        save_dir=".", name="", version="", default_hp_metric=False
-    )
+    # tb_logger = pl_loggers.TensorBoardLogger(
+    #     save_dir=".", name="", version="", default_hp_metric=False
+    # )
+    tb_logger = hydra.utils.instantiate(cfg.logger)
 
     # Logging information about gpu setup
     avail_GPUS = torch.cuda.device_count()

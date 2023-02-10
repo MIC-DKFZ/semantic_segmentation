@@ -159,8 +159,8 @@ def get_dataset_stats(
     input_channels : int, optional
         number of input channels in the dataset
     """
-    hydra.initialize(config_path="../config", version_base="1.1")
-    cfg = hydra.compose(config_name="baseline", overrides=overrides_cl)
+    hydra.initialize(config_path="../config", version_base="1.3")
+    cfg = hydra.compose(config_name="training", overrides=overrides_cl)
 
     num_classes = cfg.DATASET.NUM_CLASSES
     input_channels = cfg.input_channels if has_not_empty_attr(cfg, "input_channels") else 3

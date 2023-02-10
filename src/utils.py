@@ -38,22 +38,6 @@ def get_logger(name: str = __name__) -> logging.Logger:
         "critical",
     ):
         setattr(logger, level, rank_zero_only(getattr(logger, level)))
-    # console_handler = logging.StreamHandler()
-    # console_handler.setFormatter(
-    #     ColoredFormatter(
-    #         "[%(cyan)s%(asctime)s%(reset)s][%(blue)s%(name)s%(reset)s][%(log_color)s%(levelname)s%(reset)s]-"
-    #         " %(message)s",
-    #         log_colors={
-    #             "DEBUG": "purple",
-    #             "INFO": "green",
-    #             "WARNING": "yellow",
-    #             "ERROR": "red",
-    #             "CRITICAL": "red",
-    #         },
-    #     )
-    # )
-    # print(ColoredFormatter)
-    # logger.addHandler(console_handler)
     return logger
 
 

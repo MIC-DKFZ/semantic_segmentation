@@ -454,6 +454,7 @@ class ChallengeDataset_point_sampling(Dataset):
         return len(self.NumPatches)
 
     def __getitem__(self, item):
+        # print("X")
         item += 1
         WSIPath = self.Cases[
             int(np.ceil(item / self.NumSamplesPerSubject)) - 1
@@ -463,7 +464,7 @@ class ChallengeDataset_point_sampling(Dataset):
         Img = zarr.open(ImgPath, mode="r")
         # Mask = zarr.open(ImgPath.replace("imgs", "masks"), mode="r")
         # Mask = zarr.open(ImgPath.replace("imgs", "masks_2"), mode="r")
-        MaskPath = ImgPath.replace("imgs", "masks_3")
+        MaskPath = ImgPath.replace("imgs", "masks")
         # MaskPath = ImgPath.replace("imgs", "masks_2")
         # print(MaskPath, os.path.exists(MaskPath))
         # try:
@@ -483,7 +484,7 @@ class ChallengeDataset_point_sampling(Dataset):
 
         else:
             PointFile = open(
-                ImgPath.replace("imgs", "sample_points_3").replace(".zarr", ".pkl"),
+                ImgPath.replace("imgs", "sample_points").replace(".zarr", ".pkl"),
                 "rb"
                 # ImgPath.replace("imgs", "sample_points_2").replace(".zarr", ".pkl"),"rb",
             )

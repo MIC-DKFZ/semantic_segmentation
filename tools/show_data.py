@@ -35,8 +35,8 @@ def show_data(
         arguments from commandline to overwrite hydra config
     """
     # Init and Compose Hydra to get the config
-    hydra.initialize(config_path="../config", version_base="1.1")
-    cfg = hydra.compose(config_name="baseline", overrides=overrides_cl)
+    hydra.initialize(config_path="../config", version_base="1.3")
+    cfg = hydra.compose(config_name="training", overrides=overrides_cl)
 
     # Define Colormap and basic Transforms and instantiate the dataset
     color_map = "viridis"
@@ -93,6 +93,20 @@ def show_data(
         k = cv2.waitKey()
         if k == 113:
             break
+        elif k == 115:
+
+            img_id = cv2.getTrackbarPos("Image ID", "Window")
+            file_name = f"{cfg.DATASET.NAME}__ID{img_id}"
+            os.makedirs("dataset_visualizations", exist_ok=True)
+
+            print(f"Save {file_name}")
+
+            img = cv2.cvtColor(visualizer.img_np, cv2.COLOR_RGB2BGR)
+            mask = cv2.cvtColor(visualizer.mask_np, cv2.COLOR_RGB2BGR)
+
+            cv2.imwrite(os.path.join("dataset_visualizations", file_name + "__image.png"), img)
+            cv2.imwrite(os.path.join("dataset_visualizations", file_name + "__mask.png"), mask)
+
     cv2.destroyAllWindows()
 
 

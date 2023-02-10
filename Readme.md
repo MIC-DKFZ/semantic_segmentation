@@ -372,7 +372,7 @@ After setting up the data and downloading the pretrained weights, you can direct
 by:
 
 ````shell
-python main.py
+python training.py
 ````
 
 This trains HRNet (pretrained on ImageNet) on the Cityscape Dataset with the following default settings:
@@ -390,13 +390,13 @@ commandline as shown below.\
 **Available options for 'model' are: DeepLabv3, FCN, UNet, hrnet, hrnet_ocr, hrnet_ocr_aspp, hrnet_ocr_ms**.
 
 ````shell
-python main.py model=hrnet                      # High-Resolution Representations for Semantic Segmentation
-python main.py model=hrnet_ocr                  # Object Contextual Representation
-python main.py model=hrnet_ocr_aspp             # Combination of OCR with an ASPP module
-python main.py model=hrnet_ocr_ms               # Hierarchical Multi-Scale Attention for Semantic Segmentation
-python main.py model=FCN                        # torchvision version of FCN 
-python main.py model=DeepLabv3                  # torchvision version of DeepLabv3
-python main.py model=UNet                       # UNet
+python training.py model=hrnet                      # High-Resolution Representations for Semantic Segmentation
+python training.py model=hrnet_ocr                  # Object Contextual Representation
+python training.py model=hrnet_ocr_aspp             # Combination of OCR with an ASPP module
+python training.py model=hrnet_ocr_ms               # Hierarchical Multi-Scale Attention for Semantic Segmentation
+python training.py model=FCN                        # torchvision version of FCN 
+python training.py model=DeepLabv3                  # torchvision version of DeepLabv3
+python training.py model=UNet                       # UNet
 ````
 
 #### Selecting Pretrained weights
@@ -408,13 +408,13 @@ Available Pretrained Weights for each model:
 
 ````shell
 #For hrnet,hrnet_ocr, hrnet_ocr_aspp, hrnet_ocr_ms
-python main.py MODEL.PRETRAINED=False           # Training from scratch without Pretraining
-python main.py MODEL.pretrained_on=ImageNet     # (Default) Pretrained on ImageNet
-python main.py MODEL.pretrained_on=Paddle       # Pretrained using PaddleClas weights
-python main.py MODEL.pretrained_on=Mapillary    # Pretrained on Mapillary Dataset
+python training.py MODEL.PRETRAINED=False           # Training from scratch without Pretraining
+python training.py MODEL.pretrained_on=ImageNet     # (Default) Pretrained on ImageNet
+python training.py MODEL.pretrained_on=Paddle       # Pretrained using PaddleClas weights
+python training.py MODEL.pretrained_on=Mapillary    # Pretrained on Mapillary Dataset
 #For FCN and DeepLab
-python main.py model.pretrained=False           # Training from scratch without Pretraining
-python main.py model.pretrained=True            # (Default) Pretrained on Coco
+python training.py model.pretrained=False           # Training from scratch without Pretraining
+python training.py model.pretrained=True            # (Default) Pretrained on Coco
 ````
 
 ### Selecting a Dataset
@@ -425,11 +425,11 @@ data augmentations (from *config/data_augmentation/*) are adapted automatically 
 **Available options for 'dataset' are: Cityscapes, Cityscapes_coarse, Cityscapes_fine_coarse, VOC2010_Context, VOC2010_Context_60**.
 
 ````shell
-python main.py dataset=Cityscapes               # Cityscapes Dataset with 19 classes using fine annotated data
-python main.py dataset=Cityscapes_coarse        # Cityscapes Dataset with 19 classes using coarse annotated data
-python main.py dataset=Cityscapes_fine_coarse   # Cityscapes Dataset with 19 classes using fine and coarse annotated data
-python main.py dataset=VOC2010_Context          # VOC2010_Context Dataset with 59 classes setting
-python main.py dataset=VOC2010_Context_60       # VOC2010_Context Dataset with 60 classes setting
+python training.py dataset=Cityscapes               # Cityscapes Dataset with 19 classes using fine annotated data
+python training.py dataset=Cityscapes_coarse        # Cityscapes Dataset with 19 classes using coarse annotated data
+python training.py dataset=Cityscapes_fine_coarse   # Cityscapes Dataset with 19 classes using fine and coarse annotated data
+python training.py dataset=VOC2010_Context          # VOC2010_Context Dataset with 59 classes setting
+python training.py dataset=VOC2010_Context_60       # VOC2010_Context Dataset with 60 classes setting
 ````
 
 ### Changing Hyperparmeters
@@ -440,7 +440,7 @@ The basic hyperparameters needed for training can be set from the commandline as
 default values are shown):
 
 ````shell
-python main.py epochs=400 batch_size=6 val_batch_size=6 num_workers=10 lr=0.001 wd=0.0005 momentum=0.9
+python training.py epochs=400 batch_size=6 val_batch_size=6 num_workers=10 lr=0.001 wd=0.0005 momentum=0.9
 ````
 
 #### Changing Loss Function(s)
@@ -455,12 +455,12 @@ The provided models have the following number of outputs [*model(num_putputs)*]:
 **Available options for 'lossfunction': CE, wCE, RMI, wRMI**
 
 ````shell
-python main.py lossfunction=CE                  # default Cross Entropy loss
-python main.py lossfunction=wCE                 # including weights into Cross Entropy
-python main.py lossfunction=RMI                 # using Region Mutual Information(RMI) Loss
-python main.py lossfunction=wRMI                # using weighted RMI Loss
-python main.py lossfunction=[wRMI,wCE]          # can be arbitrarily combined for multiple outputs
-python main.py lossfunction=[CE,CE,CE,CE] lossweight=[1.0,0.4,0.05,0.05]    # default settings
+python training.py lossfunction=CE                  # default Cross Entropy loss
+python training.py lossfunction=wCE                 # including weights into Cross Entropy
+python training.py lossfunction=RMI                 # using Region Mutual Information(RMI) Loss
+python training.py lossfunction=wRMI                # using weighted RMI Loss
+python training.py lossfunction=[wRMI,wCE]          # can be arbitrarily combined for multiple outputs
+python training.py lossfunction=[CE,CE,CE,CE] lossweight=[1.0,0.4,0.05,0.05]    # default settings
 ````
 
 ### Logging and Checkpointing
@@ -479,11 +479,11 @@ Both should lead to a model checkpoint, which is a *.ckpt file.
 
 ````shell
 #Continue from Checkpoint + Example
-python main.py +continue_from=<path.to.ckpt>
-python main.py +continue_from=logs/.../checkpoints/last_epoch_74.ckpt
+python training.py +continue_from=<path.to.ckpt>
+python training.py +continue_from=logs/.../checkpoints/last_epoch_74.ckpt
 #Finetune from Checkpoint + Example
-python main.py +finetune_from=<path.to.ckpt>
-python main.py +finetune_from=logs/.../checkpoints/last_epoch_74.ckpt
+python training.py +finetune_from=<path.to.ckpt>
+python training.py +finetune_from=logs/.../checkpoints/last_epoch_74.ckpt
 ````
 
 ````
@@ -646,36 +646,36 @@ Running HRNet for different number of epochs
 
 ````shell
 
-python main.py epochs=150
-python main.py epochs=200
-python main.py epochs=250
-python main.py epochs=300
-python main.py epochs=350
-python main.py epochs=400
-python main.py epochs=450
-python main.py epochs=500
+python training.py epochs=150
+python training.py epochs=200
+python training.py epochs=250
+python training.py epochs=300
+python training.py epochs=350
+python training.py epochs=400
+python training.py epochs=450
+python training.py epochs=500
 ````
 
 Running HRNet with different batch sizes (on a single GPU)
 
 ````shell
 #for the same number of epochs
-python main.py batch_size=4 epochs=400
-python main.py batch_size=6 epochs=400
-python main.py batch_size=8 epochs=400
-python main.py batch_size=10 epochs=400
-python main.py batch_size=12 epochs=400
-python main.py batch_size=14 epochs=400
+python training.py batch_size=4 epochs=400
+python training.py batch_size=6 epochs=400
+python training.py batch_size=8 epochs=400
+python training.py batch_size=10 epochs=400
+python training.py batch_size=12 epochs=400
+python training.py batch_size=14 epochs=400
 ````
 
 ````shell
 #for the same number of steps
-python main.py batch_size=4 epochs=134
-python main.py batch_size=6 epochs=201
-python main.py batch_size=8 epochs=268
-python main.py batch_size=10 epochs=334
-python main.py batch_size=12 epochs=400
-python main.py batch_size=14 epochs=468
+python training.py batch_size=4 epochs=134
+python training.py batch_size=6 epochs=201
+python training.py batch_size=8 epochs=268
+python training.py batch_size=10 epochs=334
+python training.py batch_size=12 epochs=400
+python training.py batch_size=14 epochs=468
 ````
 
 </p>
@@ -698,27 +698,27 @@ further experiments.
 Training with Mixed Precision
 
 ````shell
-python main.py epochs=150
-python main.py epochs=200
-python main.py epochs=250
-python main.py epochs=300
-python main.py epochs=350
-python main.py epochs=400
-python main.py epochs=450
-python main.py epochs=500
+python training.py epochs=150
+python training.py epochs=200
+python training.py epochs=250
+python training.py epochs=300
+python training.py epochs=350
+python training.py epochs=400
+python training.py epochs=450
+python training.py epochs=500
 ````
 
 Training without Mixed Precision
 
 ````shell
-python main.py pl_trainer.precision=32 epochs=150
-python main.py pl_trainer.precision=32 epochs=200
-python main.py pl_trainer.precision=32 epochs=250
-python main.py pl_trainer.precision=32 epochs=300
-python main.py pl_trainer.precision=32 epochs=350
-python main.py pl_trainer.precision=32 epochs=400
-python main.py pl_trainer.precision=32 epochs=450
-python main.py pl_trainer.precision=32 epochs=500
+python training.py pl_trainer.precision=32 epochs=150
+python training.py pl_trainer.precision=32 epochs=200
+python training.py pl_trainer.precision=32 epochs=250
+python training.py pl_trainer.precision=32 epochs=300
+python training.py pl_trainer.precision=32 epochs=350
+python training.py pl_trainer.precision=32 epochs=400
+python training.py pl_trainer.precision=32 epochs=450
+python training.py pl_trainer.precision=32 epochs=500
 ````
 
 </p>
@@ -760,10 +760,10 @@ gives by far the best results.
 Training the different Models
 
 ````shell
-python main.py model=hrnet
-python main.py model=hrnet_ocr
-python main.py model=hrnet_ocr_aspp
-python main.py model=hrnet_ocr_ms
+python training.py model=hrnet
+python training.py model=hrnet_ocr
+python training.py model=hrnet_ocr_aspp
+python training.py model=hrnet_ocr_ms
 ````
 
 </p>
@@ -805,14 +805,14 @@ Only HRNet is used for these experiments.
 Training HRNet with different loss functions
 
 ````shell
-python main.py lossfunction=CE
-python main.py lossfunction=wCE
-python main.py lossfunction=RMI
-python main.py lossfunction=wRMI
-python main.py lossfunction=DC
-python main.py lossfunction=DC_CE
-python main.py lossfunction=TOPK
-python main.py lossfunction=DC_TOPK
+python training.py lossfunction=CE
+python training.py lossfunction=wCE
+python training.py lossfunction=RMI
+python training.py lossfunction=wRMI
+python training.py lossfunction=DC
+python training.py lossfunction=DC_CE
+python training.py lossfunction=TOPK
+python training.py lossfunction=DC_TOPK
 ````
 
 </p>
@@ -853,17 +853,17 @@ used during validation (validation loss).
 
 ````shell
 #Running HRNet with CE and RMI loss
-python main.py lossfunction=wCE
-python main.py lossfunction=wRMI
+python training.py lossfunction=wCE
+python training.py lossfunction=wRMI
 #Running OCR with CE and RMI loss
-python main.py model=hrnet_ocr lossfunction=[wCE,wCE]
-python main.py model=hrnet_ocr lossfunction=[wRMI,wCE]
+python training.py model=hrnet_ocr lossfunction=[wCE,wCE]
+python training.py model=hrnet_ocr lossfunction=[wRMI,wCE]
 #Running OCR + ASPP with CE and RMI loss
-python main.py model=hrnet_ocr_aspp lossfunction=[wCE,wCE]
-python main.py model=hrnet_ocr_aspp lossfunction=[wRMI,wCE]
+python training.py model=hrnet_ocr_aspp lossfunction=[wCE,wCE]
+python training.py model=hrnet_ocr_aspp lossfunction=[wRMI,wCE]
 #Running MS OCR with CE and RMI loss
-python main.py model=hrnet_ocr_ms lossfunction=[wCE,wCE,wCE,wCE]
-python main.py model=hrnet_ocr_ms lossfunction=[wRMI,wCE,wCE,wCE]
+python training.py model=hrnet_ocr_ms lossfunction=[wCE,wCE,wCE,wCE]
+python training.py model=hrnet_ocr_ms lossfunction=[wRMI,wCE,wCE,wCE]
 ````
 
 </p>
@@ -926,42 +926,42 @@ Training Models with and without different pretrained weights
 
 ````shell
 #Training from Scratch
-python main.py model=hrnet MODEL.PRETRAINED=False
-python main.py model=hrnet_ocr MODEL.PRETRAINED=False
-python main.py model=hrnet_ocr_aspp MODEL.PRETRAINED=False
-python main.py model=hrnet_ocr_ms MODEL.PRETRAINED=False
+python training.py model=hrnet MODEL.PRETRAINED=False
+python training.py model=hrnet_ocr MODEL.PRETRAINED=False
+python training.py model=hrnet_ocr_aspp MODEL.PRETRAINED=False
+python training.py model=hrnet_ocr_ms MODEL.PRETRAINED=False
 #Pretrained on ImageNet
-python main.py model=hrnet MODEL.pretrained_on=ImageNet
-python main.py model=hrnet_ocr MODEL.pretrained_on=ImageNet
-python main.py model=hrnet_ocr_aspp MODEL.pretrained_on=ImageNet
-python main.py model=hrnet_ocr_ms MODEL.pretrained_on=ImageNet
+python training.py model=hrnet MODEL.pretrained_on=ImageNet
+python training.py model=hrnet_ocr MODEL.pretrained_on=ImageNet
+python training.py model=hrnet_ocr_aspp MODEL.pretrained_on=ImageNet
+python training.py model=hrnet_ocr_ms MODEL.pretrained_on=ImageNet
 #Pretrained with PaddleClas
-python main.py model=hrnet MODEL.pretrained_on=Paddle
-python main.py model=hrnet_ocr MODEL.pretrained_on=Paddle
-python main.py model=hrnet_ocr_aspp MODEL.pretrained_on=Paddle
-python main.py model=hrnet_ocr_ms MODEL.pretrained_on=Paddle
+python training.py model=hrnet MODEL.pretrained_on=Paddle
+python training.py model=hrnet_ocr MODEL.pretrained_on=Paddle
+python training.py model=hrnet_ocr_aspp MODEL.pretrained_on=Paddle
+python training.py model=hrnet_ocr_ms MODEL.pretrained_on=Paddle
 #Pretrained on Mapillary
-python main.py model=hrnet MODEL.pretrained_on=Mapillary epochs=75
-python main.py model=hrnet_ocr MODEL.pretrained_on=Mapillary epochs=75
-python main.py model=hrnet_ocr_aspp MODEL.pretrained_on=Mapillary epochs=75
-python main.py model=hrnet_ocr_ms MODEL.pretrained_on=Mapillary epoch=75
+python training.py model=hrnet MODEL.pretrained_on=Mapillary epochs=75
+python training.py model=hrnet_ocr MODEL.pretrained_on=Mapillary epochs=75
+python training.py model=hrnet_ocr_aspp MODEL.pretrained_on=Mapillary epochs=75
+python training.py model=hrnet_ocr_ms MODEL.pretrained_on=Mapillary epoch=75
 ````
 
 Training Models with coarse data
 
 ````shell
 #HRNET
-python main.py model=hrnet
-python main.py model=hrnet epochs=25 lr=0.001 dataset=Cityscapes_coarse +finetune_from=<path.to.ckpt.of.previous.line>
-python main.py model=hrnet epochs=65 lr=0.001 +finetune_from=<path.to.ckpt.of.previous.line>
+python training.py model=hrnet
+python training.py model=hrnet epochs=25 lr=0.001 dataset=Cityscapes_coarse +finetune_from=<path.to.ckpt.of.previous.line>
+python training.py model=hrnet epochs=65 lr=0.001 +finetune_from=<path.to.ckpt.of.previous.line>
 #HRNET OCR
-python main.py model=hrnet_ocr
-python main.py model=hrnet_ocr epochs=25 lr=0.001 dataset=Cityscapes_coarse +finetune_from=<path.to.ckpt.of.previous.line>
-python main.py model=hrnet_ocr epochs=65 lr=0.001 +finetune_from=<path.to.ckpt.of.previous.line>
+python training.py model=hrnet_ocr
+python training.py model=hrnet_ocr epochs=25 lr=0.001 dataset=Cityscapes_coarse +finetune_from=<path.to.ckpt.of.previous.line>
+python training.py model=hrnet_ocr epochs=65 lr=0.001 +finetune_from=<path.to.ckpt.of.previous.line>
 #MS OCR
-python main.py model=hrnet_ocr_ms 
-python main.py model=hrnet_ocr_ms epochs=25 lr=0.001 dataset=Cityscapes_coarse +finetune_from=<path.to.ckpt.of.previous.line>
-python main.py model=hrnet_ocr_ms epochs=65 lr=0.001 +finetune_from=<path.to.ckpt.of.previous.line>
+python training.py model=hrnet_ocr_ms 
+python training.py model=hrnet_ocr_ms epochs=25 lr=0.001 dataset=Cityscapes_coarse +finetune_from=<path.to.ckpt.of.previous.line>
+python training.py model=hrnet_ocr_ms epochs=65 lr=0.001 +finetune_from=<path.to.ckpt.of.previous.line>
 ````
 
 </p>
@@ -1012,17 +1012,17 @@ experiments.
 
 ````shell
 #Paddle + RMI
-python main.py model=hrnet_ocr_ms lossfunction=[wRMI,wCE,wCE,wCE] MODEL.pretrained_on=Paddle
+python training.py model=hrnet_ocr_ms lossfunction=[wRMI,wCE,wCE,wCE] MODEL.pretrained_on=Paddle
 #Mapillary + RMI
-python main.py model=hrnet_ocr_ms lossfunction=[wRMI,wCE,wCE,wCE] MODEL.pretrained_on=Mapillary epochs=75
+python training.py model=hrnet_ocr_ms lossfunction=[wRMI,wCE,wCE,wCE] MODEL.pretrained_on=Mapillary epochs=75
 #Mapillary + RMI + coarse Data (Strategy 2)
-python main.py model=hrnet_ocr_ms epochs=75 lossfunction=[wRMI,wCE,wCE,wCE]
-python main.py model=hrnet_ocr_ms epochs=25 lr=0.001 dataset=Cityscapes_coarse +finetune_from=<path.to.ckpt.of.previous.line>
-python main.py model=hrnet_ocr_ms epochs=20 lr=0.001 lossfunction=[wRMI,wCE,wCE,wCE] +finetune_from=<path.to.ckpt.of.previous.line>
+python training.py model=hrnet_ocr_ms epochs=75 lossfunction=[wRMI,wCE,wCE,wCE]
+python training.py model=hrnet_ocr_ms epochs=25 lr=0.001 dataset=Cityscapes_coarse +finetune_from=<path.to.ckpt.of.previous.line>
+python training.py model=hrnet_ocr_ms epochs=20 lr=0.001 lossfunction=[wRMI,wCE,wCE,wCE] +finetune_from=<path.to.ckpt.of.previous.line>
 #Mapillary + RMI + coarse Data (Strategy 3)
-python main.py model=hrnet_ocr_ms epochs=75 lossfunction=[wRMI,wCE,wCE,wCE]
-python main.py model=hrnet_ocr_ms epochs=25 lr=0.001 dataset=Cityscapes_fine_coarse +finetune_from=<path.to.ckpt.of.previous.line>
-python main.py model=hrnet_ocr_ms epochs=15 lr=0.001 lossfunction=[wRMI,wCE,wCE,wCE] +finetune_from=<path.to.ckpt.of.previous.line>
+python training.py model=hrnet_ocr_ms epochs=75 lossfunction=[wRMI,wCE,wCE,wCE]
+python training.py model=hrnet_ocr_ms epochs=25 lr=0.001 dataset=Cityscapes_fine_coarse +finetune_from=<path.to.ckpt.of.previous.line>
+python training.py model=hrnet_ocr_ms epochs=15 lr=0.001 lossfunction=[wRMI,wCE,wCE,wCE] +finetune_from=<path.to.ckpt.of.previous.line>
 ````
 
 </p>
@@ -1099,27 +1099,27 @@ testing by ``pl_trainer.benchmark=False``.
 
 ````shell
 #HRNet
-python main.py model=hrnet dataset=VOC2010                                                               # Baseline
-python main.py model=hrnet dataset=VOC2010 MODEL.pretrained_on=Paddle                                    # using PaddleClas weights
-python main.py model=hrnet dataset=VOC2010 MODEL.pretrained_on=Paddle lossfunction=RMI                   # using PaddleClas + RMI
+python training.py model=hrnet dataset=VOC2010                                                               # Baseline
+python training.py model=hrnet dataset=VOC2010 MODEL.pretrained_on=Paddle                                    # using PaddleClas weights
+python training.py model=hrnet dataset=VOC2010 MODEL.pretrained_on=Paddle lossfunction=RMI                   # using PaddleClas + RMI
 ### Since some pseudo validation is used for runtime reduction during training, the models have to be validated seperatly ###
 ###<path.to.output.dir> would look similar to this: /home/.../VOC2010/hrnet/baseline_.../2022-01-18_16-05-09
 python testing.py ckpt_dir==<path.to.output.dir> TESTING.SCALES=[1.0]  TESTING.FLIP=False  # testing without Multiscale
 python testing.py ckpt_dir==<path.to.output.dir>                                           # testing with Multiscale
 
 #OCR
-python main.py model=hrnet_ocr dataset=VOC2010                                                          # Baseline
-python main.py model=hrnet_ocr dataset=VOC2010 MODEL.pretrained_on=Paddle                               # using PaddleClas weights
-python main.py model=hrnet_ocr dataset=VOC2010 MODEL.pretrained_on=Paddle lossfunction=[RMI,CE]         # using PaddleClas + RMI
+python training.py model=hrnet_ocr dataset=VOC2010                                                          # Baseline
+python training.py model=hrnet_ocr dataset=VOC2010 MODEL.pretrained_on=Paddle                               # using PaddleClas weights
+python training.py model=hrnet_ocr dataset=VOC2010 MODEL.pretrained_on=Paddle lossfunction=[RMI,CE]         # using PaddleClas + RMI
 ### Since some pseudo validation is used for runtime reduction during training, the models have to be validated seperatly ###
 ###<path.to.output.dir> would look similar to this: /home/.../VOC2010/hrnet_ocr/baseline_.../2022-01-18_16-05-09
 python testing.py ckpt_dir==<path.to.output.dir> TESTING.SCALES=[1.0]  TESTING.FLIP=False  # testing without Multiscale
 python testing.py ckpt_dir==<path.to.output.dir>                                           # testing with Multiscale
 
 #MS OCR
-python main.py model=hrnet_ocr_ms dataset=VOC2010                                                       # Baseline
-python main.py model=hrnet_ocr_ms dataset=VOC2010 MODEL.pretrained_on=Paddle                            # using PaddleClas weights
-python main.py model=hrnet_ocr_ms dataset=VOC2010 MODEL.pretrained_on=Paddle lossfunction=[RMI,CE,CE,CE]   # using PaddleClas + RMI
+python training.py model=hrnet_ocr_ms dataset=VOC2010                                                       # Baseline
+python training.py model=hrnet_ocr_ms dataset=VOC2010 MODEL.pretrained_on=Paddle                            # using PaddleClas weights
+python training.py model=hrnet_ocr_ms dataset=VOC2010 MODEL.pretrained_on=Paddle lossfunction=[RMI,CE,CE,CE]   # using PaddleClas + RMI
 ### Since some pseudo validation is used for runtime reduction during training, the models have to be validated seperatly ###
 ###<path.to.output.dir> would look similar to this: /home/.../VOC2010/hrnet_ocr_ms/baseline_.../2022-01-18_16-05-09
 #MS OCR[0.5,1]

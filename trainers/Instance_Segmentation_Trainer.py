@@ -166,11 +166,12 @@ class InstModel(SegModel):
                 # colormap class labels and transform image
                 pred = show_prediction_inst_seg(pred, img.shape[-2:], output_type="torch")
                 gt = show_mask_inst_seg(gt[0], img.shape[-2:], output_type="torch")
-                img = show_img(img, mean=self.viz_mean, std=self.viz_std, output_type="torch")
 
-                alpha = 0.5
-                gt = (img * alpha + gt * (1 - alpha)).type(torch.uint8)
-                pred = (img * alpha + pred * (1 - alpha)).type(torch.uint8)
+                # Overlay mask with images, disabled since tensorboard logfiles get to large
+                # img = show_img(img, mean=self.viz_mean, std=self.viz_std, output_type="torch")
+                # alpha = 0.5
+                # gt = (img * alpha + gt * (1 - alpha)).type(torch.uint8)
+                # pred = (img * alpha + pred * (1 - alpha)).type(torch.uint8)
 
                 # concat pred and gt for better visualization
                 axis = 0 if gt.shape[1] > 2 * gt.shape[0] else 1

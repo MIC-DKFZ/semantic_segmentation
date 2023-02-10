@@ -139,7 +139,7 @@ by running a small "unit test" using Pytorch
 Lightnings [fast_dev_run](https://pytorch-lightning.readthedocs.io/en/stable/common/debugging.html#fast-dev-run):
 
 ````
-python main.py dataset=<name.of.dataset> +pl_trainer.fast_dev_run=True
+python training.py dataset=<name.of.dataset> +pl_trainer.fast_dev_run=True
 ````
 
 Among others, this repository is mainly built on the following packages.
@@ -496,7 +496,7 @@ LOGDIR                                      # logs/ by default
                   ├── hydra/                # Contains hydra config files
                   ├── testing/              # (Optional) only when model is tested - contains testing results
                   ├── event.out...          # Tensorboard log
-                  ├── main.log              # Console logging file
+                  ├── training.log          # Console logging file
                   └── hparams.yaml          # Resolved config
 ````
 
@@ -523,7 +523,7 @@ Thereby the test dataset is loaded, this means if you don't have one, or you wan
 your dataset class should return the validation set when getting the *split=test* input argument (see datasets/Cityscapes/Cityscapes.py).
 For testing, the configuration used during training is reconstructed and composed with the arguments given by the command line.
 Consider that checkpointing hast to be enabled during
-training (``python main.py .... pl_trainer.enable_checkpointing=True`` or set to True in '
+training (``python training.py .... pl_trainer.enable_checkpointing=True`` or set to True in '
 baseline.yaml') to validate/test afterwards.
 
 No public test set exists for the Cityscapes and VOC2010_Context datasets, so the validation set is used instead.
@@ -582,6 +582,17 @@ to get some guidance when choosing an optimal initial lr (Should be used with ca
   pyhton tools/lr_finder.py dataset=Cityscapes model=hrnet
   ````
 
+### Instance Segmentation
+
+The framework can also be used in a light version (not all features and tools can be used) for doing Instance Segmentation.
+So far Mask RCNN ([paper](https://arxiv.org/abs/1703.06870), [code](https://pytorch.org/vision/main/models/mask_rcnn.html)) is the only supported model 
+and the only supported metric is Mean-Average Precision (MAP, [docs](https://torchmetrics.readthedocs.io/en/stable/detection/mean_average_precision.html)).
+Some additional tutorials can be found [here](https://torchtutorialstaging.z5.web.core.windows.net/intermediate/torchvision_tutorial.html).
+For training an Instance Segmentation model adopt the following command:
+
+  ````shell
+  python training.py model=Mask_RCNN metric=MAP trainer=InstSeg dataset=<some.inst.seg.dataset>
+  ````
 
 # Experiments
 

@@ -36,8 +36,8 @@ handle *.yaml* files, Omegaconf and YAML are also briefly introduced.
 [Hydra](https://hydra.cc/) automatically loads and composes different configuration files and allows
 to dynamically override values at runtime via the command line.
 In Hydra, *.yaml* files are used to set configurations.
-In this repository the *config/baseline.yaml* can be seen as the main file from which other
-configurations are composed.
+In this repository the *config/training.yaml* can be seen as the main file from which other
+configurations are composed (for training).
 Each subfolder in *config/* is
 a [config group](https://hydra.cc/docs/tutorials/basic/your_first_app/config_groups/), which
 contains a separate config file for each alternative inside.
@@ -57,7 +57,7 @@ To tell hydra how to compose the job configuration,
 a [default list](https://hydra.cc/docs/tutorials/basic/your_first_app/defaults/) is used, which
 specifies which configuration file from which configuration group should be used and in which order
 they are composed.
-The default list in this repository is defined in *config/baseline.yaml* and looks like this:
+The default list in this repository is defined in *config/training.yaml* and looks like this:
 
 ````yaml
 training.yaml
@@ -82,7 +82,7 @@ In addition to the order, the default list also sets default values for the conf
 This means if not changed, the parameters defined in *hyperparameters/default.yaml*,..., *datasets/Cityscapes.yaml*
 and *model/hrnet.yaml* are used in this case.
 To change the used config file of a config group, the corresponding entry in the default list can be
-changed in the *baseline.yaml*, or the entry can be overwritten from the commandline.
+changed in the *training.yaml*, or the entry can be overwritten from the commandline.
 Hydra's [commandline syntax](https://hydra.cc/docs/advanced/override_grammar/basic/#working-with-your-shell)
 is straight forward and elements can be changed, added or removed in the following ways.
 Thereby this syntax is the same for single parameters like *batch_size* as well as for config files
@@ -263,6 +263,8 @@ alist:
   - elem2                      # There needs to be a space between dash and element
   - ...
 samelist: [ elem1, elem2, ... ]               # The same list can also be defined with this syntax
+
+val_interpolation: ${alist[0]}                # Get the value of alist at position 0
 ````
 
 **Dictionaries** are defined in the following way:
@@ -273,6 +275,8 @@ adict:
   key2: val2                    # There has to be a space between colon and value
   ...                           # Each key may occur at most once
 samedict: { key1: val1, key2: val2, ... }     # The same dict can also be defined with this syntax
+
+val_interpolation: ${adict.key1}              # Get the value of adict at key1
 ````
 
 For more complex files you will end up with lists of dictionaries and dictionaries of list and
@@ -509,19 +513,19 @@ can be overwritten from the command line as shown below.
 - **lr:** initial learning rate for training.
 
  ```` shell
- python main.py epochs=100 batch_size=7 val_batch_size=3 num_workers=4 lr=0.001
+ python training.py epochs=100 batch_size=7 val_batch_size=3 num_workers=4 lr=0.001
   ```` 
 
 #### Pytorch Lightning Trainer
 
 Since Pytorch Lightning is used as training framework, with the trainer class as central unit,
 some additional parameters can be defined by passing them to the Pytorch Lightning Trainer.
-The *pl_trainer* entry in the baseline.yaml is used for this purpose.
+The *pl_trainer* entry in the training.yaml is used for this purpose.
 By default, this looks like the following and arguments can be overwritten/added/removed as shown
 below:
 
 ```` yaml
-baseline.yaml
+training.yaml
 ------------------
 pl_trainer:                     # parameters for the pytorch lightning trainer
   max_epochs: ${epochs}         # parsing the number of epochs which is defined as a hyperparameter
@@ -543,7 +547,7 @@ A full list of all available options of the Pytorch Lightning Trainer class can 
 the [Lightning docs](https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html#trainer-class-api). \
 Some arguments are defined inside the code and can't be overwritten from the config file.
 These parameters are not intended to be changed, if you still want to adapt them you can do this
-in *main.py* in the *training_loop* function.
+in *training.py* in the *training_loop* function.
 The effected parameters are:
 
 - *callbacks*: callbacks are defined in *config/callbacks*, so add your callbacks there
@@ -581,7 +585,7 @@ pl_trainer:
 ````
 
 ````shell
-python main hyperparameters=my_hparams
+python training.py hyperparameters=my_hparams
 ````
 
 </p>
@@ -601,8 +605,8 @@ nesterov, can be passed (similar for Madgrad):
 - **momentum:** default = 0.9
 
 ````shell
-python main optimizer=SGD weight_decay=0.0001 momentum=0.8 +optimizer.nesterov=True
-python main optimizer=MADGRAD
+python training.py optimizer=SGD weight_decay=0.0001 momentum=0.8 +optimizer.nesterov=True
+python training.py optimizer=MADGRAD
 
 ````
 
@@ -628,7 +632,7 @@ arg2: ...
 `````
 
 ````shell
-python main optimizer=my_optimizer
+python training.py optimizer=my_optimizer
 ````
 
 </p>
@@ -646,8 +650,8 @@ By default the polynomial scheduler is used (stepwise):
 - polynomial_epoch: Polynomial lr scheduler over number of epochs: *(1-current_epoch/max_epoch)^0.9*
 
 ````shell
-python main lr_scheduler=polynomial
-python main lr_scheduler=polynomial_epoch
+python training.py lr_scheduler=polynomial
+python training.py lr_scheduler=polynomial_epoch
 ````
 
 </p>
@@ -680,7 +684,7 @@ scheduler:                  # defining the actuel scheduler class
 `````
 
 ````shell
-python main lr_scheduler=my_scheduler
+python training.py lr_scheduler=my_scheduler
 ````
 
 </p>
@@ -993,7 +997,7 @@ python training.py environment=local
 An environment config contains everything which is specific for the environment like paths or
 specific parameters but also to reach environment specific behaviour by for example enable/disable
 checkpoint saving or the
-progressbar. Since the environment config is merged into the baseline config at last, you can
+progressbar. Since the environment config is merged into the training config at last, you can
 override all parameters from there. For adding a new environment config create a *custom_env.yaml*
 file in *config/environment/* and adapt the following dummy:
 

@@ -123,7 +123,7 @@ def training_loop(cfg: DictConfig):
     )
 
     # Log hyperparameters, if-statement is needed to catch fast_dev_run
-    if hasattr(trainer.logger, "log_dir"):
+    if not has_true_attr(cfg.pl_trainer,"fast_dev_run"):
         log_hyperparameters(cfg, model, trainer)
 
     # Start training

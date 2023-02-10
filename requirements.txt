@@ -5,6 +5,7 @@ torch>=1.13.1+cu116
 torchvision>=0.14.1+cu116
 torchmetrics==0.11
 pytorch-lightning==1.9
+tensorboard>=2.12.0
 
 # Madgrad optimizer
 madgrad==1.2

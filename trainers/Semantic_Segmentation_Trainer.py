@@ -517,7 +517,13 @@ class SegModel(LightningModule):
         else:
             loss = sum(
                 [
-                    F.cross_entropy(y, y_gt.long(), ignore_index=self.config.DATASET.IGNORE_INDEX)
+                    F.cross_entropy(
+                        y,
+                        y_gt.long(),
+                        ignore_index=self.config.DATASET.IGNORE_INDEX
+                        if has_not_empty_attr(self.config.DATASET, "IGNORE_INDEX")
+                        else -100,
+                    )
                     * self.loss_weights[i]
                     for i, y in enumerate(y_pred.values())
                 ]
@@ -631,7 +637,6 @@ class SegModel(LightningModule):
             current_batche_size = len(imgs)
             # log the desired number of images
             for i in range(min(current_batche_size, diff_to_show)):
-
                 pred = preds[i].argmax(0).detach().cpu()
                 gt = gts[i].cpu()
                 # img = imgs[i].cpu()

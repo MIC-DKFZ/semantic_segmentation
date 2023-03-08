@@ -12,11 +12,32 @@ import cv2
 
 from src.utils import has_not_empty_attr
 from src.utils import get_logger
+import torch
+import random
 
-# set number of Threads to 0 for opencv and albumentations for cleaner dataloader
+# set number of Threads to 0 for opencv and albumentations
 cv2.setNumThreads(0)
 # import logger
 log = get_logger(__name__)
+
+
+def seed_worker(worker_id):
+    """
+    from: https://github.com/MIC-DKFZ/image_classification/blob/master/base_model.py
+        https://pytorch.org/docs/stable/notes/randomness.html#dataloader
+        to fix https://tanelp.github.io/posts/a-bug-that-plagues-thousands-of-open-source-ml-projects/
+        ensures different random numbers each batch with each worker every epoch while keeping reproducibility
+    """
+    worker_seed = torch.initial_seed() % 2**32
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
+
+
+def inst_collate_fn(batch):
+    """
+    For using Instance Segmentation Datasets in DataLoader
+    """
+    return tuple(zip(*batch))
 
 
 def get_max_steps(
@@ -115,6 +136,7 @@ class BaseDataModule(LightningDataModule):
         val_batch_size: int,
         num_workers: int,
         augmentations: DictConfig,
+        instance_seg: bool = False,
     ) -> None:
         """
         __init__ the LightningModule
@@ -143,6 +165,11 @@ class BaseDataModule(LightningDataModule):
         self.augmentations = augmentations
         # dataset which is defined in the config
         self.dataset = dataset
+
+        if instance_seg:
+            self.collate_fn = inst_collate_fn
+        else:
+            self.collate_fn = None
 
     def setup(self, stage: str = None) -> None:
         """
@@ -195,6 +222,11 @@ class BaseDataModule(LightningDataModule):
             num_epochs=self.trainer.max_epochs,
             drop_last=True,
         )
+        # base_size = len(self.DS_train)
+        # steps_per_epoch = base_size // self.batch_size
+        # steps_per_gpu = int(np.ceil(steps_per_epoch / self.trainers.num_devices))
+        # acc_steps_per_gpu = int(np.ceil(steps_per_gpu / self.trainers.accumulate_grad_batches))
+        # max_steps = self.trainers.max_epochs * acc_steps_per_gpu
 
         log.info(
             "Number of Training steps: {}  ({} steps per epoch)".format(max_steps, max_steps_epoch)
@@ -279,6 +311,8 @@ class BaseDataModule(LightningDataModule):
             num_workers=self.num_workers,
             drop_last=True,
             persistent_workers=True if self.num_workers > 0 else False,
+            collate_fn=self.collate_fn,
+            worker_init_fn=seed_worker,
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -294,6 +328,8 @@ class BaseDataModule(LightningDataModule):
             batch_size=self.val_batch_size,
             num_workers=self.num_workers,
             persistent_workers=True if self.num_workers > 0 else False,
+            collate_fn=self.collate_fn,
+            # worker_init_fn=seed_worker,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -309,4 +345,6 @@ class BaseDataModule(LightningDataModule):
             batch_size=self.val_batch_size,
             num_workers=self.num_workers,
             persistent_workers=True if self.num_workers > 0 else False,
+            collate_fn=self.collate_fn,
+            # worker_init_fn=seed_worker,
         )

@@ -8,7 +8,6 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import numpy as np
 
-from src.visualization_utils import show_data
 from src.utils import get_logger
 
 log = get_logger(__name__)
@@ -165,8 +164,12 @@ class VOC2010_Context_dataset(torch.utils.data.Dataset):
         self.masks = list(sorted(glob.glob(masks_path)))
 
         self.transforms = transforms
-        # log.info("Dataset: VOC2010_Context %s - %s images - %s masks",split,  len(self.imgs),len(self.masks))
-        print("Dataset: VOC2010_Context", split, len(self.imgs), len(self.masks))
+        log.info(
+            "Dataset: VOC2010_Context %s - %s images - %s masks",
+            split,
+            len(self.imgs),
+            len(self.masks),
+        )
 
     def reduce_num_classes(self, mask):
         # exclude background class
@@ -221,18 +224,3 @@ if __name__ == "__main__":
     VOC2010_train = VOC2010_Context_dataset(Path, "train", transforms=transforms)
 
     img, mask = VOC2010_train[465]
-    print(np.unique(img))
-    print(img[:, 100, 100])
-    print(img[:, 200, 200])
-    print(img[:, 300, 300])
-
-    out = show_data(
-        img=img,
-        mask=mask,
-        alpha=0.5,
-        black=[255],
-        mean=[0.485, 0.456, 0.406],
-        std=[0.229, 0.224, 0.225],
-    )
-
-    out.show()

@@ -5,8 +5,6 @@ import torch
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 from datasets.Cityscapes.Cityscapes import Cityscapes_dataset, classes_19
-
-from src.visualization_utils import show_data
 from src.utils import get_logger
 
 log = get_logger(__name__)
@@ -102,16 +100,3 @@ if __name__ == "__main__":
     Cityscape_train = Cityscapes_coarse_dataset(cityscapesPath, "train", transforms=transforms)
 
     img, mask = Cityscape_train[2000]
-    print(len(Cityscape_train))
-    print(img.shape)
-    print(torch.unique(mask))
-    out = show_data(
-        img=img,
-        mask=mask,
-        alpha=0.7,
-        black=[255],
-        color_mapping=[x.color for x in classes_19],
-        mean=[0.485, 0.456, 0.406],
-        std=[0.229, 0.224, 0.225],
-    )
-    out.show()

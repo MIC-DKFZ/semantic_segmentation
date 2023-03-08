@@ -36,8 +36,8 @@ handle *.yaml* files, Omegaconf and YAML are also briefly introduced.
 [Hydra](https://hydra.cc/) automatically loads and composes different configuration files and allows
 to dynamically override values at runtime via the command line.
 In Hydra, *.yaml* files are used to set configurations.
-In this repository the *config/baseline.yaml* can be seen as the main file from which other
-configurations are composed.
+In this repository the *config/training.yaml* can be seen as the main file from which other
+configurations are composed (for training).
 Each subfolder in *config/* is
 a [config group](https://hydra.cc/docs/tutorials/basic/your_first_app/config_groups/), which
 contains a separate config file for each alternative inside.
@@ -57,10 +57,10 @@ To tell hydra how to compose the job configuration,
 a [default list](https://hydra.cc/docs/tutorials/basic/your_first_app/defaults/) is used, which
 specifies which configuration file from which configuration group should be used and in which order
 they are composed.
-The default list in this repository is defined in *config/baseline.yaml* and looks like this:
+The default list in this repository is defined in *config/training.yaml* and looks like this:
 
 ````yaml
-baseline.yaml
+training.yaml
   ─────────────────────────────
 defaults:
   - _self_
@@ -82,7 +82,7 @@ In addition to the order, the default list also sets default values for the conf
 This means if not changed, the parameters defined in *hyperparameters/default.yaml*,..., *datasets/Cityscapes.yaml*
 and *model/hrnet.yaml* are used in this case.
 To change the used config file of a config group, the corresponding entry in the default list can be
-changed in the *baseline.yaml*, or the entry can be overwritten from the commandline.
+changed in the *training.yaml*, or the entry can be overwritten from the commandline.
 Hydra's [commandline syntax](https://hydra.cc/docs/advanced/override_grammar/basic/#working-with-your-shell)
 is straight forward and elements can be changed, added or removed in the following ways.
 Thereby this syntax is the same for single parameters like *batch_size* as well as for config files
@@ -91,11 +91,11 @@ All available options to change for parameters and config groups are shown below
 the [Configure the Configuration](#configure-the-configuration) part.
 
 ````shell
-python main.py  parameter_to_change=<new_value>  +parameter_to_add=<a_value>  ~parameter_to_delete
+python training.py  parameter_to_change=<new_value>  +parameter_to_add=<a_value>  ~parameter_to_delete
 #Example for single parameters
-python main.py  batch_size=3 +extra_lr=0.001 ~momentum
+python training.py  batch_size=3 +extra_lr=0.001 ~momentum
 #Example for config groups
-python main.py  model=hrnet_ocr +parameter_group=default ~environment   
+python training.py  model=hrnet_ocr +parameter_group=default ~environment   
 ````
 
 Another important concept of Hydra is the ability
@@ -263,6 +263,8 @@ alist:
   - elem2                      # There needs to be a space between dash and element
   - ...
 samelist: [ elem1, elem2, ... ]               # The same list can also be defined with this syntax
+
+val_interpolation: ${alist[0]}                # Get the value of alist at position 0
 ````
 
 **Dictionaries** are defined in the following way:
@@ -273,6 +275,8 @@ adict:
   key2: val2                    # There has to be a space between colon and value
   ...                           # Each key may occur at most once
 samedict: { key1: val1, key2: val2, ... }     # The same dict can also be defined with this syntax
+
+val_interpolation: ${adict.key1}              # Get the value of adict at key1
 ````
 
 For more complex files you will end up with lists of dictionaries and dictionaries of list and
@@ -365,7 +369,7 @@ MODEL:
 ````
 3. **Train your model**
    ````shell
-    python main.py model=custom_model     # to select config/model/custom_model.yaml
+    python training.py model=custom_model     # to select config/model/custom_model.yaml
     ````
 
 </p>
@@ -482,7 +486,7 @@ afterwards setting up its config file.
    ````
 3. **Train on your Dataset**
    ````shell
-    python main.py dataset=custom_dataset     # to select config/dataset/custom_dataset.yaml
+    python training.py dataset=custom_dataset     # to select config/dataset/custom_dataset.yaml
     ````
 
 
@@ -509,19 +513,19 @@ can be overwritten from the command line as shown below.
 - **lr:** initial learning rate for training.
 
  ```` shell
- python main.py epochs=100 batch_size=7 val_batch_size=3 num_workers=4 lr=0.001
+ python training.py epochs=100 batch_size=7 val_batch_size=3 num_workers=4 lr=0.001
   ```` 
 
 #### Pytorch Lightning Trainer
 
 Since Pytorch Lightning is used as training framework, with the trainer class as central unit,
 some additional parameters can be defined by passing them to the Pytorch Lightning Trainer.
-The *pl_trainer* entry in the baseline.yaml is used for this purpose.
+The *pl_trainer* entry in the training.yaml is used for this purpose.
 By default, this looks like the following and arguments can be overwritten/added/removed as shown
 below:
 
 ```` yaml
-baseline.yaml
+training.yaml
 ------------------
 pl_trainer:                     # parameters for the pytorch lightning trainer
   max_epochs: ${epochs}         # parsing the number of epochs which is defined as a hyperparameter
@@ -532,18 +536,18 @@ pl_trainer:                     # parameters for the pytorch lightning trainer
 
 ````shell
 # Overwriting
-python main.py pl_trainer.precision=32 pl_trainer.benchmark=false
+python training.py pl_trainer.precision=32 pl_trainer.benchmark=false
 # Adding
-python main.py +fast_dev_run=True +pl_trainer.reload_dataloaders_every_n_epochs=2 
+python training.py +fast_dev_run=True +pl_trainer.reload_dataloaders_every_n_epochs=2 
 # Removing
-python main.py ~pl_trainer.precision 
+python training.py ~pl_trainer.precision 
 ````
 
 A full list of all available options of the Pytorch Lightning Trainer class can be seen in
 the [Lightning docs](https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html#trainer-class-api). \
 Some arguments are defined inside the code and can't be overwritten from the config file.
 These parameters are not intended to be changed, if you still want to adapt them you can do this
-in *main.py* in the *training_loop* function.
+in *training.py* in the *training_loop* function.
 The effected parameters are:
 
 - *callbacks*: callbacks are defined in *config/callbacks*, so add your callbacks there
@@ -581,7 +585,7 @@ pl_trainer:
 ````
 
 ````shell
-python main hyperparameters=my_hparams
+python training.py hyperparameters=my_hparams
 ````
 
 </p>
@@ -601,8 +605,8 @@ nesterov, can be passed (similar for Madgrad):
 - **momentum:** default = 0.9
 
 ````shell
-python main optimizer=SGD weight_decay=0.0001 momentum=0.8 +optimizer.nesterov=True
-python main optimizer=MADGRAD
+python training.py optimizer=SGD weight_decay=0.0001 momentum=0.8 +optimizer.nesterov=True
+python training.py optimizer=MADGRAD
 
 ````
 
@@ -628,7 +632,7 @@ arg2: ...
 `````
 
 ````shell
-python main optimizer=my_optimizer
+python training.py optimizer=my_optimizer
 ````
 
 </p>
@@ -646,8 +650,8 @@ By default the polynomial scheduler is used (stepwise):
 - polynomial_epoch: Polynomial lr scheduler over number of epochs: *(1-current_epoch/max_epoch)^0.9*
 
 ````shell
-python main lr_scheduler=polynomial
-python main lr_scheduler=polynomial_epoch
+python training.py lr_scheduler=polynomial
+python training.py lr_scheduler=polynomial_epoch
 ````
 
 </p>
@@ -680,7 +684,7 @@ scheduler:                  # defining the actuel scheduler class
 `````
 
 ````shell
-python main lr_scheduler=my_scheduler
+python training.py lr_scheduler=my_scheduler
 ````
 
 </p>
@@ -722,9 +726,9 @@ shown below:
   By default ``lossweight=[1, 0.4, 0.05, 0.05]`` is used.
 
 ```shell
-python main.py lossfunction=wCE lossweight=1                    # For one output like for HRNet
-python main.py lossfunction=[RMI, CE] lossweight=[1,0.4]        # Two outputs like OCR and OCR+ASPP
-python main.py lossfunction=[wRMI, wCE, wCE, wCE] lossweight=[1, 0.5, 0.1, 0.05]  # Four outputs like OCR+MS
+python training.py lossfunction=wCE lossweight=1                    # For one output like for HRNet
+python training.py lossfunction=[RMI, CE] lossweight=[1,0.4]        # Two outputs like OCR and OCR+ASPP
+python training.py lossfunction=[wRMI, wCE, wCE, wCE] lossweight=[1, 0.5, 0.1, 0.05]  # Four outputs like OCR+MS
 ```
 
 Consider the number of outputs of each model for **defining the correct number of losses in the right order**.
@@ -771,8 +775,8 @@ For the provided datasets the augmentation with the corresponding name is used b
 The data augmentations can be selected by the following command.
 
 ````shell
-python main.py data_augmentation=VOC2010_Context
-python main.py data_augmentation=Custom_augmentation
+python training.py data_augmentation=VOC2010_Context
+python training.py data_augmentation=Custom_augmentation
 ````
 
 </p>
@@ -845,7 +849,7 @@ suitable.
 For this case you can define your augmentation pipeline with Albumentations and output the pipeline
 as dict or save it as .json. This dict (or the content of the .json file) can then be inserted under
 the argument FROM_DICT.
-An example can be seen below and in the *data_augmentations/autoaugment_.yaml* files.
+An example can be seen below and in the *data_augmentations/autoaugment.yaml* files.
 
 ````yaml
 TRAIN:
@@ -866,26 +870,24 @@ The final score is composed of first calculating the score for each class and th
 By default only this final score is returned and logged, if additionally the score for each class is required use  **mean_IoU_Class** or **mean_Dice_Class**.
 Some additional configurations are provided, adopt them in the config files or override them from
 commandline:
-
-- **METRIC.METRIC_CALL**: Defines when the metric should be computed and should be one
-  of ["global", "stepwise", "global_and_stepwise"] (global by default).
-  For *global* the metric is updated in each step and computed once at the end of each epoch.
-  For *stepwise* the metric is computed in each step and averaged at the end of each epoch.
-  For *global_and_stepwise* both is done separately.
-  If *stepwise* is used the name of the logged metric will have a "_stepwise" postfix.
-  A short example when using the IoU: With using *METRIC.METRIC_CALL=global* the confusio nmatrix is
-  updated in each step and the IoU is computed once at the end of the epoch.
-  With using *METRIC.METRIC_CALL=stepwise* the IoU is computed for each sample and these IoUs are
-  averaged at the end of the epoch.
-- **METRIC.DURING_TRAIN**: True or False (False by default), provides the possibility to have a separate metric during
+- **METRIC.NAME**: Name of the metric that should be optimized. The name has to be one the metrics which is logged to tensorboard.
+If a step-wise or image-wise computed metric should be optimized, the "_stepwise" or "_per_image" postfix has to be used (e.g. meanDice_stepwise).
+If the metric should be optimized for a single class, add the class name (for mean_Dice_Class and mean_IoU_Class) e.g. meanDice_class1. 
+- **METRIC.call_global**: The metric is updated in each step and computed once at the end of each epoch. 
+True by default.
+- **METRIC.call_stepwise**: The metric is computed in each step and averaged at the end of each epoch (avg. over all batches).
+False by default. Can be combined with *METRIC.call_global* but only one of *METRIC.call_stepwise* and *METRIC.call_per_img* can be True.
+- **METRIC.call_per_img**: The metric is computed for each image and averaged at the end of each epoch (avg. over all images).
+False by default. Can be combined with *METRIC.call_global* but only one of *METRIC.call_stepwise* and *METRIC.call_per_img* can be True.
+- **METRIC.train_metric**: True or False (False by default), provides the possibility to have a separate metric during
   training.
 
 ````shell
-python main.py metric=mean_IoU         # mean Intersection over Onion (IoU)
-python main.py metric=mean_Dice        # mean Dice score
-python main.py metric=mean_IoU_Class   # mean IoU with additionally logging scores for each class
-python main.py metric=mean_Dice_Class  # mean Dice with additionally logging scores for each class
-python main.py METRIC.METRIC_CALL=global_and_stepwise METRIC.DURING_TRAIN=True  # change metric settings
+python training.py metric=mean_IoU         # mean Intersection over Onion (IoU)
+python training.py metric=mean_Dice        # mean Dice score
+python training.py metric=mean_IoU_Class   # mean IoU with additionally logging scores for each class
+python training.py metric=mean_Dice_Class  # mean Dice with additionally logging scores for each class
+python training.py METRIC.call_stepwise=True METRIC.train_metric=True  # change metric settings
 ````
 
 </p>
@@ -949,11 +951,12 @@ config/metric/my_metric.yaml
 ─────────────────────────────
 #@package _global_
 METRIC:
-  NAME: mymetric_name # Name of the target metric should be on of the names defined in METRIC.METRICS
-  #NAME: mymetric_name_stepwise   # if a stepwise metric is used add a _stepwise postfix
-  DURING_TRAIN: False
-  METRIC_CALL: global             # one of ["global", "stepwise", "global_and_stepwise"]. 
-                                  # Defines if the metric is computed stepwise or/and global
+  NAME: mymetric_name          # which metric to optimize - should be on of the names defined in METRIC.METRICS
+  train_metric: False    # If also a train metric is wanted (in addition to a validation metric)
+  call_global: True      # If True metric is updated in each step and computed once at the end of the epoch
+  call_stepwise: False   # If True metric is computed in each step (usually one batch) and averaged over all steps - exclusively with call_per_img but can be combined with call_global.
+  call_per_img: False    # If True metric is computed for each image and averaged over all images - exclusively with call_stepwise but can be combined with call_global.
+
   METRICS:
     mymetric_name: # define the name of the metric, needed for logging and to find the target metric
       _target_: src.metric.myMetricClass  # path to the metric Class
@@ -962,7 +965,7 @@ METRIC:
 `````
 
 ````shell
-python main.py metric=my_metric
+python training.py metric=my_metric
 ````
 
 </p>
@@ -981,8 +984,8 @@ following way.
 To add you own environment look at the customization chapter. By default ``environment=local``.
 
 ````shell
-python main.py environment=cluster
-python main.py environment=local
+python training.py environment=cluster
+python training.py environment=local
 ````
 
 </p>
@@ -994,7 +997,7 @@ python main.py environment=local
 An environment config contains everything which is specific for the environment like paths or
 specific parameters but also to reach environment specific behaviour by for example enable/disable
 checkpoint saving or the
-progressbar. Since the environment config is merged into the baseline config at last, you can
+progressbar. Since the environment config is merged into the training config at last, you can
 override all parameters from there. For adding a new environment config create a *custom_env.yaml*
 file in *config/environment/* and adapt the following dummy:
 
@@ -1017,7 +1020,7 @@ Some_Parameter: ...
 ````
 
 ````shell
-python main.py environment=custom_env
+python training.py environment=custom_env
 ````
 
 </p>

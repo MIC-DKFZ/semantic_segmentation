@@ -3,7 +3,6 @@ import hydra
 from omegaconf import DictConfig, OmegaConf
 import os
 from typing import Any
-from tqdm import tqdm
 
 import torch
 from pytorch_lightning.utilities import rank_zero_only
@@ -38,7 +37,6 @@ def get_logger(name: str = __name__) -> logging.Logger:
         "critical",
     ):
         setattr(logger, level, rank_zero_only(getattr(logger, level)))
-
     return logger
 
 
@@ -116,7 +114,7 @@ def num_gpus(avail_GPUS: int, selected_GPUS: Any) -> int:
     avail_GPUS : int
         how many gpus are available
     selected_GPUS : Any
-        num_gpus input argument for the pytorch lightning trainer
+        num_gpus input argument for the pytorch lightning trainers
 
     Returns
     -------
@@ -134,6 +132,10 @@ def num_gpus(avail_GPUS: int, selected_GPUS: Any) -> int:
     elif isinstance(selected_GPUS, str):
         num_gpus = len(selected_GPUS.split(","))
     return num_gpus
+
+
+def first_from_dict(dictionary):
+    return list(dictionary.values())[0]
 
 
 def has_true_attr(obj: Any, attr: str) -> bool:
@@ -173,18 +175,3 @@ def has_not_empty_attr(obj: Any, attr: str) -> bool:
             return True
     return False
 
-
-"""
-def has_not_empty_attr_rec(obj: Any, attr: str) -> bool:
-    # checking if the config contains a attribute and if this attribute is not empty
-    split = attr.split(".", 1)
-    key = split[0]
-    attr = split[1:]
-    if hasattr(obj, key):
-        if attr == []:
-            if obj[key] != None:
-                return True
-        else:
-            return has_not_empty_attr_rec(obj[key], attr[0])
-    return False
-"""

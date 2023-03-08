@@ -1,6 +1,5 @@
 import argparse
 import os
-import glob
 import logging
 import sys
 
@@ -14,7 +13,7 @@ from pytorch_lightning import Trainer
 import hydra
 import torch
 
-from Segmentation_Model import SegModel
+from trainers.Semantic_Segmentation_Trainer import SegModel
 
 from src.utils import has_true_attr, has_not_empty_attr, get_logger, num_gpus
 
@@ -37,8 +36,11 @@ def find_lr(overrides_cl: list, num_training_samples: int) -> None:
     hydra.initialize(config_path="../config", version_base="1.1")
 
     overrides_cl.append("ORG_CWD=./")
-    cfg = hydra.compose(config_name="baseline", overrides=overrides_cl)
-
+    cfg = hydra.compose(config_name="training", overrides=overrides_cl)
+    if os.getcwd().endswith("tools"):
+        cfg.ORG_CWD="../"
+    else:
+        cfg.ORG_CWD = "/"
     callbacks = []
     for _, cb_conf in cfg.CALLBACKS.items():
         if cb_conf is not None:
@@ -67,13 +69,24 @@ def find_lr(overrides_cl: list, num_training_samples: int) -> None:
 
     # Defining model and load checkpoint if wanted
     # cfg.finetune_from should be the path to a .ckpt file
+    # if has_not_empty_attr(cfg, "finetune_from"):
+    #     log.info("finetune from: %s", cfg.finetune_from)
+    #     model = SegModel.load_from_checkpoint(cfg.finetune_from, strict=False, config=cfg)
+    # else:
+    #     model = SegModel(config=cfg)
+    if hasattr(cfg, "num_example_predictions"):
+        cfg.num_example_predictions = 0
     if has_not_empty_attr(cfg, "finetune_from"):
         log.info("finetune from: %s", cfg.finetune_from)
-        model = SegModel.load_from_checkpoint(cfg.finetune_from, strict=False, config=cfg)
+        cfg.trainermodule._target_ += ".load_from_checkpoint"
+        model = hydra.utils.call(
+            cfg.trainermodule, cfg.finetune_from, strict=False, model_config=cfg, _recursive_=False
+        )
+        # model = SegModel.load_from_checkpoint(cfg.finetune_from, strict=False, config=cfg)
     else:
-        model = SegModel(config=cfg)
-
-    # Initializing trainer
+        # model = SegModel(config=cfg)
+        model = hydra.utils.instantiate(cfg.trainermodule, cfg, _recursive_=False)
+    # Initializing trainers
     trainer_args = getattr(cfg, "pl_trainer") if has_not_empty_attr(cfg, "pl_trainer") else {}
 
     # ddp=DDPPlugin(find_unused_parameters=False) if number_gpus > 1 else None
@@ -85,7 +98,6 @@ def find_lr(overrides_cl: list, num_training_samples: int) -> None:
         auto_lr_find="config.lr",
         **trainer_args,
     )
-
     lr_finder = trainer.tuner.lr_find(
         model=model,
         datamodule=dataModule,

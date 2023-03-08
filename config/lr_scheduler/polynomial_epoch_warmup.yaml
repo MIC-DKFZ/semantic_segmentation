@@ -1,0 +1,7 @@
+interval: epoch              # when the scheduler should be called, at each step of each epoch
+frequency: 1                # how often should it be called
+monitor: metric_to_track    # parameter for pytorch lightning to log the lr
+scheduler:                  #defining the scheduler class
+    _target_: src.lr_scheduler.PolynomialLR_Warmstart # path to the scheduler
+    power: 0.9           # arguments for the scheduler
+    warmstart_iters: 0.0125     # number of warmup steps in %

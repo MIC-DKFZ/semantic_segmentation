@@ -6,6 +6,8 @@ from torchmetrics import Metric, MetricCollection
 import pytorch_lightning as pl
 from torchmetrics.utilities.data import _bincount
 import matplotlib.pyplot as plt
+
+plt.switch_backend("agg")
 from matplotlib.figure import Figure
 
 
@@ -94,10 +96,12 @@ class ConfusionMatrix(Metric):
         Parameters
         ----------
         trainer : pl.Trainer
-            The trainer itself to access the logger and parameters like current epoch etc.
+            The trainers itself to access the logger and parameters like current epoch etc.
         """
 
-        def mat_to_figure(mat: np.ndarray, name: str = "Confusion matrix") -> Figure:
+        def mat_to_figure(
+            mat: np.ndarray, name: str = "Confusion matrix", normalized: bool = False
+        ) -> Figure:
             """
 
             Parameters
@@ -116,15 +120,17 @@ class ConfusionMatrix(Metric):
             plt.imshow(mat, interpolation="nearest", cmap=plt.cm.viridis)
 
             plt.title(name)
+            if normalized:
+                plt.clim(0, 1)
             plt.colorbar()
-            if hasattr(self, "class_names"):
-                labels = self.class_names
-            else:
-                labels = np.arange(self.num_classes)
+            # if hasattr(self, "labels"):
+            #     labels = self.labels
+            # else:
+            #     labels = np.arange(self.num_classes)
 
-            tick_marks = np.arange(len(labels))
-            plt.xticks(tick_marks, labels, rotation=-90)  # , rotation=45)
-            plt.yticks(tick_marks, labels)
+            tick_marks = np.arange(len(self.labels))
+            plt.xticks(tick_marks, self.labels, rotation=-45)
+            plt.yticks(tick_marks, self.labels)
 
             plt.ylabel("True label")
             plt.xlabel("Predicted label")
@@ -145,7 +151,7 @@ class ConfusionMatrix(Metric):
         confmat_norm = np.around(
             confmat.astype("float") / confmat.sum(axis=1)[:, np.newaxis], decimals=2
         )
-        figure = mat_to_figure(confmat_norm, "Confusion Matrix (normalized)")
+        figure = mat_to_figure(confmat_norm, "Confusion Matrix (normalized)", True)
         trainer.logger.experiment.add_figure(
             "ConfusionMatrix/ConfusionMatrix_normalized", figure, trainer.current_epoch
         )
@@ -153,7 +159,12 @@ class ConfusionMatrix(Metric):
 
 class IoU(ConfusionMatrix):
     def __init__(
-        self, per_class: bool = False, name: str = "IoU", replace_nan: bool = True, **kwargs
+        self,
+        per_class: bool = False,
+        name: str = "IoU",
+        replace_nan: bool = True,
+        ignore_bg: bool = False,
+        **kwargs,
     ):
         """
         Init the IoU Class as subclass of ConfusionMatrix
@@ -176,6 +187,7 @@ class IoU(ConfusionMatrix):
         self.per_class = per_class
         self.name = name
         self.replace_nan = replace_nan
+        self.ignore_bg = ignore_bg
 
     def get_iou_from_mat(self, confmat: torch.Tensor) -> torch.Tensor:
         """
@@ -211,9 +223,13 @@ class IoU(ConfusionMatrix):
             IoU is returned
         """
         IoU = self.get_iou_from_mat(self.mat.clone())
-        if self.replace_nan:
-            IoU[IoU.isnan()] = 0.0
-        mIoU = IoU.mean()
+        # if self.replace_nan:
+        #     IoU[IoU.isnan()] = 0.0
+
+        if self.ignore_bg:
+            mIoU = torch.nanmean(IoU[1:])  # .mean()
+        else:
+            mIoU = torch.nanmean(IoU)  # .mean()
 
         if self.per_class:
             IoU = {self.name + "_" + self.labels[i]: IoU[i] for i in range(len(IoU))}
@@ -225,7 +241,12 @@ class IoU(ConfusionMatrix):
 
 class Dice(ConfusionMatrix):
     def __init__(
-        self, per_class: bool = False, name: str = "Dice", replace_nan: bool = True, **kwargs
+        self,
+        per_class: bool = False,
+        name: str = "Dice",
+        replace_nan: bool = True,
+        ignore_bg: bool = False,
+        **kwargs,
     ):
         """
         Init the Dice Class as subclass of ConfusionMatrix
@@ -249,6 +270,7 @@ class Dice(ConfusionMatrix):
         self.per_class = per_class
         self.name = name
         self.replace_nan = replace_nan
+        self.ignore_bg = ignore_bg
 
     def get_dice_from_mat(self, confmat: torch.Tensor) -> torch.Tensor:
         """
@@ -286,9 +308,13 @@ class Dice(ConfusionMatrix):
         """
         Dice = self.get_dice_from_mat(self.mat.clone())
 
-        if self.replace_nan:
-            Dice[Dice.isnan()] = 0.0
-        mDice = Dice.mean()
+        # if self.replace_nan:
+        #     Dice[Dice.isnan()] = 0.0
+
+        if self.ignore_bg:
+            mDice = torch.nanmean(Dice[1:])  # .mean()
+        else:
+            mDice = torch.nanmean(Dice)  # mean()
 
         if self.per_class:
             Dice = {self.name + "_" + self.labels[i]: Dice[i] for i in range(len(Dice))}

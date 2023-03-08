@@ -457,7 +457,7 @@ class OCRNetASPP(nn.Module):
             if "state_dict" in pretrained_dict.keys():
                 pretrained_dict = pretrained_dict["state_dict"]
             pretrained_dict = {
-                k.replace("model.", "").replace("module.", "").replace("backbone.", ""): v
+                k.replace("model.", "").replace("module.", ""): v
                 for k, v in pretrained_dict.items()
             }
 

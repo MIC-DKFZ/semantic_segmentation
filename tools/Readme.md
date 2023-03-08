@@ -8,13 +8,15 @@
 The ``tools/`` folder contains some useful tools for developing and experimenting. 
 It is not guaranteed that these tools will work for all kind of use-cases, datasets and datatypes but even then
 they can be used as a starting point and can be adapted with a few changes.
-These scripts support the general Hydra override syntax as described in [config](../config), together with some additional arguments (these can be used via the argparse syntax with a -- prefix).
+These scripts support the general Hydra override syntax as described in [config](../config), together with some additional arguments (these can be used via the argparse syntax with a `--` prefix).
+For each tool use the ``-h`` flag (e.g. ``python tools/show_data.py -h``) to see all additional options.
 
 ### show_data.py
-Load and Visualize the pytorch dataset which is defined in the dataset config. Can be used for data inspeciton and to view different data augmentation pipelines.
+Load and Visualize the pytorch dataset which is defined in the dataset config. Can be used for data inspection and to view different data augmentation pipelines.
   - dataset: Name of the dataset config (see [here](#selecting-a-dataset))
   - --augmentation: Which augmentations to use: None (by default), train, val or test. If A.Normalization(std=...,mean=...) is part of the augmentations, this will be undone during visualization to get a better interpretable image
   - --split: which split to use: train, val or test Dataset (train by default)
+  - --segmentation: type of segmentation - semantic or instance, depending on the dataset
 ````shell
 pyhton tools/show_data.py dataset=<dataset.name>
 pyhton tools/show_data.py dataset=Cityscapes --split=val --augmentation=val
@@ -30,6 +32,7 @@ there might be a delay when sliding through the images)
   - ckpt_dir: path to the checkpoint which should be used
   - --augmentation: Which augmentations to use: train, val or test (by default). If A.Normalization(std=...,mean=...) is part of the augmentations, this will be undone during visualization to get a better interpretable image
   - --split: which split to use: train, val or test Dataset (train by default)
+  - --segmentation: type of segmentation - semantic or instance, depending on the dataset
 
   ````shell
   python tools/show_prediction.py ckpt_dir=<path>

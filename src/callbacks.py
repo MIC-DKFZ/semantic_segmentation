@@ -3,7 +3,6 @@ import torch
 from tqdm import tqdm
 from pytorch_lightning.callbacks import Callback, ModelCheckpoint
 from pytorch_lightning.callbacks.progress import TQDMProgressBar
-from pytorch_lightning.callbacks.progress.tqdm_progress import convert_inf, Tqdm
 
 
 class customModelCheckpoint(ModelCheckpoint):
@@ -97,6 +96,7 @@ class TimeCallback(Callback):
                 train_time,
                 logger=True,
                 sync_dist=True if trainer.num_devices > 1 else False,
+                prog_bar=True,
             )
             self.log(
                 "Time/mTrainTime",
@@ -121,6 +121,7 @@ class TimeCallback(Callback):
                 val_time,
                 logger=True,
                 sync_dist=True if trainer.num_devices > 1 else False,
+                prog_bar=True,
             )
             self.log(
                 "Time/mValTime",

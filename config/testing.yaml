@@ -1,13 +1,19 @@
 #@package _global_
 
 # Default List
-# Use baseline.yaml and only change/override a few parts
+# Use training.yaml and only change/override a few parts
 defaults:
-  - baseline
+  - training
   - _self_
 
 # (Required) Path to the Checkpoint which should be tested/validated
 ckpt_dir: ???
+
+# Define Test Time Augmentation
+TESTING:
+  SCALES: [1]
+  FLIP: False
+  BINARY_FLIP: False
 
 # Customizations of Hydra, change hydra/run/dir to ckpt_dir
 hydra:

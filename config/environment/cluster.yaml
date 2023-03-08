@@ -2,12 +2,13 @@
 CALLBACKS:
   tqdm_progressbar: ~
 pl_trainer:
-    enable_progress_bar: False    # Discable Progressbar in this environment
+    enable_progress_bar: False
     enable_checkpointing: True
 
-LOGDIR: cluster/.../logs
+LOGDIR: /dkfz/cluster/gpu/.../logs
+
 paths:
-  Cityscapes: /cluster/.../Datasets/cityscapes
-  VOC2010_Context: /cluster/.../Datasets/VOC2010_Context
-  EndoCV2022: /cluster/.../endocv2022
-  HidaHackathon2022: /cluster/.../Datasets/Hackathon_500/Hackathon_data
+  Cityscapes:
+      LABELS: /dkfz/cluster/gpu/.../cityscapes
+      IMAGES: /dkfz/cluster/gpu/data/.../cityscapes
+  VOC2010_Context: /dkfz/cluster/gpu/data/.../VOC2010_Context

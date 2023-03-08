@@ -1,0 +1,22 @@
+#@package _global_
+AUGMENTATIONS:
+  N: 3
+  M: 3
+  TRAIN:
+    - Compose:
+        transforms:
+          - RandAugment:
+              N: ${AUGMENTATIONS.N}
+              M: ${AUGMENTATIONS.M}
+              mode: 2
+              p: 0.5
+          - VerticalFlip:
+              p: 0.25
+          - HorizontalFlip:
+              p: 0.25
+          - ToTensorV2:
+  VALIDATION:
+    - Compose:
+        transforms:
+          - ToTensorV2:
+  TEST: ${AUGMENTATIONS.VALIDATION}

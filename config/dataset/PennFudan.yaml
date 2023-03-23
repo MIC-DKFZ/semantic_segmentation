@@ -1,0 +1,13 @@
+#@package _global_
+
+# define and configure the dataset class which is called by hydra
+dataset:
+  _target_: datasets.PennFudan.PennFudan.PennFudanDataset
+  root:     ${paths.PennFudan}
+
+# additional information about the dataset
+DATASET:
+  ##NEEDED PARAMETERS
+  NAME:         "PennFudan"
+  NUM_CLASSES:  2
+

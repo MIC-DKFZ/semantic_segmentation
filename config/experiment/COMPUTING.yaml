@@ -1,7 +1,17 @@
 # @package _global_
+defaults:
+  - override /data_augmentation: scale_crop_flip
+  - override /metric: Dice_COMPUTING
+  - override /dataset: COMPUTING
 
-# Basic hyperparameters for training. For some experiments (Cityscapes, VOC2010_Context they are
-# overwritten in config/hyperparameters/*.yaml, so edit the parameters there if using these datasets
+AUGMENTATIONS:
+  scale_limit: [-0.25, 1.0]
+  crop_size: [512, 512]
+  mean: [ 0.485, 0.456, 0.406 ]
+  std: [ 0.229, 0.224, 0.225 ]
+
+# Basic experiment for training. For some experiments (Cityscapes, VOC2010_Context they are
+# overwritten in config/experiment/*.yaml, so edit the parameters there if using these datasets
 num_workers: 10                 # number of workers for dataloader
 batch_size: 8                   # batch size per gpu for training
 val_batch_size: ${batch_size}   # batch size per gpu for validation

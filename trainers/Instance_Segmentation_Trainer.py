@@ -3,6 +3,7 @@ from omegaconf import DictConfig
 import torch
 import torch.nn.functional as F
 
+from src.metric import MetricModule
 from src.utils import get_logger
 from trainers.Semantic_Segmentation_Trainer import SegModel
 from src.visualization import show_prediction_inst_seg, show_mask_inst_seg, show_img
@@ -108,6 +109,7 @@ class InstModel(SegModel):
         y_pred = self(x)
 
         # update validation metric
+        # self.update_metric(y_pred, y_gt, self.metric, prefix="metric/")
         self.update_metric(y_pred, y_gt, self.metric, prefix="metric/")
 
         # log some example predictions to tensorboard
@@ -132,6 +134,47 @@ class InstModel(SegModel):
         # log some example predictions to tensorboard
         if self.global_rank == 0 and not self.trainer.sanity_checking:
             self.log_batch_prediction(x, y_pred, y_gt, batch_idx)
+
+    def update_metric(
+        self, y_pred: torch.Tensor, y_gt: torch.Tensor, metric: MetricModule, prefix: str = ""
+    ):
+
+        for y in y_pred:
+            y["masks"] = y["masks"].squeeze(1)
+            for i in range(0, len(y["masks"])):
+                x = torch.where(y["masks"][i] >= 0.5, 1, 0)
+                y["masks"][i] = x
+            y["masks"] = y["masks"].type(torch.uint8)
+
+        if self.metric_call_stepwise:
+            # Log the metric result for each step
+            metric_step = metric(y_pred, y_gt)
+            # exclude nan since pl uses torch.mean for reduction, this way torch.nanmean is simulated
+            metric_step = {k: v for k, v in metric_step.items() if not torch.isnan(v)}
+            self.log_dict_epoch(
+                metric_step,
+                prefix=prefix,
+                postfix="_stepwise",
+                on_step=False,
+                on_epoch=True,
+            )
+        elif self.metric_call_per_img:
+            # If metric should be called per img, iterate through the batch to compute and log the
+            # metric for each img separately
+            for yi_pred, yi_gt in zip(y_pred, y_gt):
+                metric_step = metric(yi_pred.unsqueeze(0), yi_gt.unsqueeze(0))
+                # exclude nan since pl uses torch.mean for reduction, this way torch.nanmean is simulated
+                metric_step = {k: v for k, v in metric_step.items() if not torch.isnan(v)}
+                self.log_dict_epoch(
+                    metric_step,
+                    prefix=prefix,
+                    postfix="_per_img",
+                    on_step=False,
+                    on_epoch=True,
+                )
+        elif self.metric_call_global:
+            # Just update the metric
+            metric.update(y_pred, y_gt)
 
     def get_loss(self, y_pred: dict, y_gt: torch.Tensor) -> torch.Tensor:
         pass

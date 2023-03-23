@@ -2,7 +2,7 @@
 defaults:
   - override /data_augmentation: scale_crop_flip
   - override /metric: Dice_DIADEM
-  #- override /hyperparameters: Cityscapes
+  #- override /experiment: Cityscapes
 # dataset is used to initialize your custom dataset,
 # _target_: should point to your dataset class
 # afterwards you can handle your custom input arguments which are used to initialize the dataset

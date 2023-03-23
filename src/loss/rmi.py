@@ -80,6 +80,8 @@ class RMILoss(nn.Module):
         self.class_weights = class_weights
 
     def forward(self, logits_4D, labels_4D):
+        # print(logits_4D.shape, labels_4D.shape, logits_4D.dtype, labels_4D.dtype)
+        # torch.Size([2, 19, 512, 1024]) torch.Size([2, 512, 1024]) torch.float16 torch.int64
         loss = self.forward_sigmoid(logits_4D, labels_4D)
         # loss = self.forward_softmax_sigmoid(logits_4D, labels_4D)
         return loss

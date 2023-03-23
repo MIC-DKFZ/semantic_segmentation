@@ -64,22 +64,24 @@ training.yaml
   ─────────────────────────────
 defaults:
   - _self_
-  - hyperparameters/default     # Load Default Hyperparameters
-  - optional hyperparameters:   # (Optional) Overwrite defaults with the specific hyperparameter config
+  - trainer: SemSeg             # Which Trainer to use
+  - metric: mean_IoU            # Metric configuration
+  - model: hrnet                # Model
+  - dataset: Cityscapes         # Dataset
+  - data_augmentation: only_norm  # Data Augmentation
   - optimizer: SGD              # Optimizer
   - lr_scheduler: polynomial    # Learning rate scheduler
   - callbacks: default          # Callbacks
-  - data_augmentation: default  # Data Augmentation Pipeline
-  - metric: mean_IoU            # Metric configuration
-  - dataset: Cityscapes         # Dataset
-  - model: hrnet                # Model
+  - logger: tensorboard         # Logger
+  - experiment/default          # Load Default Setting and Hyperparameters
+  - optional experiment:        # (Optional) load another experiment configuratioj
   - environment: local          # Environment
 ````
 
 The configs of each config group are merged from top to bottom, where later groups can overwrite the
 parameters of earlier groups.
 In addition to the order, the default list also sets default values for the configuration groups.
-This means if not changed, the parameters defined in *hyperparameters/default.yaml*,..., *datasets/Cityscapes.yaml*
+This means if not changed, the parameters defined in *experiment/default.yaml*,..., *datasets/Cityscapes.yaml*
 and *model/hrnet.yaml* are used in this case.
 To change the used config file of a config group, the corresponding entry in the default list can be
 changed in the *training.yaml*, or the entry can be overwritten from the commandline.
@@ -493,15 +495,30 @@ afterwards setting up its config file.
 </p>
 </details>
 
-## Hyperparameters and Pytorch Lightning Trainer
+## Experiments, Hyperparameters and Pytorch Lightning Trainer
 
 <details><summary>Configure</summary>
 <p>
 
+#### Experiments
+
+Individual data sets, models, etc. are defined in the corresponding parameter groups, the experiment files are used to define their combination. This avoids the need for manual coniguration via the commandline for frequently performed experiments.
+Therefore, the standard list is overwritten as follows:
+
+````yaml
+# @package _global_
+#define the augmentation, dataset and model
+defaults:
+  - override /data_augmentation: scale_crop_hflip
+  - override /dataset: Cityscapes
+  - override /model: hrnet
+````
+
 #### Hyperparameters
 
-The default hyperparameters are defined in *config/hyperparameters/default.yaml*. 
-For the specific datasets they are overwriten from *config/hyperparameters/<dataset.name>.yaml*
+
+The default hyperparameters are defined in *config/experiment/default.yaml*. 
+For the specific datasets they are overwriten from *config/experiment/<dataset.name>.yaml*
 The following hyperparameters are supported and can be changed in the *.yaml*-files directly or
 can be overwritten from the command line as shown below.
 
@@ -520,12 +537,12 @@ can be overwritten from the command line as shown below.
 
 Since Pytorch Lightning is used as training framework, with the trainer class as central unit,
 some additional parameters can be defined by passing them to the Pytorch Lightning Trainer.
-The *pl_trainer* entry in the training.yaml is used for this purpose.
+The *pl_trainer* entry in the config is used for this purpose.
 By default, this looks like the following and arguments can be overwritten/added/removed as shown
 below:
 
 ```` yaml
-training.yaml
+experiment/default.yaml
 ------------------
 pl_trainer:                     # parameters for the pytorch lightning trainer
   max_epochs: ${epochs}         # parsing the number of epochs which is defined as a hyperparameter
@@ -561,18 +578,21 @@ The effected parameters are:
 <details><summary>Customize</summary>
 <p>
 
-Hyperparameters can be added or changed in *.yaml*-files or from the commandline.
+Experiment Configurations and Hyperparameters can be added or changed in *.yaml*-files or from the commandline.
 For different experiments, a group of parameters may need to be adjusted at once.
-To not have to change them manually each time there is an optional *hyperparameters* config group to
-easily switch between different hyperparameter settings.
-Create *hyperparameters/my_hparams.yaml* and insert all parameters that differ from the default.yaml
+To not have to change them manually each time there is an optional *experiment* config group to
+easily switch between different experiment settings.
+Create *experiment/my_config.yaml* and insert all parameters or settings that differ from the default.yaml
 into it.
 A dummy and how this can be used it shown below:
 
 ````yaml
-config/hyperparameters/my_hparams.yaml
+config/experiment/my_config.yaml
 ─────────────────────────────
 # @package _global_
+defaults:
+  - override /data_augmentation: randaugment_hflip
+    
 batch_size: 6
 val_batch_size: 4
 epochs: 175
@@ -585,7 +605,7 @@ pl_trainer:
 ````
 
 ````shell
-python training.py hyperparameters=my_hparams
+python training.py experiment=my_config
 ````
 
 </p>

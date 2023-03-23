@@ -36,8 +36,11 @@ def find_lr(overrides_cl: list, num_training_samples: int) -> None:
     hydra.initialize(config_path="../config", version_base="1.1")
 
     overrides_cl.append("ORG_CWD=./")
-    cfg = hydra.compose(config_name="baseline", overrides=overrides_cl)
-
+    cfg = hydra.compose(config_name="training", overrides=overrides_cl)
+    if os.getcwd().endswith("tools"):
+        cfg.ORG_CWD = "../"
+    else:
+        cfg.ORG_CWD = "/"
     callbacks = []
     for _, cb_conf in cfg.CALLBACKS.items():
         if cb_conf is not None:

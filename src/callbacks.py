@@ -3,7 +3,12 @@ import torch
 from tqdm import tqdm
 from pytorch_lightning.callbacks import Callback, ModelCheckpoint
 from pytorch_lightning.callbacks.progress import TQDMProgressBar
+from pytorch_lightning.callbacks.progress.tqdm_progress import _update_n
 from pytorch_lightning.callbacks.progress.tqdm_progress import convert_inf, Tqdm
+import sys
+from typing import Any, Dict, Optional, Union
+
+from pytorch_lightning.utilities.types import STEP_OUTPUT
 
 
 class customModelCheckpoint(ModelCheckpoint):
@@ -30,9 +35,32 @@ class customTQDMProgressBar(TQDMProgressBar):
     """
 
     def __init__(self, *args, **kwargs):
-        # super(customTQDMProgressBar,self).__init__(**kwargs)
         super().__init__(*args, **kwargs)
         self.status = "None"
+
+    def init_validation_tqdm(self):
+        ### disable validation tqdm instead only use train_progress_bar###
+        bar = tqdm(
+            disable=True,
+        )
+        return bar
+
+    def on_train_epoch_start(self, trainer: "pl.Trainer", pl_module) -> None:
+        # reset progress, set status and update metric
+        self.train_progress_bar.reset(
+            convert_inf(self.total_train_batches + self.total_val_batches)
+        )
+        self.train_progress_bar.initial = 0
+        self.train_progress_bar.set_description(f"Epoch {trainer.current_epoch}")
+        self.status = "Training"
+        self.train_progress_bar.set_postfix(self.get_metrics(trainer, pl_module))
+
+    def on_validation_batch_end(
+        self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx=0
+    ):
+        n = self.total_train_batches + batch_idx + 1
+        if self._should_update(n, self.train_progress_bar.total):
+            _update_n(self.train_progress_bar, n)
 
     def get_metrics(self, trainer, model):
         # don't show the version number
@@ -42,30 +70,18 @@ class customTQDMProgressBar(TQDMProgressBar):
 
         return items
 
-    def init_validation_tqdm(self):
-        ### disable validation tqdm instead only use main_progress_bar###
-        bar = tqdm(
-            disable=True,
-        )
-        return bar
-
-    def on_validation_epoch_start(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"):
-        super().on_validation_epoch_start(trainer, pl_module)
+    def on_validation_start(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"):
         if not trainer.sanity_checking:
             self.status = "Validation"
-            self.main_progress_bar.set_postfix(self.get_metrics(trainer, pl_module))
+            self.train_progress_bar.set_postfix(self.get_metrics(trainer, pl_module))
 
     def on_validation_epoch_end(
         self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"
     ) -> None:
-        super().on_validation_epoch_end(trainer, pl_module)
         self.status = "Done"
-        self.main_progress_bar.set_postfix(self.get_metrics(trainer, pl_module))
-
-    def on_train_epoch_start(self, trainer, pl_module):
-        super().on_train_epoch_start(trainer, pl_module)
-        self.status = "Training"
-        self.main_progress_bar.set_postfix(self.get_metrics(trainer, pl_module))
+        self.train_progress_bar.set_postfix(self.get_metrics(trainer, pl_module))
+        self.train_progress_bar.refresh()
+        print("")
 
 
 class TimeCallback(Callback):

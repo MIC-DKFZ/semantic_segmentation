@@ -1,29 +1,13 @@
 #@package _global_
 
-#DEFINING THE DEFAULT DATA AUGMENTATION FOR THIS DATASET
-defaults:
-  - override /data_augmentation: scale_crop_VOC2010
-  - override /hyperparameters: VOC2010_Context
-#SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
+# define and configure the dataset class which is called by hydra
 dataset:
   _target_:     datasets.VOC2010_Context.VOC2010_Context.VOC2010_Context_dataset
   root:         ${paths.VOC2010_Context}
   ignore_index: ${DATASET.IGNORE_INDEX}
   num_classes:  ${DATASET.NUM_CLASSES}
 
-AUGMENTATIONS:
-  scale_limit: [-0.5, 1.0]
-  crop_size: [520, 520]
-  mean: [ 0.485, 0.456, 0.406 ]
-  std: [ 0.229, 0.224, 0.225 ]
-
-TESTING:
-  SCALES: [ 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0 ]
-  FLIP: False
-  BINARY_FLIP: True
-  OVERRIDES:
-    - val_batch_size=1
-
+# additional information about the dataset
 DATASET:
   NAME:         "VOC2010_Context"
   NUM_CLASSES:  59

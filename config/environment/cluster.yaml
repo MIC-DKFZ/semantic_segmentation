@@ -18,3 +18,4 @@ paths:
   DIADEM: /dkfz/cluster/gpu/data/OE0441/l727r/Dataset101_DIADEM
   #COMPUTING: /dkfz/cluster/gpu/data/OE0441/l727r/Dataset250_COMPUTING_it0
   COMPUTING: /dkfz/cluster/gpu/data/OE0441/l727r/nnUNet_raw/Dataset253_COMPUTING_it3
+  Solar_Hydrogen: /dkfz/cluster/gpu/data/OE0441/l727r/Solar_Hydrogen/New_TrainingData

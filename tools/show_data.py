@@ -101,7 +101,7 @@ def show_data(
 
             print(f"Save {file_name}")
 
-            img = cv2.cvtColor(visualizer.img_np, cv2.COLOR_RGB2BGR)
+            img = cv2.cvtColor(visualizer.img_np_fig, cv2.COLOR_RGB2BGR)
             mask = cv2.cvtColor(visualizer.mask_np, cv2.COLOR_RGB2BGR)
 
             cv2.imwrite(os.path.join("dataset_visualizations", file_name + "__image.png"), img)

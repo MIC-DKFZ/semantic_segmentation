@@ -1,98 +1,133 @@
 import itertools
 import numpy as np
 
+
+class Job_Configurator:
+    def __init__(self, script, bash, gmem="10.0G", num_gpus=1, queue="gpu-lowprio", job_group=None):
+        self.command = (
+            f"bsub -gpu num={num_gpus}:j_exclusive=yes:mode=exclusive_process:gmem={gmem} -L"
+            f" /bin/bash -q {queue}"
+        )
+
+        if job_group is not None:
+            self.command += f" -g {job_group}"
+
+        self.job_config = f"source ~/{bash} && python3 {script} "
+
+        self.parameters_hard = []
+        self.parameters_grid_search = []
+        self.parameter_random_search = []
+
+    def add_hard_set_parameter(self, parameter, value):
+        self.parameters_hard.append((parameter, value))
+
+    def add_grid_search_parameter(self, parameter, values):
+        self.parameters_grid_search.append((parameter, values))
+
+    def add_random_search_parameter(self, parameter, values, stype):
+        self.parameter_random_search.append((parameter, values, stype))
+
+    def run_grid_search(self):
+        run_configs = []
+
+        vals = [v[1] for v in self.parameters_grid_search]
+        params = [v[0] for v in self.parameters_grid_search]
+        combinations = itertools.product(*vals)
+
+        for combi in combinations:
+            run_config = ""
+            for p_all, c_all in zip(params, combi):
+                if c_all is not None:
+                    run_config += f"{p_all}={c_all} "
+            run_configs.append(run_config)
+
+        run_configs = np.unique(run_configs)
+
+        return run_configs
+
+    def run_random_search(self):
+        config = ""
+        for parameter, value_range, stype in self.parameter_random_search:
+            if stype == "list":
+                val = np.random.choice(value_range, 1)[0]
+            elif stype == "int":
+                val = np.random.randint(value_range[0], value_range[1] + 1, 1)[0]
+            elif stype == "float":
+                val = np.random.uniform(value_range[0], value_range[1], size=1)[0]
+            config += f"{parameter}={val:.5f} " if stype == "float" else f"{parameter}={val} "
+        return config
+
+    def run(self, num_random_searchs=5):
+        for c, h in self.parameters_hard:
+            self.job_config += f"{c}={h} "
+
+        run_conifgs = self.run_grid_search()
+        runs = []
+
+        for run_conifg in run_conifgs:
+            if num_random_searchs == 0 or self.parameter_random_search == []:
+                runs.append(self.command + self.job_config + run_conifg)
+            for i in range(0, num_random_searchs):
+                # runs.append(self.command + self.job_config + run_conifg + self.run_random_search())
+                runs.append(
+                    self.command + f' "{self.job_config} {run_conifg}{self.run_random_search()}"'
+                )
+        runs = np.unique(runs)
+
+        line_break = 8
+        for i, com in enumerate(runs):
+            print(com)
+            if (i + 1) % line_break == 0:
+                print("")
+
+        print(f" --- In Total {len(runs)} Jobs are configured---")
+
+
 if __name__ == "__main__":
     """
-    Cluster Configuration
-    """
-    # Required
-    queue = "gpu-lowprio.legacy"
-    gmem = "18.0G"
-    num_gpus = 1
-
-    # Optional
-    job_group = "/l727r/group_15"
-
-    command = (
-        f"bsub -gpu num={num_gpus}:j_exclusive=yes:mode=exclusive_process:gmem={gmem} -L /bin/bash"
-        f" -q {queue}"
-    )
-
-    if job_group is not None:
-        command += f" -g {job_group}"
-
-    """
-    Job Configuration
+    Cluster and Job Configuration
     """
     script = "training.py"
     bash = ".bashrc_sem_seg_2"
+    queue = "gpu-lowprio"
+    gmem = "18.0G"
+    num_gpus = 1
+    job_group = "/l727r/group_20"
 
-    job_config = f"source ~/{bash} && python3 {script}"
+    jobconf = Job_Configurator(script, bash, gmem, num_gpus, queue, job_group)
 
     """
-    Configure Parameters
+    Set Hard Parameters - Set in each run
     """
-    # Hard parameters - set to value in each run
-    parameters_hard = [
-        ("dataset", "COMPUTING_2"),
-        ("model", "hrnet_ocr_ms"),
-        ("environment", "cluster"),
-    ]
+    jobconf.add_hard_set_parameter("dataset", "Solar_Hydrogen")
+    jobconf.add_hard_set_parameter("environment", "cluster")
+    jobconf.add_hard_set_parameter("pl_trainer.enable_checkpointing", "False")
+    jobconf.add_hard_set_parameter("data_augmentation", "randaugment_nonorm_flip")
 
-    # Parameters to run in every combination
-    parameters_all_of = [
-        ("dataset.fold", [0, 1, 2, 3, 4]),
-        ("dataset.random_sampling", [0.3, 1]),
-    ]
-
-    # Parameters to run with all value cobination of a parameters but only one of these parameters at a time
-    parameters_one_of = [
-        ("lr", [None, 0.006, 0.001]),
-        ("epochs", [None, 700, 1000]),
-        ("batch_size", [None, 6, 12]),
-        ("data_augmentation", [None, "randaugment_light_flip", "randaugment_scale_crop_flip"]),
-        ("MODEL.PRETRAINED", [None, "False"]),
-        ("MODEL.pretrained_on", [None, "Paddle"]),
-    ]
-
-    for c, h in parameters_hard:
-        job_config += f" {c}={h}"
-
-    command_list = []
-    vals = [v[1] for v in parameters_all_of]
-    params = [v[0] for v in parameters_all_of]
-    combinations = itertools.product(*vals)
-    numb = 0
-    for combi in combinations:
-        numb += 1
-        run_conifg_all = ""
-        for p_all, c_all in zip(params, combi):
-            if c_all is not None:
-                run_conifg_all += f"{p_all}={c_all} "
-
-        for p_one, c_one in parameters_one_of:
-
-            for ci_one in c_one:
-                run_conifg_one = ""
-                if ci_one is not None:
-                    run_conifg_one += f"{p_one}={ci_one} "
-                final_command = command + f' "{job_config} {run_conifg_all}{run_conifg_one}"'
-                command_list.append(final_command)
-            # print(final_command)
-    command_list = np.unique(command_list)
-
-    for i, com in enumerate(command_list):
-        print(com)
-        if (i + 1) % 10 == 0:
-            print("")
-
-    print(f" --- In Total {len(command_list)} Jobs are configured---")
     """
-    Combine Cluster Configuration + Job Configuration
+    Set Grid Search Parameters - Test each possible combination
     """
-    # command += f' "{job_config}"'
-    # print(command)
-    # "source ~/.bashrc_sem_seg_2 && python3 training.py model=hrnet_ocr_ms dataset=COMPUTING_2 dataset.fold=0 dataset.random_sampling=0.3 "
+    # jobconf.add_grid_search_parameter(
+    #     "data_augmentation",
+    #     [
+    #         "randaugment_nonorm_flip",
+    #         "randaugment_light_nonorm_flip",
+    #     ],
+    # )
+    jobconf.add_grid_search_parameter("model.version", ["v1", "v2"])
+    jobconf.add_grid_search_parameter("model", ["Mask_RCNN", "Mask_RCNN_RMI"])
 
-    # print(command)
-    # "bsub -gpu num=1:j_exclusive=yes:mode=exclusive_process:gmem=18.0G -L /bin/bash -g /l727r/group_15 -q gpu-lowprio.legacy
+    """
+    Set Random Search Parameters - Select a random value in given range for each parameter
+    """
+    jobconf.add_random_search_parameter("lr", [0.0015, 0.005], "float")
+    jobconf.add_random_search_parameter("epochs", [50, 300], "int")
+    jobconf.add_random_search_parameter("batch_size", [2, 8], "int")
+    jobconf.add_random_search_parameter("AUGMENTATIONS.N", [1, 5], "int"),
+    jobconf.add_random_search_parameter("AUGMENTATIONS.M", [1, 5], "int"),
+    # jobconf.add_random_search_parameter(
+    #     "++lr_scheduler.scheduler.warmstart_iters", [0.0075, 0.0175], "float"
+    # ),
+    # jobconf.add_random_search_parameter("lr_scheduler", ["polynomial_warmup", "polynomial"], "list")
+
+    jobconf.run(num_random_searchs=20)

@@ -7,6 +7,7 @@ from torchmetrics.utilities.data import dim_zero_cat
 import pytorch_lightning as pl
 from torchmetrics.utilities.data import _bincount
 import matplotlib.pyplot as plt
+from typing import Any, Dict, Hashable, Iterable, List, Optional, Sequence, Tuple, Union
 
 plt.switch_backend("agg")
 from matplotlib.figure import Figure
@@ -31,6 +32,25 @@ class MetricModule(MetricCollection):
                 metric = hydra.utils.instantiate(m_conf)
                 metrics[name] = metric
         super().__init__(metrics, **kwargs)
+
+    # def forward(self, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+    #     if self.call_stepwise:
+    #         x = super().forward(*args, **kwargs)
+    #         self.log(x)
+    #     elif self.call_per_image:
+    #         x = super().forward(*args, **kwargs)
+    #         self.log(x)
+    #     elif self.call_global:
+    #         self.update(*args, **kwargs)
+    #
+    # def compute(self) -> Dict[str, Any]:
+    #     if self.call_stepwise:
+    #         res = torch.nanmean()
+    #     elif self.call_per_image:
+    #         res = torch.nanmean()
+    #     elif self.call_global:
+    #         res = super().compute()
+    #     return res
 
 
 class ConfusionMatrix(Metric):

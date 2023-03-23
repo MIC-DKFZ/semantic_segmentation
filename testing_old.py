@@ -83,7 +83,7 @@ def testing(cfg: DictConfig) -> None:
     trainer_args = getattr(cfg, "pl_trainer") if has_not_empty_attr(cfg, "pl_trainer") else {}
     trainer = Trainer(callbacks=callbacks, logger=tb_logger, **trainer_args)
 
-    # Log hyperparameters
+    # Log experiment
     log_hyperparameters(cfg, model, trainer)
 
     # Run testing/validation

@@ -16,9 +16,6 @@ from albumentations.pytorch import ToTensorV2
 import cv2
 from matplotlib import cm
 
-from pytorch_lightning import LightningModule
-from torch.utils.data import Dataset
-
 from trainers.Semantic_Segmentation_Trainer import SegModel
 from trainers.Instance_Segmentation_Trainer import InstModel
 
@@ -47,6 +44,11 @@ def show_prediction(
     hydra.initialize(config_path="../config", version_base="1.1")
 
     # change working dir to checkpoint dir
+    if os.getcwd().endswith("tools"):
+        ORG_CWD = os.path.join(os.getcwd(), "..")
+    else:
+        ORG_CWD = os.getcwd()
+
     ckpt_dir = None
     for override in overrides_cl:
         if override.startswith("ckpt_dir"):
@@ -75,10 +77,10 @@ def show_prediction(
             )
 
     # load the best checkpoint and load the model
-    cfg.ORG_CWD = os.getcwd()
+    cfg.ORG_CWD = ORG_CWD
     ckpt_file = glob.glob(os.path.join("checkpoints", "best_*"))[0]
-    if hasattr(cfg.MODEL, "PRETRAINED"):
-        cfg.MODEL.PRETRAINED = False
+    # if hasattr(cfg.MODEL, "PRETRAINED"):
+    #    cfg.MODEL.PRETRAINED = False
     if segmentation == "semantic":
         model = SegModel.load_from_checkpoint(ckpt_file, model_config=cfg, strict=False).cuda()
     elif segmentation == "instance":

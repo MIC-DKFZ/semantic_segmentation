@@ -1,7 +1,7 @@
 # @package _global_
 
-# Basic hyperparameters for training. For some experiments (Cityscapes, VOC2010_Context they are
-# overwritten in config/hyperparameters/*.yaml, so edit the parameters there if using these datasets
+# Basic experiment for training. For some experiments (Cityscapes, VOC2010_Context they are
+# overwritten in config/experiment/*.yaml, so edit the parameters there if using these datasets
 num_workers: 10                 # number of workers for dataloader
 batch_size: 6                   # batch size per gpu for training
 val_batch_size: ${batch_size}   # batch size per gpu for validation

@@ -1,26 +1,14 @@
 #@package _global_
-defaults:
-  - override /data_augmentation: randaugment_nonorm_flip
-  - override /metric: MAP
-num_example_predictions: 7
-# dataset is used to initialize your custom dataset,
-# _target_: should point to your dataset class
-# afterwards you can handle your custom input arguments which are used to initialize the dataset
+
+# define and configure the dataset class which is called by hydra
 dataset:
   _target_: datasets.Solar_Hydrogen.Solar_Hydrogen.Custom_dataset
-  root: /home/l727r/Documents/E132-Projekte/Projects/Helmholtz_Imaging_ACVL/HZDR_2022_Solar_Hydrogen/New_TrainingData     #the root to the data as an example input
-  #root: ${paths.my_dataset}               #the root if defined in config/environment/used_env.yaml
+  root:      ${paths.Solar_Hydrogen} #the root to the data
 
-AUGMENTATIONS:
-  N: 3
-  M: 3
-
-# DATASET is used to store information about the dataset which are needed during training
+# additional information about the dataset
 DATASET:
-  # Required dataser arguments
-  NAME: Solar_Hydrogen           # Used for the logging directory
-  NUM_CLASSES: 2    # Needed for defining the model and the metrics
-  # (Optional) can be used for nicer for logging
+  NAME: Solar_Hydrogen
+  NUM_CLASSES: 2
   CLASS_LABELS:
      - background
      - bubble

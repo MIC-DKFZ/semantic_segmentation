@@ -61,11 +61,14 @@ def show_mask_sem_seg(mask: torch.Tensor, cmap: list, output_type: str = "numpy"
 
 
 def show_mask_inst_seg(target, img_shape, output_type: str = "numpy", alpha=0.5):
+    if len(target["masks"]) == 0:
+        fig = np.ones((*img_shape, 3), dtype=np.uint8) * 255
+        return convert_numpy_to(fig, output_type)
+
     masks = target["masks"].squeeze(1)
     boxes = target["boxes"]  # .detach().cpu()
     fig = np.ones((*img_shape, 3), dtype=np.uint8) * 255
     for mask, box in zip(masks, boxes):
-
         color = np.random.randint(0, 255, 3)
 
         # If also the bounding box should be shown
@@ -229,7 +232,7 @@ class Visualizer:
         if hasattr(self, "img_np"):
             channel_id = cv2.getTrackbarPos("Channel", "Window")
 
-            # Select the correct Channel, if -1 use the channgels 0:3 otherwise use a single one
+            # Select the correct Channel, if -1 use the channels 0:3 otherwise use a single one
             # and transform to RGB
             if channel_id == -1:
                 self.img_np_chan = self.img_np[:, :, 0:3]
@@ -251,12 +254,18 @@ class Visualizer:
 
             # Blend the image with prediction
             if hasattr(self, "pred"):
-                self.img_np = cv2.addWeighted(self.img_np_chan, 1 - alpha, self.pred, alpha, 0.0)
-                self.img_np = self.update_corrects(self.img_np)
+                self.img_np_fig = cv2.addWeighted(
+                    self.img_np_chan, 1 - alpha, self.pred, alpha, 0.0
+                )
+                self.img_np_fig = self.update_corrects(self.img_np_fig)
             else:
-                self.img_np = cv2.addWeighted(self.img_np_chan, 1 - alpha, self.mask_np, alpha, 0.0)
+                self.img_np_fig = cv2.addWeighted(
+                    self.img_np_chan, 1 - alpha, self.mask_np, alpha, 0.0
+                )
+                bg_map = np.all(self.mask_np == [255, 255, 255], axis=2)
+                self.img_np_fig[bg_map] = self.img_np_fig[bg_map]
             # concat blended image and mask
-            fig = np.concatenate((self.img_np, self.mask_np), self.axis)
+            fig = np.concatenate((self.img_np_fig, self.mask_np), self.axis)
             # transform from RGB to BGR to match the cv2 order
             self.fig = cv2.cvtColor(fig, cv2.COLOR_RGB2BGR)
             # show image

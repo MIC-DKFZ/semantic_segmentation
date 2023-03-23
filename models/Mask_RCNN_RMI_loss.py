@@ -1,9 +1,35 @@
+from torchvision.models.detection import roi_heads
+from torchvision.models.detection.roi_heads import project_masks_on_boxes
+
 from torchvision import models
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 from torchvision.models.detection import MaskRCNN_ResNet50_FPN_Weights
 from torchvision.models.detection import MaskRCNN_ResNet50_FPN_V2_Weights
 from torchvision.models.detection.transform import GeneralizedRCNNTransform
+import torch
+from src.loss.rmi import RMILoss
+
+
+class RMI_loss_dummy:
+    def __init__(self, weights=None, ignore_index=255):
+        if weights:
+            weights = torch.FloatTensor(weights).cuda()
+        self.lossfunction = RMILoss(num_classes=2, class_weights=weights, ignore_index=ignore_index)
+
+    def __call__(self, mask_logits, proposals, gt_masks, gt_labels, mask_matched_idxs):
+        discretization_size = mask_logits.shape[-1]
+        mask_targets = [
+            project_masks_on_boxes(m, p, i, discretization_size)
+            for m, p, i in zip(gt_masks, proposals, mask_matched_idxs)
+        ]
+        mask_targets = torch.cat(mask_targets, dim=0).type(torch.int64)
+
+        loss = self.lossfunction(mask_logits, mask_targets)
+        return loss
+
+
+roi_heads.maskrcnn_loss = RMI_loss_dummy()
 
 
 # Disable the resize and normalize transform since we take care of this in the data augmentation pipeline

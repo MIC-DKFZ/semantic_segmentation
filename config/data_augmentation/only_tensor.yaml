@@ -1,0 +1,11 @@
+#@package _global_
+AUGMENTATIONS:
+  TRAIN:
+    - Compose:
+        transforms:
+          - ToTensorV2:
+  VALIDATION:
+    - Compose:
+        transforms:
+          - ToTensorV2:
+  TEST: ${AUGMENTATIONS.VALIDATION}

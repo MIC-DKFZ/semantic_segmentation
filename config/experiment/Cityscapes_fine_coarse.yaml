@@ -1,5 +1,17 @@
 # @package _global_
 
+# Define which Dataset and which augmentation pipeline to use
+defaults:
+  - override /data_augmentation: scale_crop_hflip
+  - override /dataset: Cityscapes_fine_coarse
+
+# Configure the augmentation pipeline
+AUGMENTATIONS:
+  scale_limit: [-0.5, 1.0]
+  crop_size: [512, 1024]
+  mean: [ 0.485, 0.456, 0.406 ]
+  std: [ 0.229, 0.224, 0.225 ]
+
 #Hyperparameters for Cityscapes Dataset
 batch_size: 6                   # batch size per gpu for training
 val_batch_size: ${batch_size}   # batch size per gpu for validation

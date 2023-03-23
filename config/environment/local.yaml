@@ -1,10 +1,7 @@
 #@package _global_
-#LOGDIR: logs/
-pl_trainer:
-  enable_checkpointing: False   #Disable checkpointing on this environment
 
 #Path to Data of different Datasets
 paths:
-  Cityscapes: /home/l727r/Desktop/Datasets/cityscapes
-  VOC2010_Context: /home/l727r/Desktop/Datasets/VOC2010_Context
-  PennFudan: /home/l727r/Desktop/Datasets/PennFudanPed
+  Cityscapes: /home/.../Datasets/cityscapes
+  VOC2010_Context: /home/.../VOC2010_Context
+  PennFudan: /home/.../Datasets/PennFudanPed

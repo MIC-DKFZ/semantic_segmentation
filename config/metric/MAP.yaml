@@ -1,5 +1,6 @@
 #@package _global_
 METRIC:
+  #NAME: map          # which metric to optimize - mean Dice over the classes
   NAME: map          # which metric to optimize - mean Dice over the classes
   train_metric: False    # If also a train metric is wanted (in addition to a validation metric)
   call_global: True      # If True metric is updated in each step and computed once at the end of the epoch
@@ -8,4 +9,4 @@ METRIC:
   METRICS:
     MAP:             # Define the Metric
       _target_: torchmetrics.detection.mean_ap.MeanAveragePrecision    # Metric Classs
-      #iou_type: segm
+      iou_type: segm

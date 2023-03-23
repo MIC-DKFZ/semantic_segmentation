@@ -1,8 +1,8 @@
 #@package _global_
 model:
-  _target_: models.Mask_RCNN.get_model_50
+  _target_: models.Mask_RCNN_RMI_loss.get_model_50
   num_classes: ${DATASET.NUM_CLASSES}
   version: v2
   disable_transforms: True
 MODEL:
-  NAME: Mask_RCNN
+  NAME: Mask_RCNN_RMI

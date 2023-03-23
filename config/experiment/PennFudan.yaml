@@ -1,0 +1,26 @@
+#@package _global_
+defaults:
+  - override /data_augmentation: only_tensor
+  - override /metric: MAP
+  - override /trainer: InstSeg
+  - override /dataset: PennFudan
+  - override /model: Mask_RCNN
+
+AUGMENTATIONS:
+  scale_limit: [-0.5, 1.0]
+  crop_size: [512, 1024]
+  mean: [ 0.485, 0.456, 0.406 ]
+  std: [ 0.229, 0.224, 0.225 ]
+
+model:
+  version: v1
+  disable_transforms: False
+
+#Hyperparameters for the Dataset
+epochs: 200                     # number of epochs
+lr: 0.005                       # learning rate for training (0.01445439770745928)
+momentum: 0.9                   # momentum for optimizer
+weight_decay: 0.0005            # wd for optimizer
+
+# how many example predictions should be logged
+num_example_predictions: 3

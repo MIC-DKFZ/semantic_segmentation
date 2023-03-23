@@ -1,7 +1,15 @@
 import os
+
+import albumentations as A
 import numpy as np
 import torch
 import cv2
+
+import os
+import numpy as np
+import torch
+import cv2
+
 
 class PennFudanDataset(torch.utils.data.Dataset):
     def __init__(self, root, split="train", transforms=None):
@@ -12,9 +20,9 @@ class PennFudanDataset(torch.utils.data.Dataset):
         # ensure that they are aligned
         self.imgs = list(sorted(os.listdir(os.path.join(root, "PNGImages"))))
         self.masks = list(sorted(os.listdir(os.path.join(root, "PedMasks"))))
-        if split=="train":
-            self.imgs=self.imgs[:-50]
-            self.masks=self.masks[:-50]
+        if split == "train":
+            self.imgs = self.imgs[:-50]
+            self.masks = self.masks[:-50]
         else:
             self.imgs = self.imgs[-50:]
             self.masks = self.masks[-50:]
@@ -24,8 +32,9 @@ class PennFudanDataset(torch.utils.data.Dataset):
         img_path = os.path.join(self.root, "PNGImages", self.imgs[idx])
         mask_path = os.path.join(self.root, "PedMasks", self.masks[idx])
 
-        img=cv2.imread(img_path)
-        mask=cv2.imread(mask_path, -1)
+        img = cv2.imread(img_path)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        mask = cv2.imread(mask_path, -1)
 
         # instances are encoded as different colors
         obj_ids = np.unique(mask)

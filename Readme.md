@@ -6,7 +6,7 @@
 
 <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/-Python-3776AB?&logo=python&logoColor=white"></a>
 <a href="https://pytorch.org/get-started/locally/"><img alt="PyTorch" src="https://img.shields.io/badge/-PyTorch 1.13-EE4C2C?logo=pytorch&logoColor=white"></a>
-<a href="https://pytorchlightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Pytorch Lightning 1.9-792EE5?logo=pytorchlightning&logoColor=white"></a>
+<a href="https://pytorchlightning.ai/"><img alt="Lightning" src="https://img.shields.io/badge/-Pytorch Lightning 2.0-792EE5?logo=pytorchlightning&logoColor=white"></a>
 <a href="https://albumentations.ai/"><img alt="Albumentations" src="https://img.shields.io/badge/Albumentations 1.3 -cc0000"></a>
 <a href="https://hydra.cc/"><img alt="L: Hydra" src="https://img.shields.io/badge/Hydra 1.3-89b8cd" ></a>
 
@@ -420,12 +420,15 @@ python training.py model.pretrained=True            # (Default) Pretrained on Co
 ### Selecting a Dataset
 
 In the same way as the model, also the dataset can be changed from the commandline. 
-For these provided datasets, the corresponding hyperaparmeters (from *config/hyperparameters/*) and 
-data augmentations (from *config/data_augmentation/*) are adapted automatically (see *config/dataset/DatasetName.ymla*). \
+For these provided datasets, the corresponding setting, hyperaparmeters (from *config/experiment/*) and 
+data augmentations (from *config/data_augmentation/*) are adapted automatically (see *config/experiment/DatasetName.ymla*). \
 **Available options for 'dataset' are: Cityscapes, Cityscapes_coarse, Cityscapes_fine_coarse, VOC2010_Context, VOC2010_Context_60**.
 
 ````shell
-python training.py dataset=Cityscapes               # Cityscapes Dataset with 19 classes using fine annotated data
+python training.py experiment=Cityscapes             # Cityscapes Dataset with 19 classes using fine annotated data and using the predefined settings
+python training.py dataset=Cityscapes               # only use the dataset with default settings
+
+# the same for the other datasets
 python training.py dataset=Cityscapes_coarse        # Cityscapes Dataset with 19 classes using coarse annotated data
 python training.py dataset=Cityscapes_fine_coarse   # Cityscapes Dataset with 19 classes using fine and coarse annotated data
 python training.py dataset=VOC2010_Context          # VOC2010_Context Dataset with 59 classes setting
@@ -434,8 +437,8 @@ python training.py dataset=VOC2010_Context_60       # VOC2010_Context Dataset wi
 
 ### Changing Hyperparmeters
 
-The default hyperparameters are defined in *config/hyperparameters/default.yaml* and are overwritten by the 
-corresponding *config/hyperparameters/<dataset.name>.yaml* for the predefined datasets.
+The default hyperparameters are defined in *config/experiment/default.yaml* and are overwritten by the 
+corresponding *config/experiment/<dataset.name>.yaml* for the predefined datasets.
 The basic hyperparameters needed for training can be set from the commandline as shown below (in the example the
 default values are shown):
 
@@ -467,7 +470,7 @@ python training.py lossfunction=[CE,CE,CE,CE] lossweight=[1.0,0.4,0.05,0.05]    
 
 The logging structure of the output folder is depicted below.
 The ``LOGDIR=<some.folder.dir>`` argument defines the logging folder (*"logs/"* by default).
-For a better overview, experiments can also be named by ``experiment="my_experiment"`` ("baseline"
+For a better overview, experiments can also be named by ``name="my_experiment"`` ("baseline"
 by default).
 The parameters which are logged are: Hyperparameters (like epochs, batch_size, initial lr,...), 
 metrics, loss (train+val), time (train+val) and learning rate as well as example predictions 
@@ -509,9 +512,9 @@ included into the tensorboard session.
 ````shell
 tensorboard --logdir=<some.dir>
 # example for viewing a single experiment
-tensorboard --logdir=/home/.../logs/Cityscapes/hrnet/baseline/2022-04-21_10-25-30
+tensorboard --logdir=/home/.../logs/Cityscapes/hrnet/run_.../2022-04-21_10-25-30
 # example for viewing all runs in .../baseline
-tensorboard --logdir=/home/.../logs/Cityscapes/hrnet/baseline
+tensorboard --logdir=/home/.../logs/Cityscapes/hrnet/run_...
 ````
 **Node**: Tensorboard does not show the images for all epochs (like the example predictions or confusion matrix) by default.
 If you need to see all images use ``tensorboard --logdir=<some.dir> --samples_per_plugin images=<num_epochs>``
@@ -556,6 +559,9 @@ For training an Instance Segmentation model adopt the following command:
   python training.py model=Mask_RCNN metric=MAP trainer=InstSeg dataset=<some.inst.seg.dataset>
   python training.py model=Mask_RCNN metric=MAP trainer=InstSeg dataset=PennFudan
   ````
+
+**Node**: The torchvision version of Mask RCNN contains a transformation layer which normalizes and resizes the data automatically. 
+This can be disabled by: ``model.disable_transforms=True``. Then, however, the shape and normalisation of the data must be taken care of in the data augmentation pipeline.
 
 ### Additional Tools
 

@@ -1,4 +1,5 @@
 import hydra
+import numpy as np
 from omegaconf import DictConfig
 
 import torch
@@ -453,6 +454,7 @@ class SegModel(LightningModule):
     def update_metric(
         self, y_pred: torch.Tensor, y_gt: torch.Tensor, metric: MetricModule, prefix: str = ""
     ):
+
         if self.metric_call_stepwise:
             # Log the metric result for each step
             metric_step = metric(y_pred, y_gt)
@@ -551,8 +553,6 @@ class SegModel(LightningModule):
             if the metric_state should be saved, currently not used
         """
         logged_metrics = self.trainer.logged_metrics
-        # logged_stuff = self.trainer._results
-        # print(logged_stuff)
         metrics = {
             k.replace(metric_group, ""): v for k, v in logged_metrics.items() if metric_group in k
         }

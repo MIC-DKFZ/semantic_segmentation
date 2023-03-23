@@ -1,18 +1,11 @@
 #@package _global_
-#DEFINING THE DEFAULT DATA AUGMENTATION FOR THIS DATASET
-defaults:
-  - override /data_augmentation: only_norm
-#SETTING UP DATASET IMPLEMENTATION, WILL BE CALLED USING HYDRA
+
+# define and configure the dataset class which is called by hydra
 dataset:
   _target_: datasets.PennFudan.PennFudan.PennFudanDataset
   root:     ${paths.PennFudan}
 
-AUGMENTATIONS:
-  scale_limit: [-0.5, 1.0]
-  crop_size: [512, 1024]
-  mean: [ 0.485, 0.456, 0.406 ]
-  std: [ 0.229, 0.224, 0.225 ]
-
+# additional information about the dataset
 DATASET:
   ##NEEDED PARAMETERS
   NAME:         "PennFudan"

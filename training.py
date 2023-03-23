@@ -116,13 +116,13 @@ def training_loop(cfg: DictConfig):
     trainer = Trainer(
         callbacks=callbacks,
         logger=tb_logger,
-        strategy=ddp if number_gpus > 1 else None,
+        strategy=ddp if number_gpus > 1 else "auto",
         # strategy="ddp_find_unused_parameters_false" if number_gpus > 1 else None,
         sync_batchnorm=True if number_gpus > 1 else False,
         **trainer_args
     )
 
-    # Log hyperparameters, if-statement is needed to catch fast_dev_run
+    # Log experiment, if-statement is needed to catch fast_dev_run
     if not has_true_attr(cfg.pl_trainer, "fast_dev_run"):
         log_hyperparameters(cfg, model, trainer)
 

@@ -4,18 +4,18 @@
 # defines which modules from which parameter group are used by default and in which order they are composed
 defaults:
   - _self_
-  - trainer: SemSeg
-  - hyperparameters/default     # Load Default Hyperparameters
-  - optional hyperparameters:   # (Optional) Overwrite defaults with the specific hyperparameter config
+  - trainer: SemSeg             # Which Trainer to use
+  - metric: mean_IoU            # Metric configuration
+  - model: hrnet                # Model
+  - dataset: Cityscapes         # Dataset
+  - data_augmentation: only_norm  # Data Augmentation
   - optimizer: SGD              # Optimizer
   - lr_scheduler: polynomial    # Learning rate scheduler
   - callbacks: default          # Callbacks
-  - data_augmentation: only_norm  # Data Augmentation
-  - metric: mean_IoU            # Metric configuration
-  - dataset: Cityscapes         # Dataset
-  - model: hrnet                # Model
+  - logger: tensorboard         # Logger
+  - experiment/default          # Load Default Hyperparameters
+  - optional experiment:
   - environment: local          # Environment
-  - logger: tensorboard
 
   - override hydra/hydra_logging: colorlog    # Using colorlog plugin of hydra for logging
   - override hydra/job_logging: colorlog
@@ -23,7 +23,7 @@ defaults:
 # Logging Related Parameters
 ORG_CWD: ${hydra:runtime.cwd}   # Saving the original working dir
 OUTPUT_DIR: ${hydra:runtime.output_dir}
-experiment: "baseline"          # Possibility for naming the experiment
+name: "run"                     # Possibility for naming the experiment
 LOGDIR: logs/                   # Default logging directory
 num_example_predictions: 2      # Save some example predictions during validation/testing
                                 # Just for visualization/inspection, set to 0 if not wanted
@@ -31,7 +31,7 @@ num_example_predictions: 2      # Save some example predictions during validatio
 # Defining the datamodule
 datamodule:
   _target_: datasets.DataModules.BaseDataModule   # Base Data Module
-  num_workers: ${num_workers}      # Parsing all needed hyperparameters
+  num_workers: ${num_workers}      # Parsing all needed experiment
   batch_size: ${batch_size}
   val_batch_size: ${val_batch_size}
   augmentations: ${AUGMENTATIONS} # Parsing the Data augmentation, defined in the augmentation config
@@ -44,13 +44,13 @@ ModelCheckpoint:
   mode: "max"                             # min or max: should be metric me maximised or minimized
   filename: 'best_epoch_{epoch}__${METRIC.NAME}_{metric/${METRIC.NAME}:.4f}'
   auto_insert_metric_name: False          # Needs to be false for better naming of checkpoint
-  save_last: False                         # If the last checkpoint should be saved too
+  save_last: True                         # If the last checkpoint should be saved too
 
 # Customizations of Hydra
 hydra:
   output_subdir: hydra
   run:
-    dir: ${LOGDIR}/${DATASET.NAME}/${MODEL.NAME}/${experiment}__${path_formatter:${hydra.job.override_dirname}}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: ${LOGDIR}/${DATASET.NAME}/${MODEL.NAME}/${name}__${path_formatter:${hydra.job.override_dirname}}/${now:%Y-%m-%d_%H-%M-%S}
     # Example Dir: /.../Semantic_Segmentation/logs/Cityscapes/hrnet/baseline__lossfunction_CE/2022-02-14_15-42-43/<ouputs>
     # using path_formatter with is defined in training.py to resolve problems which may occur with characters like [,],",or ',' in paths
   sweep:
@@ -68,5 +68,6 @@ hydra:
           - environment     # no needed information for the experiments
           - finetune_from   # to long
           - continue_from   # to long
-          - experiment      # already used in the path
+          - name            # already used in the path
           - LOGDIR          # no needed information for the experiments
+          - pl_trainer.enable_checkpointing

@@ -5,3 +5,4 @@ paths:
   Cityscapes: /home/.../Datasets/cityscapes
   VOC2010_Context: /home/.../VOC2010_Context
   PennFudan: /home/.../Datasets/PennFudanPed
+  Solar_Hydrogen: /home/.../HZDR_2022_Solar_Hydrogen/New_TrainingData

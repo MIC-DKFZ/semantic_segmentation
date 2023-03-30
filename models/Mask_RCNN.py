@@ -22,17 +22,17 @@ def get_model_50(
     if pretrained:
         if version == "v1":
             model = models.detection.maskrcnn_resnet50_fpn(
-                weights=MaskRCNN_ResNet50_FPN_Weights.DEFAULT, box_detections_per_img=250
+                weights=MaskRCNN_ResNet50_FPN_Weights.DEFAULT, box_detections_per_img=1000
             )
         elif version == "v2":
             model = models.detection.maskrcnn_resnet50_fpn_v2(
-                weights=MaskRCNN_ResNet50_FPN_V2_Weights.DEFAULT, box_detections_per_img=250
+                weights=MaskRCNN_ResNet50_FPN_V2_Weights.DEFAULT, box_detections_per_img=1000
             )
     else:
         if version == "v1":
-            model = models.detection.maskrcnn_resnet50_fpn(box_detections_per_img=250)
+            model = models.detection.maskrcnn_resnet50_fpn(box_detections_per_img=1000)
         elif version == "v2":
-            model = models.detection.maskrcnn_resnet50_fpn_v2(box_detections_per_img=250)
+            model = models.detection.maskrcnn_resnet50_fpn_v2(box_detections_per_img=1000)
 
     # get the number of input features for the classifier
     in_features = model.roi_heads.box_predictor.cls_score.in_features

@@ -1,22 +1,21 @@
 #@package _global_
 
 # define and configure the dataset class which is called by hydra
-#dataset:
-#  _target_: datasets.Cityscapes.Cityscapes.Cityscapes_dataset
-#  root:     ${paths.Cityscapes}
 dataset:
-  _target_: datasets.Base_Datasets.default.Base_Dataset
-  root:     ${paths.Cityscapes}
-  img_folder: "leftImg8bit_trainvaltest/leftImg8bit/train/*/"
-  img_folder_val: "leftImg8bit_trainvaltest/leftImg8bit/val/*/"
-  label_folder: "gtFine_trainvaltest/gtFine/train/*/"
-  label_folder_val: "gtFine_trainvaltest/gtFine/val/*/"
-  label_postfix: "labelIds_19classes"
-
+  _target_: datasets.Dataset.Base_Dataset
+  root: ${paths.Cityscapes}               #the root if defined in config/environment/used_env.yaml
+  fold: 0
+  patch_size: [640,640]
+  img_folder: leftImg8bit_trainvaltest/leftImg8bit/train/*
+  mask_folder: gtFine_trainvaltest/gtFine/train/*
+  num_classes: 19
+  random_sampling: 0.3
+  steps_per_epoch:  ${batch_size}
+  mask_postfix: labelIds_19classes
 # additional information about the dataset
 DATASET:
   ##NEEDED PARAMETERS
-  NAME:         "Cityscapes"
+  NAME:         "Cityscapes_CV"
   NUM_CLASSES:  19
   IGNORE_INDEX: 255
   #INFORMATION ABOUT DS, NOT NEEDED

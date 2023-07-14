@@ -126,6 +126,8 @@ def training_loop(cfg: DictConfig):
     if not has_true_attr(cfg.pl_trainer, "fast_dev_run"):
         log_hyperparameters(cfg, model, trainer)
 
+    if has_true_attr(cfg, "compile"):
+        model.model = torch.compile(model.model)
     # Start training
     trainer.fit(
         model,

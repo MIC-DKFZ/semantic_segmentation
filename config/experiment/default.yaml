@@ -2,6 +2,7 @@
 
 # Basic experiment for training. For some experiments (Cityscapes, VOC2010_Context they are
 # overwritten in config/experiment/*.yaml, so edit the parameters there if using these datasets
+compile: True
 num_workers: 10                 # number of workers for dataloader
 batch_size: 6                   # batch size per gpu for training
 val_batch_size: ${batch_size}   # batch size per gpu for validation
@@ -16,7 +17,7 @@ pl_trainer:                     # parameters for the pytorch lightning trainers
   accelerator: 'gpu'            # train on GPU
   devices: -1                   # using all available GPUs
   max_epochs: ${epochs}         # parsing the number of epochs which is defined as a hyperparameter
-  precision: 16                 # using Mixed Precision
+  precision: 16-mixed                 # using Mixed Precision
   benchmark: True               # using benchmark for faster training
   deterministic: False          # deterministic does not work because of not deterministc CrossEntropyLoss Error - use "warn" instead
   enable_checkpointing: True    # Enable/Disable Checkpointing

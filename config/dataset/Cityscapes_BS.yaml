@@ -5,13 +5,16 @@
 #  _target_: datasets.Cityscapes.Cityscapes.Cityscapes_dataset
 #  root:     ${paths.Cityscapes}
 dataset:
-  _target_: datasets.Base_Datasets.default.Base_Dataset
+  _target_: datasets.Base_Datasets.sampling.Sampling_Dataset
   root:     ${paths.Cityscapes}
   img_folder: "leftImg8bit_trainvaltest/leftImg8bit/train/*/"
   img_folder_val: "leftImg8bit_trainvaltest/leftImg8bit/val/*/"
   label_folder: "gtFine_trainvaltest/gtFine/train/*/"
   label_folder_val: "gtFine_trainvaltest/gtFine/val/*/"
   label_postfix: "labelIds_19classes"
+  num_classes: ${DATASET.NUM_CLASSES}
+  patch_size: ${AUGMENTATIONS.crop_size}
+  batch_size: ${batch_size}
 
 # additional information about the dataset
 DATASET:

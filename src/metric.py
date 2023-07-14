@@ -7,6 +7,7 @@ from torchmetrics.utilities.data import dim_zero_cat
 import pytorch_lightning as pl
 from torchmetrics.utilities.data import _bincount
 import matplotlib.pyplot as plt
+import torchmetrics
 from typing import Any, Dict, Hashable, Iterable, List, Optional, Sequence, Tuple, Union
 
 plt.switch_backend("agg")
@@ -93,10 +94,12 @@ class ConfusionMatrix(Metric):
             gt mask, with shape [batch_size, height, width]
         """
         # if softmax input
-        pred = pred.argmax(1).flatten()  # .detach()#.cpu()
+        # pred = pred.argmax(1).flatten()  # .detach()#.cpu()
+        pred = pred.argmax(1)
+
         # if argmax input
         # pred = pred.flatten()  # .detach()#.cpu()
-
+        pred = pred.flatten()
         gt = gt.flatten()  # .detach()#.cpu()
         n = self.num_classes
 
@@ -251,6 +254,29 @@ class IoU(ConfusionMatrix):
             mIoU = torch.nanmean(IoU[1:])  # .mean()
         else:
             mIoU = torch.nanmean(IoU)  # .mean()
+
+        if self.per_class:
+            IoU = {self.name + "_" + self.labels[i]: IoU[i] for i in range(len(IoU))}
+            IoU["mean" + self.name] = mIoU
+            return IoU
+        else:
+            return mIoU
+
+
+class IoU_MultiLabel(torchmetrics.classification.confusion_matrix.MultilabelConfusionMatrix):
+    def __init__(self, num_classes, labels, name="IoU_ML", per_class=True, **kwargs):
+        self.labels = labels
+        self.name = name
+        self.per_class = per_class
+        super().__init__(task="multilabel", num_labels=num_classes, **kwargs)
+
+    def compute(self):
+        tp = self.confmat[:, 1, 1]
+        # tn = self.confmat[:, 0, 0]
+        fp = self.confmat[:, 0, 1]
+        fn = self.confmat[:, 1, 0]
+        IoU = tp / (tp + fp + fn)
+        mIoU = torch.nanmean(IoU)
 
         if self.per_class:
             IoU = {self.name + "_" + self.labels[i]: IoU[i] for i in range(len(IoU))}

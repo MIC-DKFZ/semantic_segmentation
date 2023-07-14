@@ -2,8 +2,8 @@
 
 # Define which Dataset and which augmentation pipeline to use
 defaults:
-  - override /data_augmentation: scale_crop_hflip
-  - override /dataset: Cityscapes
+  - override /data_augmentation: randaugment_flip
+  - override /dataset: Cityscapes_CV
 
 # Configure the augmentation pipeline
 AUGMENTATIONS:
@@ -13,11 +13,11 @@ AUGMENTATIONS:
   std: [ 0.229, 0.224, 0.225 ]
 
 #Hyperparameters for Cityscapes Dataset
-batch_size: 3                   # batch size per gpu for training
-val_batch_size: ${batch_size}   # batch size per gpu for validation
-epochs: 484                     # number of epochs
+batch_size: 12                   # batch size per gpu for training
+val_batch_size: 6 #${batch_size}   # batch size per gpu for validation
+epochs: 500                     # number of epochs
 lr: 0.01                        # learning rate for training (0.01445439770745928)
 momentum: 0.9                   # momentum for optimizer
 weight_decay: 0.0005            # wd for optimizer
-lossfunction: [ "wCE", "wCE", "wCE", "wCE"]     # list of lossfunctions
+lossfunction: [ "CE", "CE", "CE", "CE"]    # list of lossfunctions
 lossweight:   [1.0, 0.4, 0.05, 0.05]            # corresponding weights for each loss function

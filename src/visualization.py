@@ -81,6 +81,18 @@ def show_mask_inst_seg(target, img_shape, output_type: str = "numpy", alpha=0.5)
     return convert_numpy_to(fig, output_type)
 
 
+def show_mask_multilabel_seg(masks, cmap, output_type: str = "numpy", alpha=0.5):
+    masks_np = np.array(masks)
+    c, w, h = masks_np.shape
+    fig = np.zeros((w, h, 3), dtype=np.uint8)
+    for i, mask in enumerate(masks):
+        color = np.array(cmap[i])
+        x, y = np.where(mask != 0)
+        fig[x, y] = fig[x, y] * alpha + color * (1 - alpha)
+    fig = fig.astype(np.uint8)
+    return convert_numpy_to(fig, output_type)
+
+
 def show_prediction_sem_seg():
     pass
 
@@ -205,6 +217,8 @@ class Visualizer:
             self.mask_np = show_mask_sem_seg(mask, self.cmap, "numpy")
         elif self.segmentation == "instance":
             self.mask_np = show_mask_inst_seg(mask, img.shape[-2:], "numpy")
+        elif self.segmentation == "multilabel":
+            self.mask_np = show_mask_multilabel_seg(mask, self.cmap, "numpy")
 
         # Predict the Image and colorize the prediction
         if self.model is not None:
@@ -263,7 +277,9 @@ class Visualizer:
                     self.img_np_chan, 1 - alpha, self.mask_np, alpha, 0.0
                 )
                 bg_map = np.all(self.mask_np == [255, 255, 255], axis=2)
-                self.img_np_fig[bg_map] = self.img_np_fig[bg_map]
+                self.img_np_fig[bg_map] = self.img_np_chan[bg_map]
+                bg_map = np.all(self.mask_np == [0, 0, 0], axis=2)
+                self.img_np_fig[bg_map] = self.img_np_chan[bg_map]
             # concat blended image and mask
             fig = np.concatenate((self.img_np_fig, self.mask_np), self.axis)
             # transform from RGB to BGR to match the cv2 order

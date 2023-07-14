@@ -202,6 +202,16 @@ def get_dataset_stats(
         weights_bal = (1 / count) * (count.sum() / num_classes)
         print("Balanced Class Weights:\n{} ".format(weights_bal.tolist()))
 
+        freq = count / count.sum()
+        cl_weights = 1.0 / freq
+        cl_weights = np.array(cl_weights)
+        print("W", cl_weights)
+        print("S", cl_weights.sum())
+
+        cl_weights /= np.sum(cl_weights)
+
+        print("GBT Class Weights:\n{} ".format(cl_weights.tolist()))
+
     if not supress_output:
         """
         Define Output Dir

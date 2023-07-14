@@ -31,6 +31,8 @@ def get_loss_function_from_cfg(name_lf: str, cfg: DictConfig) -> list:
         loss_function = torch.nn.CrossEntropyLoss(
             ignore_index=ignore_index
         )  # , label_smoothing=0.1)
+    elif name_lf == "BCE":
+        loss_function = torch.nn.BCEWithLogitsLoss()  # reduction="none")
     elif name_lf == "wCE":
         weights = torch.FloatTensor(cfg.DATASET.CLASS_WEIGHTS).cuda()
         loss_function = torch.nn.CrossEntropyLoss(ignore_index=ignore_index, weight=weights)

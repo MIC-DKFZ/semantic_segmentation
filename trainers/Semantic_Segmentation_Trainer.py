@@ -31,6 +31,7 @@ class SegModel(LightningModule):
 
         # instantiate model from config
         self.model = hydra.utils.instantiate(self.config.model)
+        # self.model = torch.compile(self.model)
         # instantiate metric from config and metric related parameters
         self.metric_name = self.config.METRIC.NAME
         # When to Call the Metric
@@ -244,8 +245,8 @@ class SegModel(LightningModule):
         # compute and log loss
         loss = self.get_loss(y_pred, y_gt)
         self.log(
-            "Loss/training_loss",
-            loss,
+            name="Loss/training_loss",
+            value=loss,
             on_step=True,
             on_epoch=True,
             logger=True,
@@ -618,6 +619,14 @@ class SegModel(LightningModule):
                 **kwargs,
             )
 
+    def viz_label(self, label, cmap, output_type):
+        label = label.cpu()
+        return show_mask_sem_seg(label, cmap, output_type)
+
+    def viz_prediction(self, pred, cmap, output_type, treshhold=0.5):
+        pred = pred.argmax(0).detach().cpu()
+        return show_mask_sem_seg(pred, cmap, output_type)
+
     def log_batch_prediction(
         self, imgs: torch.Tensor, preds: torch.Tensor, gts: torch.Tensor, batch_idx: int
     ) -> None:
@@ -639,39 +648,27 @@ class SegModel(LightningModule):
             current_batche_size = len(imgs)
             # log the desired number of images
             for i in range(min(current_batche_size, diff_to_show)):
-                pred = preds[i].argmax(0).detach().cpu()
-                gt = gts[i].cpu()
-                # img = imgs[i].cpu()
+                pred = self.viz_prediction(preds[i], self.cmap, "torch")
+                gt = self.viz_label(gts[i], self.cmap, "torch")
 
-                # colormap class labels
-                pred = show_mask_sem_seg(pred, self.cmap, "torch")
-                gt = show_mask_sem_seg(gt, self.cmap, "torch")
-
-                # Overlay mask with images, disabled since tensorboard logfiles get to large
-                # img = show_img(img, mean=self.viz_mean, std=self.viz_std, output_type="torch")
-                # alpha = 0.5
-                # gt = (img * alpha + gt * (1 - alpha)).type(torch.uint8)
-                # pred = (img * alpha + pred * (1 - alpha)).type(torch.uint8)
-
-                # concat pred and gt for better visualization
+                # Concat pred and gt for better visualization
                 axis = 0 if gt.shape[1] > 2 * gt.shape[0] else 1
                 fig = torch.cat((pred, gt), axis)
 
-                # resize fig for not getting to large tensorboard-files
+                # Resize Figure to reduce size of tensorboard files
                 w, h, c = fig.shape
                 max_size = 1024
                 if max(w, h) > max_size:
                     s = max_size / max(w, h)
-
                     fig = fig.permute(2, 0, 1).unsqueeze(0).float()
                     fig = F.interpolate(fig, size=(int(w * s), int(h * s)), mode="nearest")
                     fig = fig.squeeze(0).permute(1, 2, 0)
-                fig = fig.to(torch.uint8)
+
                 # Log Figure to tensorboard
                 self.trainer.logger.experiment.add_image(
                     "Example_Prediction/prediction_gt__sample_"
                     + str(batch_idx * val_batch_size + i),
-                    fig,
+                    fig.to(torch.uint8),
                     self.current_epoch,
                     dataformats="HWC",
                 )

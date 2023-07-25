@@ -1,0 +1,3 @@
+_target_: albumentations.Compose
+transforms:
+  - _target_: albumentations.pytorch.ToTensorV2

@@ -2,7 +2,7 @@
 
 #DEFINING THE DEFAULT DATA AUGMENTATION FOR THIS DATASET
 defaults:
-  #- override /data_augmentation: HidaHackathon2022
+  #- override /augmentation: HidaHackathon2022
   - override /hyperparameters: HidaHackathon2022
   #- override /metric: IoU_HidaHackathon2022
 

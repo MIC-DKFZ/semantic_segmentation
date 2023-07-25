@@ -3,7 +3,9 @@ import torch
 from trainers.Semantic_Segmentation_Trainer import SegModel
 from src.utils import get_logger
 from src.visualization import show_mask_multilabel_seg
+import cv2
 
+cv2.setNumThreads(0)
 log = get_logger(__name__)
 
 
@@ -29,7 +31,13 @@ class SegMCModel(SegModel):
         torch.Tenor
             weighted sum of the losses of the individual model outputs
         """
-        loss = sum([self.loss_functions[i](y, y_gt.float()) for i, y in enumerate(y_pred.values())])
+
+        loss = sum(
+            [
+                self.loss_functions[i](y, y_gt.to(torch.float16))
+                for i, y in enumerate(y_pred.values())
+            ]
+        )
         return loss
 
     def viz_label(self, label, cmap, output_type):

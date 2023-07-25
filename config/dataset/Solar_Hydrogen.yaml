@@ -2,8 +2,11 @@
 
 # define and configure the dataset class which is called by hydra
 dataset:
-  _target_: datasets.Solar_Hydrogen.Solar_Hydrogen.Custom_dataset
+  _target_: datasets.Solar_Hydrogen.Solar_Hydrogen.Solar_Hydrogen_Dataset
   root:      ${paths.Solar_Hydrogen} #the root to the data
+  dtype: ".tif"
+  img_folder: ground_truth/images
+  label_folder: none
 
 # additional information about the dataset
 DATASET:

@@ -1,6 +1,6 @@
 #@package _global_
 defaults:
-  - override /data_augmentation: only_tensor
+  - override /data_augmentation: norm #only_tensor
   - override /metric: MAP
   - override /trainer: InstSeg
   - override /dataset: PennFudan

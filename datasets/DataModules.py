@@ -97,6 +97,7 @@ def get_augmentations_from_config(augmentations: DictConfig) -> list:
     # otherwise recursively build the transformations
     trans = []
     for augmentation in augmentations:
+        print(augmentations)
         transforms = list(augmentation.keys())
 
         for transform in transforms:
@@ -109,6 +110,7 @@ def get_augmentations_from_config(augmentations: DictConfig) -> list:
                     # "transforms" indicates a transformation which takes a list of other transformations
                     # as input ,e.g. A.Compose -> recursively build these transforms
                     transforms = get_augmentations_from_config(parameters.transforms)
+                    # transform=hydra.initialize()
                     del parameters["transforms"]
                     func = getattr(A, transform)
                     trans.append(func(transforms=transforms, **parameters))
@@ -184,21 +186,25 @@ class BaseDataModule(LightningDataModule):
         # define the datasets which are defined in the config
         # additional arguments are the split and the augmentations
         if stage in (None, "fit"):
-            transforms_train = get_augmentations_from_config(self.augmentations.TRAIN)[0]
+            # transforms_train = get_augmentations_from_config(self.augmentations.train)[0]
+            transforms_train = hydra.utils.instantiate(self.augmentations.train)
             # print(transforms_train)
             self.DS_train = hydra.utils.instantiate(
                 self.dataset, split="train", transforms=transforms_train
             )
         if stage in (None, "fit", "validate"):
-            transforms_val = get_augmentations_from_config(self.augmentations.VALIDATION)[0]
+            # transforms_val = get_augmentations_from_config(self.augmentations.val)[0]
+            transforms_val = hydra.utils.instantiate(self.augmentations.val)
             self.DS_val = hydra.utils.instantiate(
                 self.dataset, split="val", transforms=transforms_val
             )
         if stage in (None, "test"):
             if has_not_empty_attr(self.augmentations, "TEST"):
-                transforms_test = get_augmentations_from_config(self.augmentations.TEST)[0]
+                # transforms_test = get_augmentations_from_config(self.augmentations.test)[0]
+                transforms_test = hydra.utils.instantiate(self.augmentations.test)
             else:
-                transforms_test = get_augmentations_from_config(self.augmentations.VALIDATION)[0]
+                # transforms_test = get_augmentations_from_config(self.augmentations.val)[0]
+                transforms_test = ghydra.utils.instantiate(self.augmentations.val)
             self.DS_test = hydra.utils.instantiate(
                 self.dataset, split="test", transforms=transforms_test
             )

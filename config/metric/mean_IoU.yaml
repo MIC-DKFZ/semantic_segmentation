@@ -7,7 +7,7 @@ METRIC:
   call_per_img: False    # If True metric is computed for each image and averaged over all images - exclusively with call_stepwise
   METRICS:
     meanIoU:              # Define the Metric
-      _target_: src.metric.IoU     # Metric Class
+      _target_: src.metric.IoU.IoU     # Metric Class
       num_classes: ${DATASET.NUM_CLASSES}      # Number of Classes in the Dataset
       labels: ${DATASET.CLASS_LABELS}          # Class Labels in the Dataset
       per_class: False    # Return the mean Metric with or without the Metric for each Class

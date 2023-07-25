@@ -22,5 +22,6 @@ paths:
   #COMPUTING: /home/l727r/Documents/cluster-data/nnUNet_raw/Dataset253_COMPUTING_it3
   PennFudan: /home/l727r/Desktop/Datasets/PennFudanPed
   Solar_Hydrogen: /home/l727r/Documents/E132-Projekte/Projects/Helmholtz_Imaging_ACVL/HZDR_2022_Solar_Hydrogen/New_TrainingData
+  #Solar_Hydrogen: /home/l727r/Documents/E132-Projekte/Projects/Helmholtz_Imaging_ACVL/HZDR_2022_Solar_Hydrogen/DefaultDataset
   Solar_Hydrogen_Karol: /media/l727r/data/Solar_Hydrogen/TrainingData_Karol
   Fishinspector: /media/l727r/data/UFZ_2023_Fishinspector/Dataset222_Fishinspector

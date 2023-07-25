@@ -7,7 +7,7 @@ METRIC:
   call_per_img: True  # If True metric is computed for each image and averaged over all images - exclusively with call_stepwise
   METRICS:
     meanDice:             # Define the Metric
-      _target_: src.metric.Dice     # Metric Class
+      _target_: src.metric.Dice.Dice     # Metric Class
       num_classes: ${DATASET.NUM_CLASSES}      # Number if Classes in the Dataset
       labels: ${DATASET.CLASS_LABELS}          # Class Labels in the Dataset
       per_class: True    # Return the mean Metric with or without the Metric for each Class

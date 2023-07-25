@@ -7,12 +7,14 @@ defaults:
   - trainer: SemSeg             # Which Trainer to use
   - metric: mean_IoU            # Metric configuration
   - model: hrnet                # Model
-  - dataset: Cityscapes         # Dataset
-  - data_augmentation: only_norm  # Data Augmentation
+  - dataset: Cityscapes/Cityscapes         # Dataset
   - optimizer: SGD              # Optimizer
   - lr_scheduler: polynomial    # Learning rate scheduler
   - callbacks: default          # Callbacks
   - logger: tensorboard         # Logger
+  - augmentation@augmentation.train: norm  # Data Augmentation
+  - augmentation@augmentation.test: norm  # Data Augmentation
+  - augmentation@augmentation.val: norm  # Data Augmentation
   - experiment/default          # Load Default Hyperparameters
   - optional experiment:
   - environment: local          # Environment
@@ -34,7 +36,7 @@ datamodule:
   num_workers: ${num_workers}      # Parsing all needed experiment
   batch_size: ${batch_size}
   val_batch_size: ${val_batch_size}
-  augmentations: ${AUGMENTATIONS} # Parsing the Data augmentation, defined in the augmentation config
+  augmentations: ${augmentation} # Parsing the Data augmentation, defined in the augmentation config
   dataset: ${dataset}             # Parsing the Dataset defined in the dataset config
 
 # Defining the saving behavior. Only used when checkpointing is enabled in the pl_trainer

@@ -6,12 +6,8 @@ METRIC:
   call_stepwise: False   # If True metric is computed in each step (usually one batch) and averaged over all steps - exclusively with call_per_img
   call_per_img: False    # If True metric is computed for each image and averaged over all images - exclusively with call_stepwise
   METRICS:
-#    meanIoU_ML:
-#       _target_: torchmetrics.JaccardIndex
-#       task: "multilabel"
-#       num_labels: ${DATASET.NUM_CLASSES}
     meanIoU_ML:              # Define the Metric
-      _target_: src.metric.IoU_MultiLabel     # Metric Class
+      _target_: src.metric.IoU.IoU_MultiLabel     # Metric Class
       num_classes: ${DATASET.NUM_CLASSES}      # Number if Classes in the Dataset
       labels: ${DATASET.CLASS_LABELS}          # Class Labels in the Dataset
       per_class: True     # Return the mean Metric with or without the Metric for each Class

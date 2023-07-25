@@ -176,6 +176,8 @@ class Visualizer:
             return show_mask_sem_seg(mask, self.cmap, "numpy")
         elif self.segmentation == "instance":
             return show_mask_inst_seg(mask, img_shape, "numpy")
+        elif self.segmentation == "multilabel":
+            return show_mask_inst_seg(mask, img_shape, "numpy")
 
     def viz_correctness(self, pred: torch.Tensor, mask: torch.Tensor) -> np.ndarray:
         """
@@ -191,6 +193,7 @@ class Visualizer:
         np.ndarray :
         """
         cor = np.zeros(self.mask_np.shape, dtype=np.uint8)
+        return cor
         # where prediction and gt are equal
         x, y = np.where(pred == mask)
         # pixel which dont belong to a class (ignore index)
@@ -210,7 +213,7 @@ class Visualizer:
         img_id = cv2.getTrackbarPos("Image ID", "Window")
 
         # Load Image and Mask, transform image and colorize the mask
-        img, mask = self.dataset[img_id]
+        img, mask = self.dataset[img_id][:2]
 
         self.img_np = show_img(img, self.mean, self.std, "numpy")
         if self.segmentation == "semantic":
@@ -233,6 +236,15 @@ class Visualizer:
                 pred = self.model(img.unsqueeze(0).cuda())[0]
                 pred = [{k: v.detach().cpu() for k, v in pred.items()}]
                 self.pred = show_prediction_inst_seg(pred, img_shape=img.shape[-2:])
+
+            elif self.segmentation == "multilabel":
+                pred = self.model(img.unsqueeze(0).cuda())
+                pred = pred["out"].squeeze(0).detach().cpu()
+                pred = (pred >= 0.5).float()
+                self.pred = show_mask_multilabel_seg(np.array(pred), self.cmap)
+
+                # Show Correctness of prediction
+                self.cor = self.viz_correctness(pred, mask)
 
         # update the the channel and alpha parameter and show the window
         self.update_channel_and_alpha()
@@ -272,6 +284,12 @@ class Visualizer:
                     self.img_np_chan, 1 - alpha, self.pred, alpha, 0.0
                 )
                 self.img_np_fig = self.update_corrects(self.img_np_fig)
+
+                bg_map = np.all(self.pred == [255, 255, 255], axis=2)
+                self.img_np_fig[bg_map] = self.img_np_chan[bg_map]
+                bg_map = np.all(self.pred == [0, 0, 0], axis=2)
+                self.img_np_fig[bg_map] = self.img_np_chan[bg_map]
+
             else:
                 self.img_np_fig = cv2.addWeighted(
                     self.img_np_chan, 1 - alpha, self.mask_np, alpha, 0.0

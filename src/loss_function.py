@@ -4,7 +4,10 @@ from omegaconf import DictConfig
 from src.loss.rmi import RMILoss
 from src.loss.Dice_Loss import DiceLoss
 from src.loss.DC_CE_Loss import DC_and_CE_loss, TopKLoss, DC_and_topk_loss
+from src.loss.Fishinspector import BCE_PL, BCE_PLv2, SoftDiceLoss_Multilabel_PL
+
 from src.utils import has_not_empty_attr
+import torch.nn as nn
 
 
 def get_loss_function_from_cfg(name_lf: str, cfg: DictConfig) -> list:
@@ -31,8 +34,17 @@ def get_loss_function_from_cfg(name_lf: str, cfg: DictConfig) -> list:
         loss_function = torch.nn.CrossEntropyLoss(
             ignore_index=ignore_index
         )  # , label_smoothing=0.1)
+    elif name_lf == "BCEwL":
+        loss_function = torch.nn.BCEWithLogitsLoss()
     elif name_lf == "BCE":
-        loss_function = torch.nn.BCEWithLogitsLoss()  # reduction="none")
+        loss_function = torch.nn.BCELoss()
+    elif name_lf == "cBCE":
+        loss_function = BCE_PL()
+    elif name_lf == "cBCEv2":
+        loss_function = BCE_PLv2()
+    elif name_lf == "DicePL":
+        loss_function = SoftDiceLoss_Multilabel_PL(batch_dice=True, smooth=0.0)
+        # loss_function = lambda pred, gt, mask: lf(pred.clone(), gt.clone(), mask)
     elif name_lf == "wCE":
         weights = torch.FloatTensor(cfg.DATASET.CLASS_WEIGHTS).cuda()
         loss_function = torch.nn.CrossEntropyLoss(ignore_index=ignore_index, weight=weights)

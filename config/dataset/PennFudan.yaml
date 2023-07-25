@@ -2,8 +2,11 @@
 
 # define and configure the dataset class which is called by hydra
 dataset:
-  _target_: datasets.PennFudan.PennFudan.PennFudanDataset
-  root:     ${paths.PennFudan}
+  #_target_: datasets.PennFudan.PennFudan.PennFudanDataset
+  _target_: datasets.Base_Datasets.instance_segmentation.Instance_Dataset_CV
+  root: ${paths.PennFudan}
+  img_folder: PNGImages
+  label_folder: PedMasks
 
 # additional information about the dataset
 DATASET:

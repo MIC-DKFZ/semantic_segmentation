@@ -6,4 +6,4 @@ METRIC:
   METRIC_CALL: global
   METRICS:
     Dice_binary:
-      _target_: src.metric.binary_per_image_Dice
+      _target_: src.metric.EndoCV.binary_per_image_Dice

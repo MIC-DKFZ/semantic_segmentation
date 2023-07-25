@@ -18,6 +18,7 @@ from matplotlib import cm
 
 from trainers.Semantic_Segmentation_Trainer import SegModel
 from trainers.Instance_Segmentation_Trainer import InstModel
+from trainers.Semantic_Segmentation_Multiclass_Trainer import SegMCModel
 
 from src.utils import has_not_empty_attr, get_logger
 from datasets.DataModules import get_augmentations_from_config
@@ -83,22 +84,36 @@ def show_prediction(
     #    cfg.MODEL.PRETRAINED = False
     if segmentation == "semantic":
         model = SegModel.load_from_checkpoint(ckpt_file, model_config=cfg, strict=False).cuda()
+        # model = SegModel(cfg)  # load_from_checkpoint(model_config=cfg, strict=False).cuda()
+        # checkpoint = torch.load(ckpt_file)
+        # print(checkpoint.keys())
+        # model.model.load_state_dict(checkpoint["state_dict"])
     elif segmentation == "instance":
         model = InstModel.load_from_checkpoint(ckpt_file, model_config=cfg, strict=False).cuda()
-    # model = SegModel.load_from_checkpoint(ckpt_file, config=cfg).cuda()
-    # print(cfg)
-    # print(cfg.model)
+    elif segmentation == "multilabel":
+        # print(ORG_CWD, ckpt_file)
+        # model = SegMCModel.load_from_checkpoint(ckpt_file, model_config=cfg, strict=False).cuda()
+        model = SegMCModel(cfg)
+        # print(model.state_dict().keys())
+        #
+        pretrained_dict = torch.load(ckpt_file)["state_dict"]
+        pretrained_dict = {k.replace("_orig_mod.", ""): v for k, v in pretrained_dict.items()}
+        model.load_state_dict(pretrained_dict)
+        model = model.cuda()
 
     # model=hydra.utils.instantiate(cfg.model).cuda()
     OmegaConf.set_struct(cfg, False)
-    if augmentation == "train":
-        transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TRAIN)[0]
-    elif augmentation == "val":
-        transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.VALIDATION)[0]
-    elif augmentation == "test":
-        transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TEST)[0]
-    else:
+    if augmentation is None:
         transforms = A.Compose([ToTensorV2()])
+    elif augmentation == "train":
+        # transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TRAIN)[0]
+        transforms = hydra.utils.instantiate(cfg.augmentation.train)
+    elif augmentation == "val":
+        # transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.VALIDATION)[0]
+        transforms = hydra.utils.instantiate(cfg.augmentation.val)
+    elif augmentation == "test":
+        # transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TEST)[0]
+        transforms = hydra.utils.instantiate(cfg.augmentation.test)
 
     # instantiate dataset
     dataset = hydra.utils.instantiate(cfg.dataset, split=split, transforms=transforms)
@@ -135,7 +150,7 @@ def show_prediction(
         cv2.createTrackbar("correctness", "Window", 0, 100, visualizer.update_alpha)
 
     # look at the first image to get the number of channels
-    img, _ = dataset[0]
+    img = dataset[0][0]
     if len(img.shape) == 2:
         channels = 2
     else:

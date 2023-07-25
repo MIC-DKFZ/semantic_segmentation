@@ -102,13 +102,13 @@ if __name__ == "__main__":
     jobconf.add_hard_set_parameter("dataset", "Solar_Hydrogen")
     jobconf.add_hard_set_parameter("environment", "cluster")
     jobconf.add_hard_set_parameter("pl_trainer.enable_checkpointing", "False")
-    jobconf.add_hard_set_parameter("data_augmentation", "randaugment_nonorm_flip")
+    jobconf.add_hard_set_parameter("augmentation", "randaugment_nonorm_flip")
 
     """
     Set Grid Search Parameters - Test each possible combination
     """
     # jobconf.add_grid_search_parameter(
-    #     "data_augmentation",
+    #     "augmentation",
     #     [
     #         "randaugment_nonorm_flip",
     #         "randaugment_light_nonorm_flip",

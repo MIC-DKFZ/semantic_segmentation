@@ -1,17 +1,8 @@
 from trainers.Semantic_Segmentation_Multiclass_Trainer import SegMCModel
-import hydra
-import numpy as np
-from omegaconf import DictConfig
 
 import torch
-import torch.nn.functional as F
-from pytorch_lightning import LightningModule
-from matplotlib import cm
-
-from src.metric import MetricModule
-from src.loss_function import get_loss_function_from_cfg
-from src.utils import get_logger, has_not_empty_attr, has_true_attr, first_from_dict
-from src.visualization import show_mask_sem_seg, show_img, show_mask_multilabel_seg
+from src.metric.metric import MetricModule
+from src.utils import get_logger, first_from_dict
 
 log = get_logger(__name__)
 
@@ -92,6 +83,7 @@ class SegMCModel(SegMCModel):
         self.update_metric(
             first_from_dict(y_pred),
             y_gt.long(),
+            labeled_classes,
             self.metric,
             prefix="metric/",
         )
@@ -99,6 +91,45 @@ class SegMCModel(SegMCModel):
         # log some example predictions to tensorboard
         if self.global_rank == 0 and not self.trainer.sanity_checking:
             self.log_batch_prediction(x, first_from_dict(y_pred), y_gt, batch_idx)
+
+    def update_metric(
+        self,
+        y_pred: torch.Tensor,
+        y_gt: torch.Tensor,
+        labeled_classes,
+        metric: MetricModule,
+        prefix: str = "",
+    ):
+
+        if self.metric_call_stepwise:
+            # Log the metric result for each step
+            metric_step = metric(y_pred, y_gt, labeled_classes)
+            # exclude nan since pl uses torch.mean for reduction, this way torch.nanmean is simulated
+            metric_step = {k: v for k, v in metric_step.items() if not torch.isnan(v)}
+            self.log_dict_epoch(
+                metric_step,
+                prefix=prefix,
+                postfix="_stepwise",
+                on_step=False,
+                on_epoch=True,
+            )
+        elif self.metric_call_per_img:
+            # If metric should be called per img, iterate through the batch to compute and log the
+            # metric for each img separately
+            for yi_pred, yi_gt, lc in zip(y_pred, y_gt, labeled_classes):
+                metric_step = metric(yi_pred.unsqueeze(0), yi_gt.unsqueeze(0), lc)
+                # exclude nan since pl uses torch.mean for reduction, this way torch.nanmean is simulated
+                metric_step = {k: v for k, v in metric_step.items() if not torch.isnan(v)}
+                self.log_dict_epoch(
+                    metric_step,
+                    prefix=prefix,
+                    postfix="_per_img",
+                    on_step=False,
+                    on_epoch=True,
+                )
+        elif self.metric_call_global:
+            # Just update the metric
+            metric.update(y_pred, y_gt, labeled_classes)
 
     def get_loss(self, y_pred: dict, y_gt: torch.Tensor, labeled_classes) -> torch.Tensor:
         """
@@ -129,7 +160,7 @@ class SegMCModel(SegMCModel):
             #    labeled_classes.unsqueeze(2).unsqueeze(3).expand(batch_size, 16, height, width)
             # )
 
-            s_loss = lf(y_pred, y_gt.float())
+            s_loss = lf(y_pred, y_gt.float(), labeled_classes)
             # s_loss = s_loss[labeled_classes].mean()
             return s_loss
             # y_gt = y_gt.permute(0, 2, 3, 1).reshape(-1, num_classes)

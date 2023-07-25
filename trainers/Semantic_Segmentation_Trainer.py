@@ -1,5 +1,4 @@
 import hydra
-import numpy as np
 from omegaconf import DictConfig
 
 import torch
@@ -7,10 +6,10 @@ import torch.nn.functional as F
 from pytorch_lightning import LightningModule
 from matplotlib import cm
 
-from src.metric import MetricModule
+from src.metric.metric import MetricModule
 from src.loss_function import get_loss_function_from_cfg
-from src.utils import get_logger, has_not_empty_attr, has_true_attr, first_from_dict
-from src.visualization import show_mask_sem_seg, show_img
+from src.utils import get_logger, has_not_empty_attr, first_from_dict
+from src.visualization import show_mask_sem_seg
 
 log = get_logger(__name__)
 
@@ -59,13 +58,13 @@ class SegModel(LightningModule):
             else 0
         )
         self.viz_mean = (
-            self.config.AUGMENTATIONS.mean
-            if has_not_empty_attr(self.config.AUGMENTATIONS, "mean")
+            self.config.augmentation_cfg.mean
+            if has_not_empty_attr(self.config.augmentation_cfg, "mean")
             else None
         )
         self.viz_std = (
-            self.config.AUGMENTATIONS.std
-            if has_not_empty_attr(self.config.AUGMENTATIONS, "std")
+            self.config.augmentation_cfg.std
+            if has_not_empty_attr(self.config.augmentation_cfg, "std")
             else None
         )
 
@@ -216,7 +215,7 @@ class SegModel(LightningModule):
             else:
                 total_pred += y_prediction
 
-        # Average the prediciotn over all scales
+        # Average the prediction over all scales
         total_pred /= len(scales)
 
         return {"out": total_pred}
@@ -283,8 +282,8 @@ class SegModel(LightningModule):
         x, y_gt = batch
         y_pred = self(x)
 
-        # compute and log loss to tensorboard
-        val_loss = self.get_loss(y_pred, y_gt.long())
+        # # compute and log loss to tensorboard
+        val_loss = self.get_loss(y_pred, y_gt)
         self.log(
             name="Loss/validation_loss",
             value=val_loss,
@@ -295,6 +294,7 @@ class SegModel(LightningModule):
         )
 
         # update validation metric
+        # print(first_from_dict(y_pred).dtype, y_gt.dtype)
         self.update_metric(first_from_dict(y_pred), y_gt, self.metric, prefix="metric/")
 
         # log some example predictions to tensorboard

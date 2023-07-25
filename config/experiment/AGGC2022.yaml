@@ -1,6 +1,6 @@
 defaults:
-  #- override /data_augmentation: AGGC2022_norm
-  #- override /data_augmentation: EndoCV2022
+  #- override /augmentation: AGGC2022_norm
+  #- override /augmentation: EndoCV2022
   - override /dataset: AGGC2022
   #- override /metric: Dice_AGGC2022
 

@@ -1,18 +1,25 @@
+import glob
+
 import cv2
-import torch
-import json
 import os
 from src.utils import get_logger
 from os.path import join
 import numpy as np
-import random
-from datasets.Base_Datasets.multilabel import Multilabel_Dataset, Multilabel_CV_Dataset
+from src.dataset_utils import split_by_ID
+from datasets.Base_Datasets.base import Base_Dataset
+from datasets.Base_Datasets.multilabel import (
+    Multilabel_CV_Dataset,
+    Multilabel_Sampling_CV_Dataset,
+    Multilabel_Sampling_Dataset,
+)
 
+cv2.setNumThreads(0)
 log = get_logger(__name__)
 
 
-class Fishinspector_dataset(Multilabel_CV_Dataset):
+class Fishinspector_Base(Base_Dataset):
     def __init__(self, num_classes, **kwargs):
+
         self.num_classes = num_classes
 
         self.ignore_files = [
@@ -25,94 +32,136 @@ class Fishinspector_dataset(Multilabel_CV_Dataset):
         super().__init__(**kwargs)
 
     def get_img_files(self) -> list:
+
         img_files = super().get_img_files()
+
         img_files = [
             img for img in img_files if not any([ignf in img for ignf in self.ignore_files])
         ]
         return img_files
 
     def get_mask_files(self) -> list:
-        return self.img_files
+
+        img_files = super().get_img_files()
+
+        mask_files = [
+            join(self.root, self.label_folder, os.path.split(img_file)[-1])
+            for img_file in img_files
+        ]
+
+        mask_files = [
+            mask for mask in mask_files if not any([ignf in mask for ignf in self.ignore_files])
+        ]
+        return mask_files
 
     def load_mask(self, idx):
         masks = []
+        mask_file = self.mask_files[idx]
         for i in range(0, self.num_classes):
-            img_name = os.path.split(self.img_files[idx])[-1]
-            mask = cv2.imread(
-                join(self.root, self.label_folder, img_name.replace("_0000", f"_{i:04d}")), -1
-            )
+            mask = cv2.imread(mask_file.replace("_0000", f"_{i:04d}"), -1)
             masks.append(mask)
-        return np.array(masks)
+        return np.array(masks, dtype=np.uint8)
+
+    def get_split_ids(self):
+        files = [os.path.split(file)[-1] for file in self.img_files]
+        IDs_S1 = [file.split("--", 1)[0] for file in files if "Set_1_" in file]
+        IDs_S2 = [file.split("_W_", 1)[0] for file in files if "Set_2_" in file]
+        files_S3 = [file for file in files if "Set_3_" in file]
+        IDs_S3 = [
+            file.split("_W_", 1)[0].split("_controlplateW", 1)[0]
+            for file in files_S3
+            if "_controlplateW" in file or "_W_" in file
+        ]
+        IDs_S3 += [
+            file.split("--")[0]
+            for file in files_S3
+            if not "_controlplateW" in file and not "_W_" in file
+        ]
+        IDs = np.unique(IDs_S1 + IDs_S2 + IDs_S3)
+        IDs = [ID for ID in IDs if not any(JD in ID and JD != ID for JD in IDs)]
+        return IDs
 
 
-class Fishinspector_dataset_partly_labeled(Fishinspector_dataset):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+class Fishinspector_dataset(Multilabel_CV_Dataset, Fishinspector_Base):
+    pass
 
-        self.dorsal_classes = torch.tensor(
-            [0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0], dtype=bool
-        )
-        self.lateral_classes = torch.tensor(
-            [1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1], dtype=bool
-        )
 
-    def __getitem__(self, idx):
-
-        img, mask = super().__getitem__(idx)
-
-        file_name = os.path.split(self.img_files[idx])[-1].replace("_0000.png", ".json")
-
-        with open(join(self.root, self.label_folder, file_name)) as file:
-            labeled_classes = json.load(file)["annotated_labels"]
-
-            if "Dorsal" in file_name:
-                map = self.lateral_classes.clone()
-            elif "Lateral" in file_name:
-                map = self.dorsal_classes.clone()
-            map[labeled_classes] = True
-
-        return img, mask, map
-
-        # # reading images and masks as numpy arrays
-        # img = cv2.imread(join(self.root, self.img_folder, self.imgs[idx]))
-        # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # cv2 reads images in BGR order
-        # masks = []
-        # for i in range(0, self.num_classes):
-        #     # mask_name = join(self.root, self.img_folder, self.imgs[idx].replace("_0000", f"_{i:04d}"))
-        #     mask = cv2.imread(
-        #         join(self.root, self.label_folder, self.imgs[idx].replace("_0000", f"_{i:04d}")), -1
-        #     )
-        #     masks.append(mask)
-        # masks = np.array(masks)
-        # with open(
-        #     join(self.root, self.label_folder, self.imgs[idx].replace("_0000.png", ".json"))
-        # ) as file:
-        #     labeled_classes = json.load(file)["annotated_labels"]
-        #
-        #     map = torch.zeros(self.num_classes, dtype=bool)
-        #     if "Dorsal" in self.imgs[idx]:
-        #         map = self.lateral_classes.clone()
-        #     elif "Lateral" in self.imgs[idx]:
-        #         map = self.dorsal_classes.clone()
-        #
-        #     map[labeled_classes] = True
-        #
-        # # mask = cv2.imread(self.masks[idx], -1)
-        #
-        # # thats how you apply Albumentations transformations
-        # if self.transforms is not None:
-        #     masks = masks.transpose((1, 2, 0))
-        #     transformed = self.transforms(image=img, mask=masks)
-        #     img = transformed["image"]  # / 255
-        #     masks = transformed["mask"].permute(2, 0, 1).long()  # type(torch.float16)  # .long()
-        #
-        # # print(masks.shape)
-        # return img, masks, map  # , self.imgs[idx]
+class Fishinspector_sampling_dataset(Multilabel_Sampling_Dataset, Fishinspector_Base):
+    pass
 
 
 if __name__ == "__main__":
+    print(Fishinspector_sampling_dataset.mro())
+    root = "/media/l727r/data/UFZ_2023_Fishinspector/Dataset222_Fishinspector"
+    dataset = Fishinspector_sampling_dataset(
+        root=root,
+        img_folder="imagesTr",
+        num_classes=16,
+        label_folder="labelsTr",
+        split="train",
+        fold="all",
+    )
+    img, mask = dataset[0]
+    print(img.shape, mask.shape)
+    quit()
 
+    root = "/media/l727r/data/UFZ_2023_Fishinspector/Dataset222_Fishinspector"
+
+    files = glob.glob(join(root, "imagesTr", "*.png"))
+    files = [os.path.split(file)[-1] for file in files]
+    # files = [
+    #     file.split("_W_", 1)[0] for file in files if "Set_3_Dorsal__2022_02_11_11_39_47" in file
+    # ]
+    # print(np.unique(files))
     # quit()
+
+    IDs_S1 = [file.split("--", 1)[0] for file in files if "Set_1_" in file]
+    IDs_S2 = [file.split("_W_", 1)[0] for file in files if "Set_2_" in file]
+    files_S3 = [file for file in files if "Set_3_" in file]
+    IDs_S3 = [
+        file.split("_W_", 1)[0].split("_controlplateW", 1)[0]
+        for file in files_S3
+        if "_controlplateW" in file or "_W_" in file
+    ]
+    IDs_S3 += [
+        file.split("--")[0]
+        for file in files_S3
+        if not "_controlplateW" in file and not "_W_" in file
+    ]
+    IDs = np.unique(IDs_S1 + IDs_S2 + IDs_S3)
+    IDs = [ID for ID in IDs if not any(JD in ID and JD != ID for JD in IDs)]
+
+    print(len(IDs))
+    for id in IDs:
+        for jd in IDs:
+            if id in jd and id != jd:
+                print("I", id)
+                print("J", jd)
+
+    split_by_ID(files, IDs)
+
+    # files_S2 = [file for file in files if "Set_3_" in file]
+    #
+    # IDs_S3_1 = [
+    #     file.split("_W_", 1)[0].split("_controlplateW", 1)[0]
+    #     for file in files_S2
+    #     if "_controlplateW" in file or "_W_" in file
+    # ]
+    # IDs_S3_2 = [
+    #     file.split("--")[0]
+    #     for file in files_S2
+    #     if not "_controlplateW" in file and not "_W_" in file
+    # ]
+    # IDs_S3 = IDs_S3_1 + IDs_S3_2
+    # # files_ID = [file.split("_W_", 1)[0].split("_controlplateW", 1)[0] for file in files_S2]
+    # # files_ID = [file.split("_W_", 1)[0].split("controlplateW_", 1)[0] for file in files_S2]
+    # IDs, count = np.unique(IDs_S3, return_counts=True)
+    # # print(files)
+    # for i, c in zip(IDs, count):
+    #     print(i, c)
+    # print(len(files_S2), len(IDs))
+
+    quit()
     from tqdm import tqdm
     import matplotlib.pyplot as plt
 

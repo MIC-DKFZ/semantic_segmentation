@@ -5,7 +5,6 @@ logging.basicConfig(level=logging.INFO)
 import os
 import hydra
 import torch
-from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.strategies.ddp import DDPStrategy
 
@@ -17,9 +16,6 @@ from src.utils import (
     log_hyperparameters,
 )
 from omegaconf import DictConfig, OmegaConf
-
-# from trainers.Semantic_Segmentation_Trainer import SegModel
-# from trainers.Instance_Segmentation_Trainer import InstSegModel as SegModel
 
 log = get_logger(__name__)
 
@@ -37,7 +33,8 @@ OmegaConf.register_new_resolver(
     .replace(",", "_")
     .replace("=", "_")
     .replace("/", ".")
-    .replace("+", ""),
+    .replace("+", "")
+    .replace("@", "."),
 )
 
 

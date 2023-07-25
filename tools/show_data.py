@@ -48,11 +48,14 @@ def show_data(
     if augmentation is None:
         transforms = A.Compose([ToTensorV2()])
     elif augmentation == "train":
-        transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TRAIN)[0]
+        # transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TRAIN)[0]
+        transforms = hydra.utils.instantiate(cfg.augmentation.train)
     elif augmentation == "val":
-        transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.VALIDATION)[0]
+        # transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.VALIDATION)[0]
+        transforms = hydra.utils.instantiate(cfg.augmentation.val)
     elif augmentation == "test":
-        transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TEST)[0]
+        # transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TEST)[0]
+        transforms = hydra.utils.instantiate(cfg.augmentation.test)
 
     dataset = hydra.utils.instantiate(cfg.dataset, split=split, transforms=transforms)
 
@@ -76,7 +79,7 @@ def show_data(
     cv2.createTrackbar("alpha", "Window", 0, 100, visualizer.update_alpha)
 
     # look at the first image to get the number of channels
-    img, _ = dataset[0]
+    img = dataset[0][0]
     if len(img.shape) == 2:
         channels = 2
     else:

@@ -795,8 +795,8 @@ For the provided datasets the augmentation with the corresponding name is used b
 The data augmentations can be selected by the following command.
 
 ````shell
-python training.py data_augmentation=VOC2010_Context
-python training.py data_augmentation=Custom_augmentation
+python training.py augmentation=VOC2010_Context
+python training.py augmentation=Custom_augmentation
 ````
 
 </p>

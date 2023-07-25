@@ -1,0 +1,21 @@
+_target_: albumentations.Compose
+transforms:
+  - _target_: albumentations.PadIfNeeded
+    min_height: ${augmentation_cfg.crop_size[0]}
+    min_width: ${augmentation_cfg.crop_size[1]}
+  - _target_: albumentations.RandomCrop
+    height: ${augmentation_cfg.crop_size[0]}
+    width: ${augmentation_cfg.crop_size[1]}
+  - _target_: src.augmentations.RandAugment_light
+    N: ${augmentation_cfg.N}
+    M: ${augmentation_cfg.M}
+    mode: 2
+    p: 0.5
+  - _target_: albumentations.HorizontalFlip
+    p: 0.25
+  - _target_: albumentations.VerticalFlip
+    p: 0.25
+  - _target_: albumentations.Normalize
+    mean: ${augmentation_cfg.mean}
+    std: ${augmentation_cfg.std}
+  - _target_: albumentations.pytorch.ToTensorV2

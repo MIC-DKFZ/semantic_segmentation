@@ -1,0 +1,4 @@
+# @package _global_
+defaults:
+  - override /data_augmentation: 0_test
+  - override /data_augmentation: 1_test

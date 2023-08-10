@@ -137,7 +137,7 @@ class Custom_dataset(torch.utils.data.Dataset):
         # Even if no empty images in dataset, this can happen because of spatial data augmentations
         # Should not occur often, but when it happens we just select another image
         if len(masks) == 0 and self.split == "train":
-            return self.__getitem__(np.random.randint(0, self.__len__))
+            return self.__getitem__(np.random.randint(0, self.__len__()))
 
         # Define the label of each mask, since we only have one class (bubble) it's just a list of 1
         labels = torch.ones((len(masks),), dtype=torch.int64)

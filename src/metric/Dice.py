@@ -80,7 +80,10 @@ class Dice(ConfusionMatrix):
             mDice = torch.nanmean(Dice)  # mean()
 
         if self.per_class:
-            Dice = {self.name + "_" + self.labels[i]: Dice[i] for i in range(len(Dice))}
+            if self.ignore_bg:
+                Dice = {self.name + "_" + self.labels[i]: Dice[i] for i in range(1, len(Dice))}
+            else:
+                Dice = {self.name + "_" + self.labels[i]: Dice[i] for i in range(len(Dice))}
             Dice["mean" + self.name] = mDice
             return Dice
         else:

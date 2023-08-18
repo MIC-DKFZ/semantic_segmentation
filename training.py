@@ -1,131 +1,109 @@
 import logging
+import sys
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    # level=logging.INFO,
+    stream=sys.stdout,
+    format="[%(asctime)s][%(name)s][%(levelname)s] - %(message)s",
+)
 
 import os
 import hydra
-import torch
-from pytorch_lightning import Trainer, seed_everything
-from pytorch_lightning.strategies.ddp import DDPStrategy
+from omegaconf import DictConfig
 
-from src.utils import (
-    has_true_attr,
-    has_not_empty_attr,
+import torch
+import lightning as L
+from lightning.pytorch.strategies.ddp import DDPStrategy
+
+from src.utils.config_utils import has_true_attr, has_not_empty_attr
+from src.utils.utils import (
     get_logger,
     num_gpus,
     log_hyperparameters,
+    register_resolvers,
+    set_lightning_logging,
 )
-from omegaconf import DictConfig, OmegaConf
 
 log = get_logger(__name__)
-
-
-# OmegaConf resolver for preventing problems in the output path
-# Removing all characters which can cause problems or are not wanted in a directory name
-OmegaConf.register_new_resolver(
-    "path_formatter",
-    lambda s: s.replace("[", "")
-    .replace("]", "")
-    .replace("}", "")
-    .replace("{", "")
-    .replace(")", "")
-    .replace("(", "")
-    .replace(",", "_")
-    .replace("=", "_")
-    .replace("/", ".")
-    .replace("+", "")
-    .replace("@", "."),
-)
+set_lightning_logging()
+register_resolvers()
 
 
 @hydra.main(config_path="config", config_name="training", version_base="1.3")
-def training_loop(cfg: DictConfig):
+def training(cfg: DictConfig) -> None:
     """
-    Running Training
-    import Callbacks and initialize Logger
-    Load Model, Datamodule and Trainer
-    Train the model
+    Instantiating Callbacks, Logger, Datamodule, Model and Trainer
+    Run the lightning training loop
 
     Parameters
     ----------
-    cfg :
-        cfg given by hydra - build from config/training.yaml + commandline argumentss
+    cfg : DictConfig
+        cfg given by hydra - build from config/training.yaml + commandline arguments
     """
-    # for k, v in logging.Logger.manager.loggerDict.items():
-    #     if not isinstance(v, logging.PlaceHolder):
-    #         print(k, v.handlers)
+    # Logging path to Output
     log.info("Output Directory: %s", os.getcwd())
+
+    # Logging Information about GPU-setup
+    avail_GPUS = torch.cuda.device_count()
+    selected_GPUS = cfg.pl_trainer.devices
+    number_gpus = num_gpus(avail_GPUS, selected_GPUS)
+    log.info(f"Available GPUs: {avail_GPUS} - {torch.cuda.get_device_name()}")
+    log.info(f"Number of used GPUs: {number_gpus}    Selected GPUs: {cfg.pl_trainer.devices}")
+    log.info(f"CUDA version: {torch._C._cuda_getCompiledVersion()}")
+    log.info(f"Pytorch version: {torch.__version__}")
+
     # Seeding if given by config
     if has_not_empty_attr(cfg, "seed"):
-        seed_everything(cfg.seed, workers=True)
+        log.info(f"Seed everything with seed: {cfg.seed}")
+        L.seed_everything(cfg.seed, workers=True)
 
-    # Importing callbacks using hydra
+    # Instantiating Callbacks
     callbacks = []
     for _, cb_conf in cfg.CALLBACKS.items():
         if cb_conf is not None:
             cb = hydra.utils.instantiate(cb_conf)
             callbacks.append(cb)
-    # Adding a Checkpoint Callback if checkpointing is enabled
+
+    # Adding and Instantiating Checkpoint Callback if checkpointing is enabled
     if has_true_attr(cfg.pl_trainer, "enable_checkpointing"):
         callbacks.append(hydra.utils.instantiate(cfg.ModelCheckpoint))
 
-    # Using tensorboard logger
-    # tb_logger = pl_loggers.TensorBoardLogger(
-    #     save_dir=".", name="", version="", default_hp_metric=False
-    # )
-    tb_logger = hydra.utils.instantiate(cfg.logger)
+    # Instantiating Logger
+    logger = hydra.utils.instantiate(cfg.logger)
 
-    # Logging information about gpu setup
-    avail_GPUS = torch.cuda.device_count()
-    selected_GPUS = cfg.pl_trainer.devices
-    number_gpus = num_gpus(avail_GPUS, selected_GPUS)
-    log.info("Available GPUs: %s - %s", avail_GPUS, torch.cuda.get_device_name())
-    log.info(
-        "Number of used GPUs: %s    Selected GPUs: %s",
-        number_gpus,
-        cfg.pl_trainer.devices,
-    )
-    log.info(
-        "CUDA version: {}    Pytorch version: {}".format(
-            torch._C._cuda_getCompiledVersion(), torch.__version__
-        )
-    )
-
-    # Defining the datamodule
+    # Instantiating Datamodule
     dataModule = hydra.utils.instantiate(cfg.datamodule, _recursive_=False)
 
-    # Defining model and load checkpoint if wanted
-    # cfg.finetune_from should be the path to a .ckpt file
+    # Instantiating Model and load weights from a Checkpoint if given
     if has_not_empty_attr(cfg, "finetune_from"):
-        log.info("finetune from: %s", cfg.finetune_from)
+        log.info("finetune from: %s", cfg.finetune_from)  # should be path to a .ckpt file
         cfg.trainermodule._target_ += ".load_from_checkpoint"
-        model = hydra.utils.call(
+        model = hydra.utils.instantiate(
             cfg.trainermodule, cfg.finetune_from, strict=False, model_config=cfg, _recursive_=False
         )
-        # model = SegModel.load_from_checkpoint(cfg.finetune_from, strict=False, config=cfg)
     else:
-        # model = SegModel(config=cfg)
         model = hydra.utils.instantiate(cfg.trainermodule, cfg, _recursive_=False)
 
-    # Initializing trainers
+    # Instantiating trainer with trainer_args from config
     trainer_args = getattr(cfg, "pl_trainer") if has_not_empty_attr(cfg, "pl_trainer") else {}
     ddp = DDPStrategy(find_unused_parameters=False)  # if number_gpus > 1 else None
-    trainer = Trainer(
+    trainer = L.Trainer(
         callbacks=callbacks,
-        logger=tb_logger,
+        logger=logger,
         strategy=ddp if number_gpus > 1 else "auto",
-        # strategy="ddp_find_unused_parameters_false" if number_gpus > 1 else None,
         sync_batchnorm=True if number_gpus > 1 else False,
-        **trainer_args
+        **trainer_args,
     )
 
-    # Log experiment, if-statement is needed to catch fast_dev_run
+    # Log Experiment, if-statement is needed to catch fast_dev_run
     if not has_true_attr(cfg.pl_trainer, "fast_dev_run"):
         log_hyperparameters(cfg, model, trainer)
 
+    # Compile Model
     if has_true_attr(cfg, "compile"):
         model.model = torch.compile(model.model)
-    # Start training
+
+    # Start Training
     trainer.fit(
         model,
         dataModule,
@@ -134,4 +112,4 @@ def training_loop(cfg: DictConfig):
 
 
 if __name__ == "__main__":
-    training_loop()
+    training()

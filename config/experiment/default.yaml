@@ -26,3 +26,11 @@ pl_trainer:                     # parameters for the pytorch lightning trainers
   #limit_val_batches: 0.5
   #limit_test_batches: 0.25
   #accumulate_grad_batches: 2
+
+augmentation_cfg:
+  scale_limit: [-0.5, 1.0]
+  crop_size: [512, 1024]
+  mean: [ 0.485, 0.456, 0.406 ]
+  std: [ 0.229, 0.224, 0.225 ]
+  N: 3
+  M: 3

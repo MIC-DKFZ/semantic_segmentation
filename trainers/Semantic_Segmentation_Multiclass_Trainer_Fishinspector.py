@@ -2,7 +2,8 @@ from trainers.Semantic_Segmentation_Multiclass_Trainer import SegMCModel
 
 import torch
 from src.metric.metric import MetricModule
-from src.utils import get_logger, first_from_dict
+from src.utils.utils import get_logger
+from src.utils.config_utils import first_from_dict
 
 log = get_logger(__name__)
 
@@ -154,31 +155,14 @@ class SegMCModel(SegMCModel):
         """
 
         def get_single_loss(y_pred, y_gt, lf, labeled_classes):
-            batch_size, num_classes, height, width = y_gt.shape
-
-            # expanded_array = (
-            #    labeled_classes.unsqueeze(2).unsqueeze(3).expand(batch_size, 16, height, width)
-            # )
 
             s_loss = lf(y_pred, y_gt.float(), labeled_classes)
-            # s_loss = s_loss[labeled_classes].mean()
             return s_loss
-            # y_gt = y_gt.permute(0, 2, 3, 1).reshape(-1, num_classes)
-            # y_pred = y_pred.permute(0, 2, 3, 1).reshape(-1, num_classes)
-            l1 = (
-                lf(y_pred, y_gt.float())
-                .reshape(batch_size, height, width, num_classes)
-                .permute(0, 3, 1, 2)
-            )
-            # l1 = l1.sum(dim=2, keepdim=False).sum(dim=2, keepdim=False)
-            # print(l1.shape)
-            lo = l1[expanded_array].mean()
-            # lo = l1[labeled_classes].sum() / labeled_classes.sum()
-            return lo
 
         loss = sum(
             [
                 get_single_loss(y, y_gt.long(), self.loss_functions[i], labeled_classes)
+                * self.loss_weights[i]
                 for i, y in enumerate(y_pred.values())
             ]
         )

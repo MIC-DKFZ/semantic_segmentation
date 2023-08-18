@@ -1,7 +1,7 @@
 from trainers.Semantic_Segmentation_Trainer import SegModel
 import torch
 import torch.nn.functional as F
-from src.utils import get_logger
+from src.utils.utils import get_logger
 from src.metric.metric import MetricModule_AGGC
 import numpy as np
 

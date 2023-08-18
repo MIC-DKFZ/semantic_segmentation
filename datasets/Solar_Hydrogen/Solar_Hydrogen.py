@@ -1,11 +1,9 @@
-import torch
 import os
 import pandas as pd
 import cv2
 import numpy as np
-import random
 
-from src.utils import get_logger
+from src.utils.utils import get_logger
 from datasets.Base_Datasets.instance_segmentation import Instance_Dataset_CV
 
 

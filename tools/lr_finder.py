@@ -13,9 +13,7 @@ from pytorch_lightning import Trainer
 import hydra
 import torch
 
-from trainers.Semantic_Segmentation_Trainer import SegModel
-
-from src.utils import has_true_attr, has_not_empty_attr, get_logger, num_gpus
+from src.utils.utils import has_true_attr, has_not_empty_attr, get_logger, num_gpus
 
 
 log = get_logger(__name__)

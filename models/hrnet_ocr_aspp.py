@@ -40,10 +40,10 @@ https://github.com/NVIDIA/semantic-segmentation/tree/main/network
 import torch
 from torch import nn
 import torch.nn.functional as F
-import os
 from models.backbones.hrnet_backbone import get_backbone_model
 
-from src.utils import get_logger
+from src.utils.utils import get_logger
+from src.utils.model_utils import update_state_dict
 
 log = get_logger(__name__)
 
@@ -449,51 +449,14 @@ class OCRNetASPP(nn.Module):
         return {"out": cls_out, "aux": aux_out}
 
     def load_weights(self, pretrained):
-        if os.path.isfile(pretrained):
-            pretrained_dict = torch.load(pretrained, map_location={"cuda:0": "cpu"})
-            log.info("Loading pretrained weights {}".format(pretrained))
-
-            # some preprocessing
-            if "state_dict" in pretrained_dict.keys():
-                pretrained_dict = pretrained_dict["state_dict"]
-            pretrained_dict = {
-                k.replace("model.", "").replace("module.", "").replace("backbone.", ""): v
-                for k, v in pretrained_dict.items()
-            }
-
-            model_dict = self.state_dict()
-
-            # find weights which match to the model
-            pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict.keys()}
-            no_match = set(model_dict) - set(pretrained_dict)
-
-            # check if shape of pretrained weights match to the model
-            pretrained_dict = {
-                k: v for k, v in pretrained_dict.items() if v.shape == model_dict[k].shape
-            }
-            shape_mismatch = (set(model_dict) - set(pretrained_dict)) - no_match
-
-            # log info about weights which are not found and weights which have a shape mismatch
-            if len(no_match):
-                num = len(no_match)
-                if num >= 5:
-                    no_match = list(no_match)[:5]
-                    no_match.append("...")
-                log.warning("No pretrained Weights found for {} layers: {}".format(num, no_match))
-            if len(shape_mismatch):
-                num = len(shape_mismatch)
-                if num >= 5:
-                    shape_mismatch = list(shape_mismatch)[:5]
-                    shape_mismatch.append("...")
-                log.warning("Shape Mismatch for {} layers: {}".format(num, shape_mismatch))
-
-            # load weights
-            model_dict.update(pretrained_dict)
-            self.load_state_dict(model_dict)
-            del model_dict, pretrained_dict
-            log.info("Weights successfully loaded")
-        else:
-            raise NotImplementedError("No Pretrained Weights found for {}".format_map(pretrained))
+        self.load_state_dict(
+            update_state_dict(
+                pretrained,
+                self.state_dict(),
+                ["model.", "module.", "backbone."],
+                "pretrained OCR ASPP",
+            )
+        )
 
 
 def get_seg_model(cfg):

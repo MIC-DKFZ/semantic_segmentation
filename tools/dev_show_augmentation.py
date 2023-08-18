@@ -3,24 +3,19 @@ import logging
 import os
 import sys
 
-import torch
-
-from src.visualization import convert_torch_to, convert_numpy_to
+from src.utils.visualization import convert_numpy_to
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 logging.basicConfig(level=logging.INFO)
 
 import hydra
 from omegaconf import OmegaConf
-from datasets.DataModules import get_augmentations_from_config
 import albumentations as A
-from albumentations.pytorch import ToTensorV2
 import cv2
 import numpy as np
 from matplotlib import cm
 
-from src.utils import get_logger
-from src.visualization import Visualizer
+from src.utils.utils import get_logger
 
 log = get_logger(__name__)
 

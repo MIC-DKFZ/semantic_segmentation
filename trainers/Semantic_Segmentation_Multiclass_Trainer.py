@@ -1,8 +1,8 @@
 import torch
 
 from trainers.Semantic_Segmentation_Trainer import SegModel
-from src.utils import get_logger
-from src.visualization import show_mask_multilabel_seg
+from src.utils.utils import get_logger
+from src.utils.visualization import show_mask_multilabel_seg
 import cv2
 
 cv2.setNumThreads(0)

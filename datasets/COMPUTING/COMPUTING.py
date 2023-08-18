@@ -2,7 +2,7 @@ import cv2
 import torch
 import json
 import os
-from src.utils import get_logger
+from src.utils.utils import get_logger
 
 log = get_logger(__name__)
 

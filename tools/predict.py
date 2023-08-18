@@ -18,7 +18,7 @@ import cv2
 
 cv2.setNumThreads(0)
 
-from src.utils import get_logger
+from src.utils.utils import get_logger
 
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
@@ -58,8 +58,8 @@ def predict_img(
 
 
 def predict(input_dir, output_dir, overrides, use_tta, save_probabilities=False):
-    hydra.initialize(config_path="../config", version_base="1.1")
-    cfg = hydra.compose(config_name="baseline", overrides=overrides)
+    hydra.initialize(config_path="../config", version_base="1.3")
+    cfg = hydra.compose(config_name="training", overrides=overrides)
     model = hydra.utils.instantiate(cfg.model)
     model.eval().to("cuda")
 

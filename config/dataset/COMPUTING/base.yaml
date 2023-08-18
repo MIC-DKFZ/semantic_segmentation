@@ -1,0 +1,21 @@
+#@package _global_
+dataset:
+  _target_: datasets.Base_Datasets.cross_validation.CV_Dataset
+  root:     ${paths.COMPUTING}
+  img_folder: "imagesTr"
+  label_folder: "labelsTr"
+  fold: 0
+
+
+DATASET:
+  NAME: COMPUTING_it4
+  NUM_CLASSES: 7
+  IGNORE_INDEX: 7
+  CLASS_LABELS:
+    - background
+    - areas_wo_pores
+    - open_pore
+    - closed_pore
+    - internal_structure
+    - artifact_blob
+    - artifact_dust

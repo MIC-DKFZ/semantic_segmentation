@@ -1,4 +1,3 @@
-import glob
 import os
 
 import torch
@@ -7,7 +6,7 @@ import cv2
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import pickle
-from src.utils import get_logger
+from src.utils.utils import get_logger
 
 log = get_logger(__name__)
 

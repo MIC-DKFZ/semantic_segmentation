@@ -5,10 +5,8 @@ import random
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
-import torch
-
-from datasets.Cityscapes.Cityscapes import Cityscapes_dataset, classes_19, classes_34
-from src.utils import get_logger
+from datasets.Cityscapes.Cityscapes import Cityscapes_dataset
+from src.utils.utils import get_logger
 
 log = get_logger(__name__)
 

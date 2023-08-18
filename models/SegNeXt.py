@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from models.backbones.mscan import MSCAN
 import torch
-from src.utils import get_logger
+from src.utils.utils import get_logger
 
 log = get_logger(__name__)
 

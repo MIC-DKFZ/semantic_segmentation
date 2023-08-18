@@ -1,0 +1,25 @@
+#@package _global_
+dataset:
+  _target_: datasets.Base_Datasets.cross_validation_sampling.CV_Sampling_Dataset
+  root:     ${paths.COMPUTING}
+  img_folder: "imagesTr"
+  label_folder: "labelsTr"
+  fold: 0
+  num_classes: ${DATASET.NUM_CLASSES}
+  patch_size: ${augmentation_cfg.crop_size}
+  batch_size: ${batch_size}
+  scale_limit: ${augmentation_cfg.scale_limit}
+
+
+DATASET:
+  NAME: COMPUTING_it4
+  NUM_CLASSES: 7
+  IGNORE_INDEX: 7
+  CLASS_LABELS:
+    - background
+    - areas_wo_pores
+    - open_pore
+    - closed_pore
+    - internal_structure
+    - artifact_blob
+    - artifact_dust

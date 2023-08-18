@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import warnings
-from torch.optim.lr_scheduler import _LRScheduler
+from torch.optim.lr_scheduler import LRScheduler
 
 
 def polynomial_LR_scheduler_stepwise(optimizer, max_steps, exponent=0.9, **kwargs):
@@ -20,7 +20,7 @@ def polynomial_LR_scheduler_epochwise(optimizer, max_epochs, exponent=0.9, **kwa
     return lr_scheduler
 
 
-class PolynomialLR_Warmstart(_LRScheduler):
+class PolynomialLR_Warmstart(LRScheduler):
     def __init__(
         self, optimizer, warmstart_iters=1, total_iters=5, power=1.0, last_epoch=-1, verbose=False
     ):

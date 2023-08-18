@@ -18,12 +18,8 @@ import cv2
 
 cv2.setNumThreads(0)
 
-from src.utils import (
-    has_true_attr,
-    has_not_empty_attr,
+from src.utils.utils import (
     get_logger,
-    num_gpus,
-    log_hyperparameters,
 )
 
 import albumentations as A
@@ -53,14 +49,14 @@ class SamplerDataset(Dataset):
 def predict_img(
     image,
     model,
-    patch_size=(512, 512),
-    patch_overlap=(256, 256),
+    patch_size=[512, 1024],  # (512, 512),
+    patch_overlap=(256, 512),
     chunk_size=None,
     # chunk_size=(700, 700),
     # chunk_size=(4096, 4096),
     test_time_augmentation=True,
     no_tqdm=False,
-    num_classes=8,
+    num_classes=7,  # 8,
 ):
     spatial_size = image.shape[-2:]
     # Init GridSampler
@@ -120,10 +116,10 @@ def predict_img(
                     aggregator.append(patch_prediction[i], patch_indices[i])
 
     # Finalize aggregation
-    prediction = aggregator.get_output()
+    prediction_sm = aggregator.get_output()
     if chunk_size is None:
-        prediction = prediction.argmax(0)
-    return prediction
+        prediction = prediction_sm.argmax(0)
+    return prediction, prediction_sm
 
 
 def predict(input_dir, output_dir, overrides, use_tta, no_tqdm=False):

@@ -3,8 +3,8 @@ import os
 import json
 
 from datasets.Base_Datasets.base import Base_Dataset
-from src.utils import get_logger
-from src.dataset_utils import split_by_ID
+from src.utils.utils import get_logger
+from src.utils.dataset_utils import split_by_ID
 
 log = get_logger(__name__)
 

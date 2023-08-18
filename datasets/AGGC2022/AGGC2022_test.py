@@ -6,7 +6,7 @@ import torch
 import numpy as np
 import cv2
 
-from src.utils import get_logger
+from src.utils.utils import get_logger
 import zarr
 from tqdm import tqdm
 import json

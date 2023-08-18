@@ -1,8 +1,7 @@
 import argparse
 import os
 import sys
-from itertools import combinations, combinations_with_replacement
-import omegaconf
+from itertools import combinations_with_replacement
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -15,7 +14,7 @@ import numpy as np
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
-from src.utils import has_not_empty_attr
+from src.utils.utils import has_not_empty_attr
 import cv2
 from matplotlib import cm
 

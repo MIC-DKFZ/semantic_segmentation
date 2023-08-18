@@ -1,13 +1,37 @@
+from typing import Any
 import logging
+import os
 import hydra
 from omegaconf import DictConfig, OmegaConf
-import os
-from typing import Any
-from tqdm import tqdm
 
+import lightning as L
 import torch
-from pytorch_lightning.utilities import rank_zero_only
-import pytorch_lightning as pl
+from lightning.pytorch.utilities import rank_zero_only
+
+from src.utils.config_utils import has_true_attr, has_not_empty_attr
+
+
+def set_lightning_logging():
+    """
+    remove Handlers from all lightning logging instances to prevent conflicts with hydra logging
+    Preventing double printing and logging
+
+    Returns
+    -------
+
+    """
+    all_loggers = logging.Logger.manager.loggerDict
+
+    # Filter out the loggers that are not instances of logging.Logger
+    active_loggers = [
+        logger for logger in all_loggers.values() if isinstance(logger, logging.Logger)
+    ]
+
+    # Check if logger is connected to lightning, if true remove the handler
+    for logger in active_loggers:
+
+        if logger.handlers != [] and "lightning" in logger.name:
+            logger.removeHandler(logger.handlers[0])
 
 
 def get_logger(name: str = __name__) -> logging.Logger:
@@ -44,8 +68,8 @@ def get_logger(name: str = __name__) -> logging.Logger:
 @rank_zero_only
 def log_hyperparameters(
     config: DictConfig,
-    model: pl.LightningModule,
-    trainer: pl.Trainer,
+    model: L.LightningModule,
+    trainer: L.Trainer,
 ) -> None:
     """
     Controls which config parts are saved by Lightning loggers, additionally update hparams.yaml
@@ -135,59 +159,24 @@ def num_gpus(avail_GPUS: int, selected_GPUS: Any) -> int:
     return num_gpus
 
 
-def first_from_dict(dictionary):
-    return list(dictionary.values())[0]
+def register_resolvers():
 
-
-def has_true_attr(obj: Any, attr: str) -> bool:
-    """
-    return True if obj contains attr and attr is true, else returns False
-
-    Parameters
-    ----------
-    obj : Any
-    attr : str
-
-    Returns
-    -------
-    bool :
-    """
-    if hasattr(obj, attr):
-        if obj[attr]:
-            return True
-    return False
-
-
-def has_not_empty_attr(obj: Any, attr: str) -> bool:
-    """
-    return True if obj contains attr and attr is not empty, else returns False
-
-    Parameters
-    ----------
-    obj : Any
-    attr : str
-
-    Returns
-    -------
-    bool :
-    """
-    if hasattr(obj, attr):
-        if obj[attr] != None:
-            return True
-    return False
-
-
-"""
-def has_not_empty_attr_rec(obj: Any, attr: str) -> bool:
-    # checking if the config contains a attribute and if this attribute is not empty
-    split = attr.split(".", 1)
-    key = split[0]
-    attr = split[1:]
-    if hasattr(obj, key):
-        if attr == []:
-            if obj[key] != None:
-                return True
-        else:
-            return has_not_empty_attr_rec(obj[key], attr[0])
-    return False
-"""
+    OmegaConf.register_new_resolver(
+        "fold_formatter", lambda s: f"fold_{s.fold}" if has_not_empty_attr(s, "fold") else ""
+    )
+    # OmegaConf resolver for preventing problems in the output path
+    # Removing all characters which can cause problems or are not wanted in a directory name
+    OmegaConf.register_new_resolver(
+        "path_formatter",
+        lambda s: s.replace("[", "")
+        .replace("]", "")
+        .replace("}", "")
+        .replace("{", "")
+        .replace(")", "")
+        .replace("(", "")
+        .replace(",", "_")
+        .replace("=", "_")
+        .replace("/", ".")
+        .replace("+", "")
+        .replace("@", "."),
+    )

@@ -5,8 +5,8 @@ import json
 import numpy as np
 
 from datasets.Base_Datasets.base import Base_Dataset
-from src.utils import get_logger
-from src.dataset_utils import random_scale_crop, keypoint_scale_crop
+from src.utils.utils import get_logger
+from src.utils.dataset_utils import random_scale_crop, keypoint_scale_crop
 
 log = get_logger(__name__)
 
@@ -14,6 +14,7 @@ log = get_logger(__name__)
 class Sampling_Dataset(Base_Dataset):
     def __init__(
         self,
+        num_classes: int,
         patch_size: tuple = (512, 512),
         scale_limit: tuple = (0, 0),  # albumentations definition
         num_sampling_points: int = 10000,
@@ -23,8 +24,8 @@ class Sampling_Dataset(Base_Dataset):
         class_probabilities: list = None,
         **kwargs,
     ):
-        super().__init__(**kwargs)
-
+        super().__init__(num_classes=num_classes, **kwargs)
+        self.num_classes = num_classes
         self.patch_size = patch_size
         self.scale_limit = scale_limit
         self.random_sampling = random_sampling

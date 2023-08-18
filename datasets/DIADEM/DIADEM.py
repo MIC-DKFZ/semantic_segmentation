@@ -4,7 +4,7 @@ import torch
 import numpy as np
 import cv2
 import albumentations as A
-from src.utils import get_logger
+from src.utils.utils import get_logger
 from PIL import Image
 import json
 
@@ -45,10 +45,7 @@ class DIADEM_dataset(torch.utils.data.Dataset):
 
 
 if __name__ == "__main__":
-    from torchvision import transforms
     import torchvision.transforms.functional as F
-    import torchvision
-    import math
 
     color_Aug = [
         # A.RandomBrightnessContrast(contrast_limit=(1, 1), brightness_limit=0, p=1),

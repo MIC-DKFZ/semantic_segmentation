@@ -2,13 +2,23 @@
 
 model:
   _target_: models.model_ensemble.Ensemble
-  # Iteration 1
+  # Iteration 4
+  ckpt_type: "best" # or best
   ckpts:
-    - ${LOGDIR}Ensembles_COMPUTING/hrnet_ocr_ms_it1/it1__dataset.fold_0__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-12-02_15-43-14
-    - ${LOGDIR}Ensembles_COMPUTING/hrnet_ocr_ms_it1/it1__dataset.fold_1__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-12-02_15-54-58
-    - ${LOGDIR}Ensembles_COMPUTING/hrnet_ocr_ms_it1/it1__dataset.fold_2__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-12-02_16-01-50
-    - ${LOGDIR}Ensembles_COMPUTING/hrnet_ocr_ms_it1/it1__dataset.fold_3__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-12-02_16-11-16
-    - ${LOGDIR}Ensembles_COMPUTING/hrnet_ocr_ms_it1/it1__dataset.fold_4__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-12-02_16-10-58
+    - /home/l727r/Documents/cluster-checkpoints/logs/COMPUTING_it4/hrnet_ocr_ms/run__dataset.fold_0__experiment_COMPUTING.sampling__lossfunction_RMI_CE_CE_CE/2023-07-28_08-20-39
+    - /home/l727r/Documents/cluster-checkpoints/logs/COMPUTING_it4/hrnet_ocr_ms/run__dataset.fold_1__experiment_COMPUTING.sampling__lossfunction_RMI_CE_CE_CE/2023-07-28_08-20-47
+    - /home/l727r/Documents/cluster-checkpoints/logs/COMPUTING_it4/hrnet_ocr_ms/run__dataset.fold_2__experiment_COMPUTING.sampling__lossfunction_RMI_CE_CE_CE/2023-07-28_08-20-54
+    - /home/l727r/Documents/cluster-checkpoints/logs/COMPUTING_it4/hrnet_ocr_ms/run__dataset.fold_3__experiment_COMPUTING.sampling__lossfunction_RMI_CE_CE_CE/2023-07-28_08-21-07
+    - /home/l727r/Documents/cluster-checkpoints/logs/COMPUTING_it4/hrnet_ocr_ms/run__dataset.fold_4__experiment_COMPUTING.sampling__lossfunction_RMI_CE_CE_CE/2023-07-28_08-21-15
+
+
+  # Iteration 1
+#  ckpts:
+#    - ${LOGDIR}Ensembles_COMPUTING/hrnet_ocr_ms_it1/it1__dataset.fold_0__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-12-02_15-43-14
+#    - ${LOGDIR}Ensembles_COMPUTING/hrnet_ocr_ms_it1/it1__dataset.fold_1__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-12-02_15-54-58
+#    - ${LOGDIR}Ensembles_COMPUTING/hrnet_ocr_ms_it1/it1__dataset.fold_2__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-12-02_16-01-50
+#    - ${LOGDIR}Ensembles_COMPUTING/hrnet_ocr_ms_it1/it1__dataset.fold_3__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-12-02_16-11-16
+#    - ${LOGDIR}Ensembles_COMPUTING/hrnet_ocr_ms_it1/it1__dataset.fold_4__epochs_400__lossfunction_RMI_CE_CE_CE__lr_0.006/2022-12-02_16-10-58
 
   # Iteration 0
 #  ckpts:

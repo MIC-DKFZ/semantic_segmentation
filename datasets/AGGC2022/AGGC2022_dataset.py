@@ -1,12 +1,11 @@
 import numpy as np
 import torch
 from torch.utils.data import Dataset
-from PIL import Image
 import os
 import zarr
 import json
 import pickle as pkl
-from src.utils import get_logger
+from src.utils.utils import get_logger
 from numcodecs import blosc
 from threadpoolctl import threadpool_limits
 import cv2

@@ -6,8 +6,7 @@ from src.loss.Dice_Loss import DiceLoss
 from src.loss.DC_CE_Loss import DC_and_CE_loss, TopKLoss, DC_and_topk_loss
 from src.loss.Fishinspector import BCE_PL, BCE_PLv2, SoftDiceLoss_Multilabel_PL
 
-from src.utils import has_not_empty_attr
-import torch.nn as nn
+from src.utils.config_utils import has_not_empty_attr
 
 
 def get_loss_function_from_cfg(name_lf: str, cfg: DictConfig) -> list:

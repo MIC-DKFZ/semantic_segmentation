@@ -8,7 +8,7 @@ import cv2
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
-from src.utils import get_logger
+from src.utils.utils import get_logger
 
 cv2.setNumThreads(0)
 log = get_logger(__name__)
@@ -23,6 +23,7 @@ class Base_Dataset(torch.utils.data.Dataset):
         split: str = "train",
         transforms: Any = None,
         dtype: str = ".png",
+        dtype_mask: str = ".png",
         img_folder_val: str = None,
         label_folder_val: str = None,
         img_folder_test: str = None,
@@ -56,6 +57,7 @@ class Base_Dataset(torch.utils.data.Dataset):
         self.label_prefix = label_prefix
         self.label_postfix = label_postfix
         self.dtype = dtype
+        self.dtype_mask = dtype_mask
 
         # Load all Path for Image and Mask Files
         self.img_files = self.get_img_files()
@@ -98,7 +100,7 @@ class Base_Dataset(torch.utils.data.Dataset):
             join(
                 self.root,
                 folder,
-                self.label_prefix + "*" + self.label_postfix + self.dtype,
+                self.label_prefix + "*" + self.label_postfix + self.dtype_mask,
             )
         )
         mask_files = list(sorted(mask_files))

@@ -9,7 +9,7 @@ transforms:
   - _target_: albumentations.RandomCrop
     height: ${augmentation_cfg.crop_size[0]}
     width: ${augmentation_cfg.crop_size[1]}
-  - _target_: src.augmentations.RandAugment
+  - _target_: src.augmentations.randaugment.RandAugment
     N: ${augmentation_cfg.N}
     M: ${augmentation_cfg.M}
     mode: 2

@@ -1,6 +1,6 @@
 _target_: albumentations.Compose
 transforms:
-  - _target_: src.augmentations.RandAugment_light
+  - _target_: src.augmentations.randaugment.RandAugment_light
     N: ${augmentation_cfg.N}
     M: ${augmentation_cfg.M}
     mode: 2

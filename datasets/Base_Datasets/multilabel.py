@@ -7,8 +7,8 @@ import numpy as np
 from datasets.Base_Datasets.base import Base_Dataset
 from datasets.Base_Datasets.cross_validation import CV_Dataset
 from datasets.Base_Datasets.sampling import Sampling_Dataset
-from src.utils import get_logger
-from src.dataset_utils import random_scale_crop, keypoint_scale_crop
+from src.utils.utils import get_logger
+from src.utils.dataset_utils import random_scale_crop, keypoint_scale_crop
 import cv2
 
 cv2.setNumThreads(0)

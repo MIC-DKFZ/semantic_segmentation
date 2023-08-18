@@ -1,124 +1,114 @@
 import argparse
-import os
 import glob
 import logging
 import sys
+from os.path import join
+import os
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    stream=sys.stdout,
+    format="[%(asctime)s][%(name)s][%(levelname)s] - %(message)s",
+)
 
 import hydra
-from omegaconf import OmegaConf
+
 import torch
 import numpy as np
+import cv2
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-import cv2
 from matplotlib import cm
 
-from trainers.Semantic_Segmentation_Trainer import SegModel
-from trainers.Instance_Segmentation_Trainer import InstModel
-from trainers.Semantic_Segmentation_Multiclass_Trainer import SegMCModel
-
-from src.utils import has_not_empty_attr, get_logger
-from datasets.DataModules import get_augmentations_from_config
+from src.utils.config_utils import build_predict_config
+from src.utils.config_utils import get_CV_ensemble_config
+from src.utils.utils import get_logger, set_lightning_logging
+from src.utils.visualization import Visualizer
 
 log = get_logger(__name__)
-
-from src.visualization import Visualizer
+set_lightning_logging()
 
 
 def show_prediction(
     overrides_cl: list, augmentation: str, split: str, segmentation: str, axis: int
 ) -> None:
     """
-    Show Model Predictions
-    Load Model and Dataset from the checkpoint(ckpt_dir)
-    Show predictions of the model for the images in a small GUI
+    Visualizing a Models Predictions
+        Initializing the dataset defined in the config
+        Initializing the model from the checkpoint(ckpt_dir)
+        Enables to predict with a CV ensemble as well as a single model dependent on the cfg.ckpt_file
+        Display img, prediction + mask using opencv
 
     Parameters
     ----------
-    overrides_cl : list of strings
-        arguments from the commandline to overwrite the config
+    overrides_cl : list
+        arguments from commandline to overwrite hydra config
+    augmentation : str
+        which augmentations to use (train,val,test or None)
+    split : str
+        which split of the dataset to use
+    segmentation : str
+        which type of segmentation is used (semantic, instance or multilabel)
+    axis : int
+        show img and gt side by side or on top of each other
+
+    Requirements
+    ----------
+    cfg.ckpt_file: str
+        a) path to a singleoutput folder
+           e.g. .../logs/Cityscapes/hrnet_v1/run__batch_size_3/2023-08-18_10-13-05
+        b) path to output folder of a cross validation, folder has to contain at least one fold_x
+           e.g. .../logs/Cityscapes/hrnet_v1/run__batch_size_3/
     """
-    # initialize hydra
-    hydra.initialize(config_path="../config", version_base="1.1")
+    # Init and Compose Hydra to get the config
+    hydra.initialize(config_path="../config", version_base="1.3")
+    cfg = hydra.compose(config_name="testing", overrides=overrides_cl)
 
-    # change working dir to checkpoint dir
-    if os.getcwd().endswith("tools"):
-        ORG_CWD = os.path.join(os.getcwd(), "..")
+    # Define Colormap
+    color_map = "viridis"
+    cmap = np.array(cm.get_cmap(color_map, cfg.DATASET.NUM_CLASSES).colors * 255, dtype=np.uint8)[
+        :, 0:3
+    ]
+
+    # Check if cfg.ckpt_dir points to a single model or a CV folder
+    ensemble_CV = any([x.startswith("fold_") for x in os.listdir(cfg.ckpt_dir)])
+
+    # Load the config from the Checkpoint
+    if ensemble_CV:
+        # All runs inside CV have the same config (exept dataset.fold which is not relevant here)
+        file = glob.glob(join(cfg.ckpt_dir, "fold_*", "*", "hydra", "overrides.yaml"))[0]
     else:
-        ORG_CWD = os.getcwd()
+        file = join(cfg.ckpt_dir, "hydra", "overrides.yaml")
+    cfg = build_predict_config(file, overrides)
 
-    ckpt_dir = None
-    for override in overrides_cl:
-        if override.startswith("ckpt_dir"):
-            ckpt_dir = override.split("=", 1)[1]
-            break
-    if ckpt_dir is None:
-        log.error(
-            "ckpt_dir has to be in th config. Run python show_prediction.py ckpt_dir=<some.path>"
+    # Instantiating Model and load weights from a Checkpoint
+    if ensemble_CV:
+        cfg.model = get_CV_ensemble_config(cfg.ckpt_dir)
+        model = hydra.utils.instantiate(cfg.trainermodule, model_config=cfg, _recursive_=False)
+    else:
+        ckpt_file = glob.glob(os.path.join(cfg.ckpt_dir, "checkpoints", "best_*"))[0]
+        log.info("Checkpoint Directory: %s", ckpt_file)
+
+        cfg.trainermodule._target_ += ".load_from_checkpoint"
+        model = hydra.utils.instantiate(
+            cfg.trainermodule, ckpt_file, strict=True, model_config=cfg, _recursive_=False
         )
-        quit()
-    os.chdir(ckpt_dir)
+    model = model.cuda()
+    model.eval()
 
-    # load overrides from the experiment in the checkpoint dir
-    overrides_ckpt = OmegaConf.load(os.path.join("hydra", "overrides.yaml"))
-    # compose config by override with overrides_ckpt, afterwards override with overrides_cl
-    cfg = hydra.compose(config_name="testing", overrides=overrides_ckpt + overrides_cl)
-
-    # Get the TESTING.OVERRIDES to check if additional parameters should be changed
-    if has_not_empty_attr(cfg, "TESTING"):
-        if has_not_empty_attr(cfg.TESTING, "OVERRIDES"):
-            overrides_test = cfg.TESTING.OVERRIDES
-            # Compose config again with including the new overrides
-            cfg = hydra.compose(
-                config_name="testing",
-                overrides=overrides_ckpt + overrides_test + overrides_cl,
-            )
-
-    # load the best checkpoint and load the model
-    cfg.ORG_CWD = ORG_CWD
-    ckpt_file = glob.glob(os.path.join("checkpoints", "best_*"))[0]
-    # if hasattr(cfg.MODEL, "PRETRAINED"):
-    #    cfg.MODEL.PRETRAINED = False
-    if segmentation == "semantic":
-        model = SegModel.load_from_checkpoint(ckpt_file, model_config=cfg, strict=False).cuda()
-        # model = SegModel(cfg)  # load_from_checkpoint(model_config=cfg, strict=False).cuda()
-        # checkpoint = torch.load(ckpt_file)
-        # print(checkpoint.keys())
-        # model.model.load_state_dict(checkpoint["state_dict"])
-    elif segmentation == "instance":
-        model = InstModel.load_from_checkpoint(ckpt_file, model_config=cfg, strict=False).cuda()
-    elif segmentation == "multilabel":
-        # print(ORG_CWD, ckpt_file)
-        # model = SegMCModel.load_from_checkpoint(ckpt_file, model_config=cfg, strict=False).cuda()
-        model = SegMCModel(cfg)
-        # print(model.state_dict().keys())
-        #
-        pretrained_dict = torch.load(ckpt_file)["state_dict"]
-        pretrained_dict = {k.replace("_orig_mod.", ""): v for k, v in pretrained_dict.items()}
-        model.load_state_dict(pretrained_dict)
-        model = model.cuda()
-
-    # model=hydra.utils.instantiate(cfg.model).cuda()
-    OmegaConf.set_struct(cfg, False)
+    # Instantiating Augmentations
     if augmentation is None:
         transforms = A.Compose([ToTensorV2()])
     elif augmentation == "train":
-        # transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TRAIN)[0]
         transforms = hydra.utils.instantiate(cfg.augmentation.train)
     elif augmentation == "val":
-        # transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.VALIDATION)[0]
         transforms = hydra.utils.instantiate(cfg.augmentation.val)
     elif augmentation == "test":
-        # transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TEST)[0]
         transforms = hydra.utils.instantiate(cfg.augmentation.test)
 
-    # instantiate dataset
+    # Instantiating Dataset
     dataset = hydra.utils.instantiate(cfg.dataset, split=split, transforms=transforms)
 
-    # check if data is normalized, if yes redo this during visualization of the image
+    # Check if data is normalized, if yes redo this during visualization of the image
     mean = None
     std = None
     for t in transforms.transforms:  # .transforms:
@@ -127,18 +117,12 @@ def show_prediction(
             std = t.std
             break
 
-    # define colormap
-    color_map = "viridis"
-    cmap = np.array(cm.get_cmap(color_map, cfg.DATASET.NUM_CLASSES).colors * 255, dtype=np.uint8)[
-        :, 0:3
-    ]
-
-    # init visualizer
+    # Create Visualizer Class
     visualizer = Visualizer(
         dataset, cmap, model, mean=mean, std=std, segmentation=segmentation, axis=axis
     )
 
-    # create window
+    # Create the cv2 Window
     cv2.namedWindow("Window", cv2.WINDOW_NORMAL)
     cv2.resizeWindow("Window", 1200, 1200)
 
@@ -149,7 +133,7 @@ def show_prediction(
     if segmentation == "semantic":
         cv2.createTrackbar("correctness", "Window", 0, 100, visualizer.update_alpha)
 
-    # look at the first image to get the number of channels
+    # Load first image to get the number of channels
     img = dataset[0][0]
     if len(img.shape) == 2:
         channels = 2
@@ -161,15 +145,36 @@ def show_prediction(
     cv2.setTrackbarMin("Channel", "Window", -1)
     cv2.setTrackbarPos("Channel", "Window", -1)
 
-    # show the first image in window and start loop
-    model.eval()
+    # Show the first image in window and start loop
     with torch.no_grad():
         visualizer.update_window()
         print("press q to quit")
         while True:
+            print("Press q to quit \n Press s to save the current image and mask")
             k = cv2.waitKey()
             if k == 113:
                 break
+            elif k == 115:
+
+                img_id = cv2.getTrackbarPos("Image ID", "Window")
+                file_name = f"{cfg.DATASET.NAME}__ID{img_id}"
+                os.makedirs("dataset_visualizations", exist_ok=True)
+
+                print(
+                    "Save"
+                    f" {os.path.join('dataset_visualizations', 'pred_'+file_name + '__image.png')}"
+                )
+                print(
+                    "Save"
+                    f" {os.path.join('dataset_visualizations', 'pred_'+file_name + '__mask.png')}"
+                )
+
+                img = cv2.cvtColor(visualizer.img_np_fig, cv2.COLOR_RGB2BGR)
+                mask = cv2.cvtColor(visualizer.mask_np, cv2.COLOR_RGB2BGR)
+
+                cv2.imwrite(os.path.join("dataset_visualizations", file_name + "__image.png"), img)
+                cv2.imwrite(os.path.join("dataset_visualizations", file_name + "__mask.png"), mask)
+
         cv2.destroyAllWindows()
 
 
@@ -191,7 +196,7 @@ if __name__ == "__main__":
         "--segmentation",
         type=str,
         default="semantic",
-        help="semantic or instance, depending on the dataset",
+        help="semantic, instance or multilabel, depending on the dataset",
     )
     parser.add_argument(
         "--axis",

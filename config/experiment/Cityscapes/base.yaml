@@ -17,7 +17,7 @@ augmentation_cfg:
 #Hyperparameters for Cityscapes Dataset
 batch_size: 12                   # batch size per gpu for training
 val_batch_size: 6 #${batch_size}   # batch size per gpu for validation
-epochs: 484                     # number of epochs
+epochs: 400                     # number of epochs
 lr: 0.01                        # learning rate for training (0.01445439770745928)
 momentum: 0.9                   # momentum for optimizer
 weight_decay: 0.0005            # wd for optimizer

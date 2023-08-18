@@ -1,86 +1,95 @@
 import logging
+import sys
 
-logging.basicConfig(level=logging.INFO)
-
+logging.basicConfig(
+    # level=logging.INFO,
+    stream=sys.stdout,
+    format="[%(asctime)s][%(name)s][%(levelname)s] - %(message)s",
+)
 import os
+from os.path import join
 import glob
 import hydra
-from omegaconf import OmegaConf, DictConfig
+from omegaconf import DictConfig
 
-from pytorch_lightning import Trainer
-from pytorch_lightning import loggers as pl_loggers
+import lightning as L
 
-from trainers.Semantic_Segmentation_Trainer import SegModel
-from src.utils import has_not_empty_attr, log_hyperparameters, get_logger
-
+from src.utils.config_utils import has_not_empty_attr, get_CV_ensemble_config
+from src.utils.utils import get_logger, log_hyperparameters, set_lightning_logging
 
 log = get_logger(__name__)
+set_lightning_logging()
 
 
 @hydra.main(config_path="config", config_name="testing", version_base="1.3")
 def testing(cfg: DictConfig) -> None:
     """
-    Running the Testing/Validation
-    Using the ckpt_dir as Working Directory
-    Load the hydra overrides from the ckpt_dir
     Compose config from config/testing.yaml with overwrites from the checkpoint and the overwrites
     from commandline
-    (Optional) include Overrides defined in the config (TRAINING.OVERRIDES)
-    Load Model, Datamodule, Logger and Trainer
-    Run testing
+    Instantiating Callbacks, Logger, Datamodule, Model and Trainer
+    Enables to test a CV ensemble as well as a single model dependent on the cfg.ckpt_file
+    Run the lightning testing loop
 
     Parameters
     ----------
     cfg : DictConfig
         cfg given by hydra - build from config/testing.yaml + commandline arguments
+
+    Requirements
+    ----------
+    cfg.ckpt_file: str
+        a) path to a singleoutput folder
+           e.g. .../logs/Cityscapes/hrnet_v1/run__batch_size_3/2023-08-18_10-13-05
+        b) path to output folder of a cross validation, folder has to contain at least one fold_x
+           e.g. .../logs/Cityscapes/hrnet_v1/run__batch_size_3/
     """
-    # Save overrides from the commandline for the current run
-    overrides_cl = hydra.core.hydra_config.HydraConfig.get().overrides.task
-    # Load overrides from the experiment in the checkpoint dir
-    overrides_ckpt = OmegaConf.load(os.path.join("hydra", "overrides.yaml"))
+    # Check if cfg.ckpt_dir points to a single model or a CV folder
+    ensemble_CV = any([x.startswith("fold_") for x in os.listdir(cfg.ckpt_dir)])
 
-    # Compose config by override with overrides_ckpt, afterwards override with overrides_cl
-    cfg = hydra.compose(config_name="testing", overrides=overrides_ckpt + overrides_cl)
+    # Load the config from the Checkpoint
+    if ensemble_CV:
+        # All runs inside CV have the same config (exept dataset.fold which is not relevant here)
+        file = glob.glob(join(cfg.ckpt_dir, "fold_*", "*", "hydra", "overrides.yaml"))[0]
+    else:
+        file = join(cfg.ckpt_dir, "hydra", "overrides.yaml")
 
-    # Get the TESTING.OVVERRIDES to check if additional parameters should be changed
-    if has_not_empty_attr(cfg, "TESTING"):
-        if has_not_empty_attr(cfg.TESTING, "OVERRIDES"):
-            overrides_test = cfg.TESTING.OVERRIDES
-            # Compose config again with including the new overrides
-            cfg = hydra.compose(
-                config_name="testing",
-                overrides=overrides_ckpt + overrides_test + overrides_cl,
-            )
+    # Compose the config
+    cfg = build_test_config(file)
 
-    # Load the best checkpoint and load the model
-    log.info("Working Directory: %s", os.getcwd())
-    ckpt_file = glob.glob(os.path.join("checkpoints", "best_*"))[0]
-    log.info("Checkpoint Directory: %s", ckpt_file)
+    # Instantiating Model and load weights from a Checkpoint
+    if ensemble_CV:
+        cfg.model = get_CV_ensemble_config(cfg.ckpt_dir)
+        model = hydra.utils.instantiate(cfg.trainermodule, model_config=cfg, _recursive_=False)
+    else:
+        ckpt_file = glob.glob(os.path.join(cfg.ckpt_dir, "checkpoints", "best_*"))[0]
+        log.info("Checkpoint Directory: %s", ckpt_file)
 
-    model = SegModel.load_from_checkpoint(ckpt_file, model_config=cfg, strict=False)
+        cfg.trainermodule._target_ += ".load_from_checkpoint"
+        model = hydra.utils.instantiate(
+            cfg.trainermodule, ckpt_file, strict=True, model_config=cfg, _recursive_=False
+        )
 
-    # Load the datamodule
+    # Instantiating Datamodule
     dataModule = hydra.utils.instantiate(cfg.datamodule, _recursive_=False)
 
-    # Instantiate callbacks
+    # Instantiating Callbacks
     callbacks = []
     for _, cb_conf in cfg.CALLBACKS.items():
         if cb_conf is not None:
             cb = hydra.utils.instantiate(cb_conf)
             callbacks.append(cb)
 
-    tb_logger = pl_loggers.TensorBoardLogger(
-        save_dir="testing", name="", version="", default_hp_metric=False
-    )
+    # Instantiating Logger
+    logger = hydra.utils.instantiate(cfg.logger)
 
-    # Parsing the pl_trainer args and instantiate the trainers
+    # Instantiating trainer with trainer_args from config
     trainer_args = getattr(cfg, "pl_trainer") if has_not_empty_attr(cfg, "pl_trainer") else {}
-    trainer = Trainer(callbacks=callbacks, logger=tb_logger, **trainer_args)
+    trainer = L.Trainer(callbacks=callbacks, logger=logger, **trainer_args)
 
-    # Log experiment
+    # Log Experiment
     log_hyperparameters(cfg, model, trainer)
 
-    # Run testing/validation
+    # Start Testing
     trainer.test(model, dataModule)
 
 

@@ -3,22 +3,24 @@ import logging
 import os
 import sys
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    stream=sys.stdout,
+    format="[%(asctime)s][%(name)s][%(levelname)s] - %(message)s",
+)
 
 import hydra
-from omegaconf import OmegaConf
-from datasets.DataModules import get_augmentations_from_config
+
+import numpy as np
+import cv2
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-import cv2
-import numpy as np
 from matplotlib import cm
 
-from src.utils import get_logger
-from src.visualization import Visualizer
+from src.utils.utils import get_logger, set_lightning_logging
+from src.utils.visualization import Visualizer
 
 log = get_logger(__name__)
+set_lightning_logging()
 
 
 def show_data(
@@ -26,40 +28,46 @@ def show_data(
 ) -> None:
     """
     Visualizing a Dataset
-    initializing the dataset defined in the config
-    display img + mask using opencv
+        Initializing the dataset defined in the config
+        Display img + mask using opencv
 
     Parameters
     ----------
     overrides_cl : list
         arguments from commandline to overwrite hydra config
+    augmentation : str
+        which augmentations to use (train,val,test or None)
+    split : str
+        which split of the dataset to use
+    segmentation : str
+        which type of segmentation is used (semantic, instance or multilabel)
+    axis : int
+        show img and gt side by side or on top of each other
     """
     # Init and Compose Hydra to get the config
     hydra.initialize(config_path="../config", version_base="1.3")
     cfg = hydra.compose(config_name="training", overrides=overrides_cl)
 
-    # Define Colormap and basic Transforms and instantiate the dataset
+    # Define Colormap
     color_map = "viridis"
     cmap = np.array(cm.get_cmap(color_map, cfg.DATASET.NUM_CLASSES).colors * 255, dtype=np.uint8)[
         :, 0:3
     ]
 
-    OmegaConf.set_struct(cfg, False)
+    # Instantiating Augmentations
     if augmentation is None:
         transforms = A.Compose([ToTensorV2()])
     elif augmentation == "train":
-        # transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TRAIN)[0]
         transforms = hydra.utils.instantiate(cfg.augmentation.train)
     elif augmentation == "val":
-        # transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.VALIDATION)[0]
         transforms = hydra.utils.instantiate(cfg.augmentation.val)
     elif augmentation == "test":
-        # transforms = get_augmentations_from_config(cfg.AUGMENTATIONS.TEST)[0]
         transforms = hydra.utils.instantiate(cfg.augmentation.test)
 
+    # Instantiating Dataset
     dataset = hydra.utils.instantiate(cfg.dataset, split=split, transforms=transforms)
 
-    # check if data is normalized, if yes redo this during visualization of the image
+    # Check if data is normalized, if yes redo this during visualization of the image
     mean = None
     std = None
     for t in transforms.transforms:  # .transforms:
@@ -68,6 +76,7 @@ def show_data(
             std = t.std
             break
 
+    # Create Visualizer Class
     visualizer = Visualizer(dataset, cmap, mean=mean, std=std, segmentation=segmentation, axis=axis)
 
     # Create the cv2 Window
@@ -78,7 +87,7 @@ def show_data(
     cv2.createTrackbar("Image ID", "Window", 0, len(dataset) - 1, visualizer.update_window)
     cv2.createTrackbar("alpha", "Window", 0, 100, visualizer.update_alpha)
 
-    # look at the first image to get the number of channels
+    # Load first image to get the number of channels
     img = dataset[0][0]
     if len(img.shape) == 2:
         channels = 2
@@ -89,10 +98,11 @@ def show_data(
     cv2.setTrackbarMin("Channel", "Window", -1)
     cv2.setTrackbarPos("Channel", "Window", -1)
 
-    # show the first image in window and start loop
+    # Show the first image in window and start loop
     visualizer.update_window()
     print("press q to quit")
     while True:
+        print("Press q to quit \n Press s to save the current image and mask")
         k = cv2.waitKey()
         if k == 113:
             break
@@ -131,7 +141,7 @@ if __name__ == "__main__":
         "--segmentation",
         type=str,
         default="semantic",
-        help="semantic or instance, depending on the dataset",
+        help="semantic, instance or multilabel, depending on the dataset",
     )
     parser.add_argument(
         "--axis",

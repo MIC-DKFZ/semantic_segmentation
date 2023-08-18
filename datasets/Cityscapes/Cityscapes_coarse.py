@@ -1,11 +1,10 @@
 import os
 import glob
 
-import torch
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-from datasets.Cityscapes.Cityscapes import Cityscapes_dataset, classes_19
-from src.utils import get_logger
+from datasets.Cityscapes.Cityscapes import Cityscapes_dataset
+from src.utils.utils import get_logger
 
 log = get_logger(__name__)
 

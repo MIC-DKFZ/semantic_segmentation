@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from torchmetrics import Metric
-import pytorch_lightning as pl
+import lightning as L
 from torchmetrics.utilities.data import _bincount
 import matplotlib.pyplot as plt
 
@@ -67,7 +67,7 @@ class ConfusionMatrix(Metric):
             )  # torch.bincount(inds, minlength=n**2).reshape(n, n)
         self.mat += confmat  # .to(self.mat)
 
-    def save_state(self, trainer: pl.Trainer) -> None:
+    def save_state(self, trainer: L.Trainer) -> None:
         """
         save the raw and normalized confusion matrix (self.mat) as image/figure to tensorboard
         Adopted from: https://www.tensorflow.org/tensorboard/image_summaries

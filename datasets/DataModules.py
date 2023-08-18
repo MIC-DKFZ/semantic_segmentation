@@ -1,19 +1,15 @@
-import hydra
-from omegaconf import OmegaConf, DictConfig
-import numpy as np
-
-from torch.utils.data import DataLoader
-from pytorch_lightning import LightningDataModule
-
-import albumentations as A
-import albumentations.pytorch
-import src.augmentations as custom_augmentations
-import cv2
-
-from src.utils import has_not_empty_attr
-from src.utils import get_logger
-import torch
 import random
+
+import hydra
+from omegaconf import DictConfig
+import numpy as np
+import torch
+from torch.utils.data import DataLoader
+import cv2
+from lightning import LightningDataModule
+
+from src.utils.utils import get_logger
+from src.utils.config_utils import has_not_empty_attr
 
 # set number of Threads to 0 for opencv and albumentations
 cv2.setNumThreads(0)
@@ -74,62 +70,6 @@ def get_max_steps(
     return max_steps, steps_per_epoch
 
 
-def get_augmentations_from_config(augmentations: DictConfig) -> list:
-    """
-    Build an Albumentations augmentation pipeline from the input config
-
-    Parameters
-    ----------
-    augmentations : DictConfig
-        config of the Augmentation
-
-    Returns
-    -------
-    list :
-        list of Albumentations transforms
-    """
-    # print(augmentations)
-    # print(type(augmentations))
-    # if transformations are given as a Albumentations-dict they can directly be loaded
-    if has_not_empty_attr(augmentations, "FROM_DICT"):
-        return [A.from_dict(OmegaConf.to_container(augmentations.FROM_DICT))]
-
-    # otherwise recursively build the transformations
-    trans = []
-    for augmentation in augmentations:
-        print(augmentations)
-        transforms = list(augmentation.keys())
-
-        for transform in transforms:
-            parameters = getattr(augmentation, transform)
-            if parameters is None:
-                parameters = {}
-
-            if hasattr(A, transform):
-                if "transforms" in list(parameters.keys()):
-                    # "transforms" indicates a transformation which takes a list of other transformations
-                    # as input ,e.g. A.Compose -> recursively build these transforms
-                    transforms = get_augmentations_from_config(parameters.transforms)
-                    # transform=hydra.initialize()
-                    del parameters["transforms"]
-                    func = getattr(A, transform)
-                    trans.append(func(transforms=transforms, **parameters))
-                else:
-                    # load transformation form Albumentations
-                    func = getattr(A, transform)
-                    trans.append(func(**parameters))
-            elif hasattr(A.pytorch, transform):
-                # ToTensorV2 transformation is located in A.pytorch
-                func = getattr(A.pytorch, transform)
-                trans.append(func(**parameters))
-            elif hasattr(custom_augmentations, transform):
-                func = getattr(custom_augmentations, transform)
-                trans.append(func(**parameters))
-            else:
-                log.info("No Operation Found: %s", transform)
-    return trans
-
-
 class BaseDataModule(LightningDataModule):
     def __init__(
         self,
@@ -186,25 +126,20 @@ class BaseDataModule(LightningDataModule):
         # define the datasets which are defined in the config
         # additional arguments are the split and the augmentations
         if stage in (None, "fit"):
-            # transforms_train = get_augmentations_from_config(self.augmentations.train)[0]
             transforms_train = hydra.utils.instantiate(self.augmentations.train)
-            # print(transforms_train)
             self.DS_train = hydra.utils.instantiate(
                 self.dataset, split="train", transforms=transforms_train
             )
         if stage in (None, "fit", "validate"):
-            # transforms_val = get_augmentations_from_config(self.augmentations.val)[0]
             transforms_val = hydra.utils.instantiate(self.augmentations.val)
             self.DS_val = hydra.utils.instantiate(
                 self.dataset, split="val", transforms=transforms_val
             )
         if stage in (None, "test"):
             if has_not_empty_attr(self.augmentations, "TEST"):
-                # transforms_test = get_augmentations_from_config(self.augmentations.test)[0]
                 transforms_test = hydra.utils.instantiate(self.augmentations.test)
             else:
-                # transforms_test = get_augmentations_from_config(self.augmentations.val)[0]
-                transforms_test = ghydra.utils.instantiate(self.augmentations.val)
+                transforms_test = hydra.utils.instantiate(self.augmentations.val)
             self.DS_test = hydra.utils.instantiate(
                 self.dataset, split="test", transforms=transforms_test
             )
@@ -253,54 +188,6 @@ class BaseDataModule(LightningDataModule):
             )
         )
         return max_steps
-
-    def get_augmentations_from_config(self, augmentations: DictConfig) -> list:
-        """
-        Build an Albumentations augmentation pipeline from the input config
-
-        Parameters
-        ----------
-        augmentations : DictConfig
-            config of the Augmentation
-
-        Returns
-        -------
-        list :
-            list of Albumentations transforms
-        """
-        # if transformations are given as a Albumentations-dict they can directly be loaded
-        if has_not_empty_attr(augmentations, "FROM_DICT"):
-            return [A.from_dict(OmegaConf.to_container(augmentations.FROM_DICT))]
-
-        # otherwise recursively build the transformations
-        trans = []
-        for augmentation in augmentations:
-            transforms = list(augmentation.keys())
-
-            for transform in transforms:
-                parameters = getattr(augmentation, transform)
-                if parameters is None:
-                    parameters = {}
-
-                if hasattr(A, transform):
-                    if "transforms" in list(parameters.keys()):
-                        # "transforms" indicates a transformation which takes a list of other transformations
-                        # as input ,e.g. A.Compose -> recursively build these transforms
-                        transforms = self.get_augmentations_from_config(parameters.transforms)
-                        del parameters["transforms"]
-                        func = getattr(A, transform)
-                        trans.append(func(transforms=transforms, **parameters))
-                    else:
-                        # load transformation form Albumentations
-                        func = getattr(A, transform)
-                        trans.append(func(**parameters))
-                elif hasattr(A.pytorch, transform):
-                    # ToTensorV2 transformation is located in A.pytorch
-                    func = getattr(A.pytorch, transform)
-                    trans.append(func(**parameters))
-                else:
-                    log.info("No Operation Found: %s", transform)
-        return trans
 
     def train_dataloader(self) -> DataLoader:
         """

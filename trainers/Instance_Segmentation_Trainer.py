@@ -4,9 +4,9 @@ import torch
 import torch.nn.functional as F
 
 from src.metric.metric import MetricModule
-from src.utils import get_logger
+from src.utils.utils import get_logger
 from trainers.Semantic_Segmentation_Trainer import SegModel
-from src.visualization import show_prediction_inst_seg, show_mask_inst_seg
+from src.utils.visualization import show_prediction_inst_seg, show_mask_inst_seg
 
 log = get_logger(__name__)
 

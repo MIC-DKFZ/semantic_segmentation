@@ -1,13 +1,13 @@
 import torch
 import json
 import os
-from src.utils import get_logger
+from src.utils.utils import get_logger
 from os.path import join
 import numpy as np
 
 from datasets.Fishinspector.Fishinspector import Fishinspector_Base
 from datasets.Base_Datasets.multilabel import Multilabel_CV_Dataset, Multilabel_Sampling_CV_Dataset
-from src.dataset_utils import random_scale_crop, keypoint_scale_crop
+from src.utils.dataset_utils import random_scale_crop, keypoint_scale_crop
 
 log = get_logger(__name__)
 
@@ -43,7 +43,7 @@ class Fishinspector_PL_Base(Fishinspector_Base):
             # print(labeled_classes)
             map_labeled_classes = np.zeros(self.num_classes, dtype=bool)
             map_labeled_classes[labeled_classes] = True
-
+        # print(sorted(labeled_classes))
         # 2) Get all empty masks
         map_empty_classes = ~np.any(masks == 1, axis=(1, 2)).astype(bool)
 
@@ -116,9 +116,10 @@ class Fishinspector_sampling_dataset_PL(Multilabel_Sampling_CV_Dataset, Fishinsp
 
 
 if __name__ == "__main__":
+
     from tqdm import tqdm
 
-    lateral_classes = [1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1]
+    # lateral_classes = [1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1]
     root = "/media/l727r/data/UFZ_2023_Fishinspector/Dataset222_Fishinspector"
     dataset = Fishinspector_dataset_PL(
         root=root,
@@ -132,20 +133,28 @@ if __name__ == "__main__":
     # print(img.shape, mask.shape, labeled.shape)
     # quit()
     img_files = dataset.img_files
-    #
-    # num_classes = 16
-    # count = [0 for _ in range(0, num_classes)]
+
+    count = [0 for _ in range(0, dataset.num_classes)]
     files = []
-    for i in range(len(dataset)):
+    for i in tqdm(range(len(dataset))):
         # for i in range(len(dataset)):
         img, mask, label_map = dataset[i]
-        not_empty = np.any(mask == 1, axis=(1, 2)).astype(int)
-        if not any(not_empty):
+        not_empty = np.any(mask == 1)
+        # if not not_empty:
+        #     continue
+        # j = 11
+        # if not np.any(mask[j] == 1) and label_map[j]:
+        #     files.append(img_files[i].rsplit("/", 1)[-1])
+        # for j in range(dataset.num_classes):
+        #     if not np.any(mask[j] == 1) and label_map[j]:
+        #         count[j] += 1
+        # print(count)
+        if not not_empty and any(label_map):
             files.append(img_files[i].rsplit("/", 1)[-1])
-
+    #
     for f in files:
-        print(f)
-    print(len(files))
+        print(f"'{f}',")
+    # print(len(files))
     quit()
     # lateral_img = "Lateral" in img_files[i]
     # for j in range(0, num_classes):

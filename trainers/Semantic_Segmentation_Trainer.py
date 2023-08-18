@@ -3,18 +3,21 @@ from omegaconf import DictConfig
 
 import torch
 import torch.nn.functional as F
-from pytorch_lightning import LightningModule
 from matplotlib import cm
+import lightning as L
+from samplify.sampler import GridSampler
+from samplify.aggregator import Aggregator
 
 from src.metric.metric import MetricModule
 from src.loss_function import get_loss_function_from_cfg
-from src.utils import get_logger, has_not_empty_attr, first_from_dict
-from src.visualization import show_mask_sem_seg
+from src.utils.utils import get_logger
+from src.utils.config_utils import has_not_empty_attr, first_from_dict
+from src.utils.visualization import show_mask_sem_seg
 
 log = get_logger(__name__)
 
 
-class SegModel(LightningModule):
+class SegModel(L.LightningModule):
     def __init__(self, model_config: DictConfig) -> None:
         """
         __init__ the LightningModule
@@ -30,7 +33,6 @@ class SegModel(LightningModule):
 
         # instantiate model from config
         self.model = hydra.utils.instantiate(self.config.model)
-        # self.model = torch.compile(self.model)
         # instantiate metric from config and metric related parameters
         self.metric_name = self.config.METRIC.NAME
         # When to Call the Metric
@@ -57,16 +59,8 @@ class SegModel(LightningModule):
             if has_not_empty_attr(self.config, "num_example_predictions")
             else 0
         )
-        self.viz_mean = (
-            self.config.augmentation_cfg.mean
-            if has_not_empty_attr(self.config.augmentation_cfg, "mean")
-            else None
-        )
-        self.viz_std = (
-            self.config.augmentation_cfg.std
-            if has_not_empty_attr(self.config.augmentation_cfg, "std")
-            else None
-        )
+
+        self.patch_size = self.config.augmentation_cfg.crop_size
 
     def configure_optimizers(self) -> dict:
         """
@@ -220,6 +214,26 @@ class SegModel(LightningModule):
 
         return {"out": total_pred}
 
+    def forward_patching(self, x: torch.Tensor):
+
+        sampler = GridSampler(
+            image=x,
+            spatial_size=x.shape[-2:],
+            patch_size=self.patch_size,
+            spatial_first=False,
+        )
+        aggregator = Aggregator(
+            sampler=sampler,
+            output=torch.zeros([x.shape[0], 19, x.shape[-2], x.shape[-1]], device=x.device),
+            weights="avg",
+            softmax_dim=None,
+            spatial_first=False,
+        )
+        for patch, id in sampler:
+            pred = first_from_dict(self(patch))
+            aggregator.append(pred, id)
+        return {"out": aggregator.get_output(inplace=True)}
+
     def training_step(self, batch: list, batch_idx: int) -> torch.Tensor:
         """
         Forward the image through the model and compute the loss
@@ -281,6 +295,7 @@ class SegModel(LightningModule):
         # predict batch
         x, y_gt = batch
         y_pred = self(x)
+        # y_pred = self.forward_patching(x)
 
         # # compute and log loss to tensorboard
         val_loss = self.get_loss(y_pred, y_gt)
@@ -451,6 +466,12 @@ class SegModel(LightningModule):
 
         # reset metric manually
         self.metric.reset()
+
+    def predict_step(self, batch, batch_idx, dataloader_idx=0):
+
+        img, name = batch
+        pred = self(img)
+        return pred, name
 
     def update_metric(
         self, y_pred: torch.Tensor, y_gt: torch.Tensor, metric: MetricModule, prefix: str = ""

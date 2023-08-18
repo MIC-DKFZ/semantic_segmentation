@@ -1,14 +1,48 @@
-import numpy as np
-import torch
+import os
+from os.path import join
 from tqdm import tqdm
-from pytorch_lightning.callbacks import Callback, ModelCheckpoint
-from pytorch_lightning.callbacks.progress import TQDMProgressBar
-from pytorch_lightning.callbacks.progress.tqdm_progress import _update_n
-from pytorch_lightning.callbacks.progress.tqdm_progress import convert_inf, Tqdm
-import sys
-from typing import Any, Dict, Optional, Union
 
-from pytorch_lightning.utilities.types import STEP_OUTPUT
+import torch
+import torch.nn.functional as F
+import numpy as np
+import cv2
+
+from lightning.pytorch.callbacks import Callback, ModelCheckpoint
+from lightning.pytorch.callbacks import BasePredictionWriter
+from lightning.pytorch.callbacks.progress import TQDMProgressBar
+from lightning.pytorch.callbacks.progress.tqdm_progress import convert_inf, _update_n
+from src.utils.config_utils import first_from_dict
+
+
+class SemSegPredictionWriter(BasePredictionWriter):
+    def __init__(self, output_dir, write_interval="batch", save_probabilities=False):
+        super().__init__(write_interval)
+        self.output_dir = output_dir
+        self.save_probabilities = save_probabilities
+
+        os.makedirs(self.output_dir, exist_ok=True)
+
+    def save_softmax(self, pred_sm, name):
+        np.savez(join(self.output_dir, name + ".npz"), probabilities=pred_sm)
+
+    def save_prediction(self, pred, name):
+        cv2.imwrite(join(self.output_dir, name + ".png"), pred)
+
+    def write_on_batch_end(
+        self, trainer, pl_module, prediction, batch_indices, batch, batch_idx, dataloader_idx
+    ):
+        preds, names = prediction
+        preds_sm = first_from_dict(preds)
+        preds = preds_sm.argmax(1)
+        preds_sm = F.softmax(preds_sm, dim=1) if self.save_probabilities else preds_sm
+
+        preds = preds.detach().cpu().numpy()
+        preds_sm = preds_sm.detach().cpu().numpy()
+
+        for name, pred, pred_sm in zip(names, preds, preds_sm):
+            self.save_prediction(pred, name)
+            if self.save_probabilities:
+                self.save_softmax(pred_sm, name)
 
 
 class customModelCheckpoint(ModelCheckpoint):
@@ -21,7 +55,7 @@ class customModelCheckpoint(ModelCheckpoint):
             customModelCheckpoint,
             self,
         ).__init__(**kwargs)
-        self.CHECKPOINT_NAME_LAST = "last_epoch_{epoch}"
+        self.CHECKPOINT_NAME_LAST = self.filename.replace("best_", "last_")
 
 
 class customTQDMProgressBar(TQDMProgressBar):

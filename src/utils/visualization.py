@@ -2,16 +2,28 @@ from PIL import Image
 import torch
 import numpy as np
 import cv2
-
-from pytorch_lightning import LightningModule
+from typing import Any
+from lightning import LightningModule
 from torch.utils.data import Dataset
 
-from src.utils import has_not_empty_attr, get_logger
+from src.utils.utils import get_logger
 
 log = get_logger(__name__)
 
 
-def convert_torch_to(img_torch, output_type):
+def convert_torch_to(img_torch: torch.Tensor, output_type: str) -> Any:
+    """
+    Converting a torch.tensor to a np.array, PIL.Image or torch.tensor
+
+    Parameters
+    ----------
+    img_torch: torch.Tensor
+    output_type: str
+
+    Returns
+    -------
+    Any
+    """
     if output_type == "numpy":
         return np.array(img_torch)
     elif output_type == "PIL":
@@ -20,7 +32,19 @@ def convert_torch_to(img_torch, output_type):
         return img_torch
 
 
-def convert_numpy_to(img_np, output_type):
+def convert_numpy_to(img_np: np.ndarray, output_type: str) -> Any:
+    """
+    Converting a np.array to a np.array, PIL.Image or torch.tensor
+
+    Parameters
+    ----------
+    img_np: np.array
+    output_type: str
+
+    Returns
+    -------
+    Any
+    """
     if output_type == "numpy":
         return img_np
     elif output_type == "PIL":
@@ -29,7 +53,25 @@ def convert_numpy_to(img_np, output_type):
         return torch.tensor(img_np)
 
 
-def show_img(img: torch.Tensor, mean: list = None, std: list = None, output_type: str = "numpy"):
+def show_img(
+    img: torch.Tensor, mean: list = None, std: list = None, output_type: str = "numpy"
+) -> Any:
+    """
+    Visualize Images
+    Create visualization of a tensor by undoing the normalization and convert to RGB (scaling to
+    0-255 with 3 channels)
+
+    Parameters
+    ----------
+    img: torch.Tensor
+    mean: list
+    std: list
+    output_type: str
+
+    Returns
+    -------
+    np.ndarry, torch.tensor or PIL.Image, dependent on desired output_type
+    """
 
     img_np = np.array(img)
     if len(img_np.shape) == 2:
@@ -46,7 +88,23 @@ def show_img(img: torch.Tensor, mean: list = None, std: list = None, output_type
     return convert_numpy_to(img_np, output_type)
 
 
-def show_mask_sem_seg(mask: torch.Tensor, cmap: list, output_type: str = "numpy"):
+def show_mask_sem_seg(mask: torch.Tensor, cmap: list, output_type: str = "numpy") -> Any:
+    """
+    Visualize a Semantic Segmentation mask
+    Create visualization of a tensor by colour encode classes with the given cmap
+    Convert it to the desired output type
+
+    Parameters
+    ----------
+    mask : torch.Tensor
+    cmap : list
+        list with len(num_classes) and encoding each class to a RBB value (0-255)
+    output_type : str
+
+    Returns
+    -------
+    np.ndarry, torch.tensor or PIL.Image, dependent on desired output_type
+    """
     mask_np = np.array(mask)
     w, h = mask_np.shape
     fig = np.zeros((w, h, 3), dtype=np.uint8)
@@ -60,7 +118,26 @@ def show_mask_sem_seg(mask: torch.Tensor, cmap: list, output_type: str = "numpy"
     return convert_numpy_to(fig, output_type)
 
 
-def show_mask_inst_seg(target, img_shape, output_type: str = "numpy", alpha=0.5):
+def show_mask_inst_seg(
+    target: dict, img_shape: list, output_type: str = "numpy", alpha: float = 0.5
+) -> Any:
+    """
+    Visualize an Instance Segmentation mask
+    Create visualization of a tensor by colour encode instance with a random colour
+    Convert it to the desired output type
+
+    Parameters
+    ----------
+    target : dict
+    img_shape : list
+    output_type : str
+    alpha: float
+        alpha of the segmentation masks, to see overlapping masks
+
+    Returns
+    -------
+    np.ndarry, torch.tensor or PIL.Image, dependent on desired output_type
+    """
     if len(target["masks"]) == 0:
         fig = np.ones((*img_shape, 3), dtype=np.uint8) * 255
         return convert_numpy_to(fig, output_type)
@@ -82,6 +159,24 @@ def show_mask_inst_seg(target, img_shape, output_type: str = "numpy", alpha=0.5)
 
 
 def show_mask_multilabel_seg(masks, cmap, output_type: str = "numpy", alpha=0.5):
+    """
+    Visualize a multilabel Semantic Segmentation mask
+    Create visualization of a tensor by colour encode classes with the given cmap
+    Convert it to the desired output type
+
+    Parameters
+    ----------
+    mask : torch.Tensor
+    cmap : list
+        list with len(num_classes) and encoding each class to a RBB value (0-255)
+    output_type : str
+    alpha: float
+        alpha of the segmentation masks, to see overlapping masks
+
+    Returns
+    -------
+    np.ndarry, torch.tensor or PIL.Image, dependent on desired output_type
+    """
     masks_np = np.array(masks)
     c, w, h = masks_np.shape
     fig = np.zeros((w, h, 3), dtype=np.uint8)
@@ -93,11 +188,25 @@ def show_mask_multilabel_seg(masks, cmap, output_type: str = "numpy", alpha=0.5)
     return convert_numpy_to(fig, output_type)
 
 
-def show_prediction_sem_seg():
-    pass
-
-
 def show_prediction_inst_seg(pred, img_shape, output_type="numpy", alpha=0.5):
+    """
+    Visualize an Instance Segmentation prediction
+    Create visualization of a tensor by colour encode instance (confidence score >=0.5)(Softmax values
+    >=0.5) with a random colour
+    Convert it to the desired output type
+
+    Parameters
+    ----------
+    target : dict
+    img_shape : list
+    output_type : str
+    alpha: float
+        alpha of the segmentation masks, to see overlapping masks
+
+    Returns
+    -------
+    np.ndarry, torch.tensor or PIL.Image, dependent on desired output_type
+    """
     # pred = [{k: v.detach().cpu() for k, v in t.items()} for t in pred]
     # pred = list(p.detach().cpu() for p in pred)
     pred = pred[0]
@@ -150,6 +259,10 @@ class Visualizer:
             if given the normalization is inverted during visualization --> nicer image
         std: list, optional
             if given the normalization is inverted during visualization --> nicer image
+        segmentation: str
+            which type of segmentation is used, semantic, multilabel or instance
+        axis: int
+            show images side by side (1) or above each other (0)
         """
         self.model = model
         self.dataset = dataset
@@ -159,14 +272,16 @@ class Visualizer:
         self.segmentation = segmentation
         self.axis = axis
 
-    def color_mask(self, mask: torch.Tensor, img_shape) -> np.ndarray:
+    def color_mask(self, mask: torch.Tensor, img_shape: list) -> np.ndarray:
         """
-        Color encode mask with color ids into RGB
+        Color encode mask to a RGB np.ndarray dependent on the segmentation type
 
         Parameters
         ----------
         mask_np
             array of shape [w,h], with class ids for each pixel
+        img_shape: list
+            shape of the image, needed for empty instance segmentation masks
         Returns
         -------
         np.ndarray :
@@ -283,7 +398,7 @@ class Visualizer:
                 self.img_np_fig = cv2.addWeighted(
                     self.img_np_chan, 1 - alpha, self.pred, alpha, 0.0
                 )
-                self.img_np_fig = self.update_corrects(self.img_np_fig)
+                # self.img_np_fig = self.update_corrects(self.img_np_fig)
 
                 bg_map = np.all(self.pred == [255, 255, 255], axis=2)
                 self.img_np_fig[bg_map] = self.img_np_chan[bg_map]

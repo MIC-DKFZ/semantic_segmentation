@@ -10,7 +10,8 @@ from mmcv.cnn.utils import revert_sync_batchnorm
 import torch.nn as nn
 import torch.nn.functional as F
 import logging
-from src.utils import get_logger, has_not_empty_attr
+from src.utils.utils import get_logger
+from src.utils.config_utils import has_not_empty_attr
 
 
 class MMSeg_Model(nn.Module):

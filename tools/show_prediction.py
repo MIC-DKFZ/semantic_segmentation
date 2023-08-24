@@ -82,9 +82,11 @@ def show_prediction(
     #if hasattr(cfg.MODEL, "PRETRAINED"):
     #    cfg.MODEL.PRETRAINED = False
     if segmentation == "semantic":
-        model = SegModel.load_from_checkpoint(ckpt_file, model_config=cfg, strict=False).cuda()
+        model = SegModel.load_from_checkpoint(ckpt_file, model_config=cfg, strict=False)
     elif segmentation == "instance":
-        model = InstModel.load_from_checkpoint(ckpt_file, model_config=cfg, strict=False).cuda()
+        model = InstModel.load_from_checkpoint(ckpt_file, model_config=cfg, strict=False)
+    if torch.cuda.is_available():
+        model=model.cuda()
     # model = SegModel.load_from_checkpoint(ckpt_file, config=cfg).cuda()
     # print(cfg)
     # print(cfg.model)

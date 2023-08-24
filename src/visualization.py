@@ -206,14 +206,14 @@ class Visualizer:
         # Predict the Image and colorize the prediction
         if self.model is not None:
             if self.segmentation == "semantic":
-                pred = self.model(img.unsqueeze(0).cuda())
+                pred = self.model(img.unsqueeze(0).to(self.model.device))
                 pred = torch.argmax(list(pred.values())[0].squeeze(), dim=0).detach().cpu()
                 self.pred = self.color_mask(np.array(pred), img_shape=img.shape[-2:])
 
                 # Show Correctness of prediction
                 self.cor = self.viz_correctness(pred, mask)
             elif self.segmentation == "instance":
-                pred = self.model(img.unsqueeze(0).cuda())[0]
+                pred = self.model(img.unsqueeze(0).to(self.model.device))[0]
                 pred = [{k: v.detach().cpu() for k, v in pred.items()}]
                 self.pred = show_prediction_inst_seg(pred, img_shape=img.shape[-2:])
 
@@ -253,10 +253,19 @@ class Visualizer:
             if hasattr(self, "pred"):
                 self.img_np_fig = cv2.addWeighted(self.img_np_chan, 1 - alpha, self.pred, alpha, 0.0)
                 self.img_np_fig = self.update_corrects(self.img_np_fig)
+
+                bg_map = np.all(self.pred == [255, 255, 255], axis=2)
+                self.img_np_fig[bg_map] = self.img_np_chan[bg_map]
+                bg_map = np.all(self.pred == [0, 0, 0], axis=2)
+                self.img_np_fig[bg_map] = self.img_np_chan[bg_map]
+
             else:
                 self.img_np_fig = cv2.addWeighted(self.img_np_chan, 1 - alpha, self.mask_np, alpha, 0.0)
+
                 bg_map = np.all(self.mask_np == [255, 255, 255], axis=2)
-                self.img_np_fig[bg_map] = self.img_np_fig[bg_map]
+                self.img_np_fig[bg_map] = self.img_np_chan[bg_map]
+                bg_map = np.all(self.mask_np == [0, 0, 0], axis=2)
+                self.img_np_fig[bg_map] = self.img_np_chan[bg_map]
             # concat blended image and mask
             fig = np.concatenate((self.img_np_fig, self.mask_np), self.axis)
             # transform from RGB to BGR to match the cv2 order

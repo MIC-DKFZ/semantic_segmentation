@@ -11,6 +11,7 @@ from pytorch_lightning import Trainer
 from pytorch_lightning import loggers as pl_loggers
 
 from trainers.Semantic_Segmentation_Trainer import SegModel
+from trainers.Instance_Segmentation_Trainer import InstModel
 from src.utils import has_not_empty_attr, log_hyperparameters, get_logger
 
 
@@ -57,7 +58,7 @@ def testing(cfg: DictConfig) -> None:
     ckpt_file = glob.glob(os.path.join("checkpoints", "best_*"))[0]
     log.info("Checkpoint Directory: %s", ckpt_file)
 
-    model = SegModel.load_from_checkpoint(ckpt_file, model_config=cfg, strict=False)
+    model = InstModel.load_from_checkpoint(ckpt_file, model_config=cfg, strict=False)
 
     # Load the datamodule
     dataModule = hydra.utils.instantiate(cfg.datamodule, _recursive_=False)

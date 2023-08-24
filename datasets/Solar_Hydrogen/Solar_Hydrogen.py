@@ -6,10 +6,12 @@ import numpy as np
 import random
 
 from src.utils import get_logger
+
 log = get_logger(__name__)
 
+
 class Custom_dataset(torch.utils.data.Dataset):
-    def __init__(self, root:str, split:str="train", transforms=None):
+    def __init__(self, root: str, split: str = "train", transforms=None):
         """
         Initialization of the Dataset Class
 
@@ -27,11 +29,16 @@ class Custom_dataset(torch.utils.data.Dataset):
         self.root = root
         self.split = split
         self.transforms = transforms
-
-        # Name of the subfolder which contains the images, change this if needed
-        self.img_folder="images"
-        # Name of the csv file which contains the bubble annotations, change if needed
-        self.csv_file="annotations.csv"
+        if split == "test":
+            # Name of the subfolder which contains the images, change this if needed
+            self.img_folder = "images_test"
+            # Name of the csv file which contains the bubble annotations, change if needed
+            self.csv_file = "annotations_test.csv"
+        elif split == "train" or split == "val":
+            # Name of the subfolder which contains the images, change this if needed
+            self.img_folder = "images"
+            # Name of the csv file which contains the bubble annotations, change if needed
+            self.csv_file = "annotations.csv"
 
         # Read the csv file which contains the annotations
         self.df = pd.read_csv(open(os.path.join(root, self.csv_file)))
@@ -39,27 +46,30 @@ class Custom_dataset(torch.utils.data.Dataset):
         # Get the name of files which are in the csv without duplicates
         files = self.df.file.unique()
         files.sort()
-        # in our case the images where homogeneous (same crop of the image) and from different
-        # source images. If this is not the case for new data it may make sense to shuffle the data
-        # for a random distribution of certain characteristics over the train and val set
-        # seed=123 # seed is needed since the data should always be shuffled in the same way
-        # random.Random(seed).shuffle(files)
+        if split == "test":
+            self.files = files
+        if split == "train" or split == "val":
+            # in our case the images where homogeneous (same crop of the image) and from different
+            # source images. If this is not the case for new data it may make sense to shuffle the data
+            # for a random distribution of certain characteristics over the train and val set
+            # seed=123 # seed is needed since the data should always be shuffled in the same way
+            # random.Random(seed).shuffle(files)
 
-        # define the number of validation cases, ~25% of the dataset
-        num_val_cases=len(files)//4
+            # define the number of validation cases, ~25% of the dataset
+            num_val_cases = len(files) // 4
 
-        # Select the files which are used for training and validation
-        # Here  just the last num_val_cases are chosen for validation and the rest for training
-        train_files = files[:-num_val_cases]
-        val_files = files[-num_val_cases:]
-        if split == "train":
-            self.files = train_files
-        elif split == "val" or split == "test":
-            self.files = val_files
+            # Select the files which are used for training and validation
+            # Here  just the last num_val_cases are chosen for validation and the rest for training
+            train_files = files[:-num_val_cases]
+            val_files = files[-num_val_cases:]
+            if split == "train":
+                self.files = train_files
+            elif split == "val":
+                self.files = val_files
 
         log.info("Solar_Hydrogen Dataset: {} Files found for {} set".format(len(self.files), split))
 
-    def __getitem__(self, idx:int):
+    def __getitem__(self, idx: int):
         """
         This function is called by the dataloader and returns the images as well as the label information
         I think you should not the need anything here if you adopt the script to new data, everything

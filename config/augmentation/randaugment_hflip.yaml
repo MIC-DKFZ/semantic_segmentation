@@ -1,14 +1,14 @@
 _target_: albumentations.Compose
 transforms:
   - _target_: src.augmentations.randaugment.RandAugment
-    N: ${augmentation_cfg.N}
-    M: ${augmentation_cfg.M}
+    N: ${augmentation.cfg.N}
+    M: ${augmentation.cfg.M}
     mode: 2
     p: 0.5
   - _target_: albumentations.HorizontalFlip
     p: 0.5
   - _target_: albumentations.Normalize
-    mean: ${augmentation_cfg.mean}
-    std: ${augmentation_cfg.std}
+    mean: ${augmentation.cfg.mean}
+    std: ${augmentation.cfg.std}
   - _target_: albumentations.pytorch.ToTensorV2
 

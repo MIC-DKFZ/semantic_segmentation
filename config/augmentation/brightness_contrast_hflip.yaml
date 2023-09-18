@@ -1,0 +1,14 @@
+_target_: albumentations.Compose
+transforms:
+  - _target_: albumentations.ColorJitter
+    brightness: 0.2
+    contrast: 0.2
+    saturation: 0.0
+    hue: 0.0
+    p: 0.5
+  - _target_: albumentations.HorizontalFlip
+    p: 0.5
+  - _target_: albumentations.Normalize
+    mean: ${augmentation.cfg.mean}
+    std: ${augmentation.cfg.std}
+  - _target_: albumentations.pytorch.ToTensorV2

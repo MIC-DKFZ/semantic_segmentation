@@ -1,7 +1,7 @@
 _target_: albumentations.Compose
 transforms:
   - _target_: albumentations.Normalize
-    mean: ${augmentation_cfg.mean}
-    std: ${augmentation_cfg.std}
+    mean: ${augmentation.cfg.mean}
+    std: ${augmentation.cfg.std}
   - _target_: albumentations.pytorch.ToTensorV2
 

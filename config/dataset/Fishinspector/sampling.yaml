@@ -1,38 +1,33 @@
-#@package _global_
-# afterwards you can handle your custom input arguments which are used to initialize the dataset
 dataset:
-  _target_: datasets.Fishinspector.Fishinspector.Fishinspector_sampling_dataset
-  root: ${paths.Fishinspector}               #the root if defined in config/environment/used_env.yaml
+  _target_: src.datasets.fishinspector.fishinspector.FishinspectorSamplingDataset
+  root: ${paths.Fishinspector}
   img_folder: imagesTr
   label_folder: labelsTr
-  fold: 0
-  num_classes: ${DATASET.NUM_CLASSES}
+  fold: ${fold}
+  num_classes: ${dataset.num_classes}
   batch_size: ${batch_size}
   random_sampling: 0.3
   num_sampling_points: 1000
-  patch_size: ${augmentation_cfg.crop_size}
-  scale_limit: ${augmentation_cfg.scale_limit}
+  patch_size: ${augmentation.cfg.crop_size}
+  scale_limit: ${augmentation.cfg.scale_limit}
 
-# DATASET is used to store information about the dataset which are needed during training
-DATASET:
-  max_size: (345,1024)
-  min_size: (190,776)
-  NAME: Fishinspector
-  NUM_CLASSES: 16
-  CLASS_LABELS:
-    - contour_LAT # 0
-    - yolk_DV # 1
-    - mouth_tip_LAT # 2
-    - eye_LAT # 3
-    - pericard_LAT #4
-    - eye1_DV # 5
-    - contour_DV # 6
-    - fin1_DV # 7
-    - otolith1_LAT # 8
-    - otolith2_LAT # 9
-    - eye2_DV # 10
-    - notochord_LAT # 11
-    - swimbladder_LAT # 12
-    - yolk_LAT # 13
-    - fin2_DV # 14
-    - pigmentation_LAT # 15
+name: Fishinspector
+num_classes: 16
+segmentation_type: multilabel
+class_labels:
+  - contour_LAT       # 0
+  - yolk_DV           # 1
+  - mouth_tip_LAT     # 2
+  - eye_LAT           # 3
+  - pericard_LAT      # 4
+  - eye1_DV           # 5
+  - contour_DV        # 6
+  - fin1_DV           # 7
+  - otolith1_LAT      # 8
+  - otolith2_LAT      # 9
+  - eye2_DV           # 10
+  - notochord_LAT     # 11
+  - swimbladder_LAT   # 12
+  - yolk_LAT          # 13
+  - fin2_DV           # 14
+  - pigmentation_LAT  # 15

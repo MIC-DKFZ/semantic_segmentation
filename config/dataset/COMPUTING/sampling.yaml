@@ -1,10 +1,10 @@
 #@package _global_
 dataset:
-  _target_: datasets.Base_Datasets.cross_validation_sampling.CV_Sampling_Dataset
+  _target_: src.datasets.Base_Datasets.cross_validation_sampling.CV_Sampling_Dataset
   root:     ${paths.COMPUTING}
   img_folder: "imagesTr"
   label_folder: "labelsTr"
-  fold: 0
+  fold: ${fold}
   num_classes: ${DATASET.NUM_CLASSES}
   patch_size: ${augmentation_cfg.crop_size}
   batch_size: ${batch_size}

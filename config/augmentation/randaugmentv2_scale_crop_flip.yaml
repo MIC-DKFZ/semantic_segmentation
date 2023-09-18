@@ -1,17 +1,17 @@
 _target_: albumentations.Compose
 transforms:
   - _target_: albumentations.RandomScale
-    scale_limit: ${augmentation_cfg.scale_limit}
+    scale_limit: ${augmentation.cfg.scale_limit}
     p: 1.0
   - _target_: albumentations.PadIfNeeded
-    min_height: ${augmentation_cfg.crop_size[0]}
-    min_width: ${augmentation_cfg.crop_size[1]}
+    min_height: ${augmentation.cfg.crop_size[0]}
+    min_width: ${augmentation.cfg.crop_size[1]}
   - _target_: albumentations.RandomCrop
-    height: ${augmentation_cfg.crop_size[0]}
-    width: ${augmentation_cfg.crop_size[1]}
+    height: ${augmentation.cfg.crop_size[0]}
+    width: ${augmentation.cfg.crop_size[1]}
   - _target_: src.augmentations.randaugment.RandAugment_light
-    N: ${augmentation_cfg.N}
-    M: ${augmentation_cfg.M}
+    N: ${augmentation.cfg.N}
+    M: ${augmentation.cfg.M}
     mode: 2
     p: 0.5
   - _target_: albumentations.HorizontalFlip
@@ -19,6 +19,6 @@ transforms:
   - _target_: albumentations.VerticalFlip
     p: 0.25
   - _target_: albumentations.Normalize
-    mean: ${augmentation_cfg.mean}
-    std: ${augmentation_cfg.std}
+    mean: ${augmentation.cfg.mean}
+    std: ${augmentation.cfg.std}
   - _target_: albumentations.pytorch.ToTensorV2

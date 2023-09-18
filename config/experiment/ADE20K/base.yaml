@@ -1,0 +1,33 @@
+# @package _global_
+
+# Define which Dataset and which augmentation pipeline to use
+defaults:
+  - override /augmentation@augmentation.train: TODO
+  - override /augmentation@augmentation.val: TODO
+  - override /augmentation@augmentation.test: TODO
+  - override /dataset: ADE20K/base
+
+# Configure the augmentation pipeline
+augmentation_cfg:
+  scale_limit: X
+  crop_size: X
+  pad_size: X
+  pad_mode: X #cv2.BORDER_CONSTANT, cv2.BORDER_REPLICATE, cv2.BORDER_REFLECT, cv2.BORDER_WRAP, cv2.BORDER_REFLECT_101
+  pad_val: X
+  pad_mask: X
+  mean: [ 0.485, 0.456, 0.406 ]
+  std: [ 0.229, 0.224, 0.225 ]
+  N: 3
+  M: 3
+
+#Hyperparameters for Cityscapes Dataset
+batch_size: X                   # batch size per gpu for training
+val_batch_size: X #${batch_size}   # batch size per gpu for validation
+epochs: X                     # number of epochs
+lr: X                        # learning rate for training (0.01445439770745928)
+momentum: 0.9                   # momentum for optimizer
+weight_decay: 0.0005            # wd for optimizer
+loss:
+  function: [ "CE", "CE", "CE", "CE"]     # list of lossfunctions
+  val_function: [ "CE", "CE", "CE", "CE"]     # list of lossfunctions
+  weight:   [1.0, 0.4, 0.05, 0.05]            # corresponding weights for each loss function

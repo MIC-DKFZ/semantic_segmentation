@@ -1,10 +1,8 @@
-#@package _global_
+name: FCN
+pretrained: True
 model:
-  _target_: models.FCN.get_seg_model #torchvision.models.segmentation.fcn_resnet101
-  num_classes: ${DATASET.NUM_CLASSES}
-  pretrained: True
+  _target_: src.models.FCN.get_seg_model #torchvision.models.segmentation.fcn_resnet101
+  num_classes: ${dataset.num_classes}
+  pretrained: ${model.pretrained}
   aux_loss: True
   backbone: resnet101 #resnet50 or resnet101
-
-MODEL:
-  NAME: FCN

@@ -14,37 +14,6 @@ from lightning.pytorch.callbacks.progress.tqdm_progress import convert_inf, _upd
 from src.utils.config_utils import first_from_dict
 
 
-class SemSegPredictionWriter(BasePredictionWriter):
-    def __init__(self, output_dir, write_interval="batch", save_probabilities=False):
-        super().__init__(write_interval)
-        self.output_dir = output_dir
-        self.save_probabilities = save_probabilities
-
-        os.makedirs(self.output_dir, exist_ok=True)
-
-    def save_softmax(self, pred_sm, name):
-        np.savez(join(self.output_dir, name + ".npz"), probabilities=pred_sm)
-
-    def save_prediction(self, pred, name):
-        cv2.imwrite(join(self.output_dir, name + ".png"), pred)
-
-    def write_on_batch_end(
-        self, trainer, pl_module, prediction, batch_indices, batch, batch_idx, dataloader_idx
-    ):
-        preds, names = prediction
-        preds_sm = first_from_dict(preds)
-        preds = preds_sm.argmax(1)
-        preds_sm = F.softmax(preds_sm, dim=1) if self.save_probabilities else preds_sm
-
-        preds = preds.detach().cpu().numpy()
-        preds_sm = preds_sm.detach().cpu().numpy()
-
-        for name, pred, pred_sm in zip(names, preds, preds_sm):
-            self.save_prediction(pred, name)
-            if self.save_probabilities:
-                self.save_softmax(pred_sm, name)
-
-
 class customModelCheckpoint(ModelCheckpoint):
     """
     Small modification on the ModelCheckpoint from pytorch lightning for renaming the last epoch

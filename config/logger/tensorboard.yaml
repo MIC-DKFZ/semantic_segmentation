@@ -1,5 +1,12 @@
 _target_ : lightning.pytorch.loggers.tensorboard.TensorBoardLogger
-save_dir: ${OUTPUT_DIR}
+save_dir: ${logging.output_dir}
 name: ""
 version: ""
 default_hp_metric: False
+
+
+#_target_ : lightning.pytorch.loggers.tensorboard.TensorBoardLogger
+#save_dir: ${OUTPUT_DIR}
+#name: ""
+#version: ""
+#default_hp_metric: False

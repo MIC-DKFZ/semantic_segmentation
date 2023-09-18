@@ -1,3 +1,0 @@
-#@package _global_
-trainermodule:
-  _target_: trainers.Semantic_Segmentation_Multiclass_Trainer.SegMCModel

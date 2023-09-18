@@ -23,9 +23,7 @@ log = get_logger(__name__)
 set_lightning_logging()
 
 
-def show_data(
-    overrides_cl: list, augmentation: str, split: str, segmentation: str, axis: int
-) -> None:
+def show_data(overrides_cl: list, augmentation: str, split: str, axis: int) -> None:
     """
     Visualizing a Dataset
         Initializing the dataset defined in the config
@@ -39,8 +37,6 @@ def show_data(
         which augmentations to use (train,val,test or None)
     split : str
         which split of the dataset to use
-    segmentation : str
-        which type of segmentation is used (semantic, instance or multilabel)
     axis : int
         show img and gt side by side or on top of each other
     """
@@ -50,7 +46,7 @@ def show_data(
 
     # Define Colormap
     color_map = "viridis"
-    cmap = np.array(cm.get_cmap(color_map, cfg.DATASET.NUM_CLASSES).colors * 255, dtype=np.uint8)[
+    cmap = np.array(cm.get_cmap(color_map, cfg.dataset.num_classes).colors * 255, dtype=np.uint8)[
         :, 0:3
     ]
 
@@ -65,7 +61,7 @@ def show_data(
         transforms = hydra.utils.instantiate(cfg.augmentation.test)
 
     # Instantiating Dataset
-    dataset = hydra.utils.instantiate(cfg.dataset, split=split, transforms=transforms)
+    dataset = hydra.utils.instantiate(cfg.dataset.dataset, split=split, transforms=transforms)
 
     # Check if data is normalized, if yes redo this during visualization of the image
     mean = None
@@ -77,7 +73,9 @@ def show_data(
             break
 
     # Create Visualizer Class
-    visualizer = Visualizer(dataset, cmap, mean=mean, std=std, segmentation=segmentation, axis=axis)
+    visualizer = Visualizer(
+        dataset, cmap, mean=mean, std=std, segmentation=cfg.dataset.segmentation_type, axis=axis
+    )
 
     # Create the cv2 Window
     cv2.namedWindow("Window", cv2.WINDOW_NORMAL)
@@ -88,6 +86,7 @@ def show_data(
     cv2.createTrackbar("alpha", "Window", 0, 100, visualizer.update_alpha)
 
     # Load first image to get the number of channels
+    print(dataset)
     img = dataset[0][0]
     if len(img.shape) == 2:
         channels = 2
@@ -138,12 +137,6 @@ if __name__ == "__main__":
         help="which split to use: train (by default), val or test",
     )
     parser.add_argument(
-        "--segmentation",
-        type=str,
-        default="semantic",
-        help="semantic, instance or multilabel, depending on the dataset",
-    )
-    parser.add_argument(
         "--axis",
         type=int,
         default=1,
@@ -152,7 +145,6 @@ if __name__ == "__main__":
     args, overrides = parser.parse_known_args()
     augmentation = args.augmentation
     split = args.split
-    segmentation = args.segmentation
     axis = args.axis
 
-    show_data(overrides, augmentation, split, segmentation, axis)
+    show_data(overrides_cl=overrides, augmentation=augmentation, split=split, axis=axis)

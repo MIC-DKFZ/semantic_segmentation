@@ -347,27 +347,19 @@ afterwards setting up its config file.
 
 2. **Setting up your model config**
     - Create a *custom_model.yaml* file in *config/model/*. Therby the name of the file defines how the model can be select over hydras commandline syntax.
-   For the content of the *.yaml* file adopt the following dummy. Node that *MODEL.NAME* is required.
+   For the content of the *.yaml* file adopt the following dummy.
 
-````yaml 
-#@package _global_
-# model is used to initialize your custom model, 
-# _target_: should point to your model class or a getter function which returns your model
-# afterwards you can handle your custom input arguments which are used to initialize the model
+````yaml
+name: ModelName           # Required for logging
+arg1: ...                 # Store some custom stuff
+pretrained: True          # e.g. if pretrained model should be used
 model:
    _target_: models.my_model.get_model     # if you want to use a getter function to load weights 
                                            # or initialize you model
    #_target_: models.my_model.Model        # if you want to load the Model directly
-   num_classes:  ${DATASET.NUM_CLASSES}    # example arguments, for example the number of classes
-   pretrained: ${MODEL.PRETRAINED}         # of if pretrained weights should be used
-   arg1: ...
-# model is used to store information which are needed for your model
-MODEL:
-  # Required model arguments
-  NAME: MyModel            # Name of the model is needed for logging
-  # Your arguments, for example somethinnk like that
-  PRETRAINED: True         # e.g. a parameter to indicate if pretrained weights should be used 
-  PRETRAINED_WEIGHTS: /pretrained/weights.pth  # give the path to the weights      
+   num_classes:  ${dataset.num_classes}    # example arguments, for example the number of classes
+   pretrained: ${model.pretrained}         # of if pretrained weights should be used
+   arg1: ...  
 ````
 3. **Train your model**
    ````shell
@@ -461,30 +453,18 @@ afterwards setting up its config file.
       adopt the following dummy:
 
    ````yaml 
-   #@package _global_
-   # dataset is used to initialize your custom dataset, 
-   # _target_: should point to your dataset class
-   # afterwards you can handle your custom input arguments which are used to initialize the dataset
+   name: MyDataset                  # Name is needed for logging
+   num_classes: 2                   # Number of classes in the dataset
+   segmentation_type: semantic      # Typ of segmentation, one of - semantic, instance or multilabel
+   class_labels:                    # Name for each class
+   - class_1
+   - class_2
    dataset:
-     _target_: datasets.MyDataset.Custom_dataset 
-     root: /home/.../Datasets/my_dataset     #the root to the data as an example input
-     #root: ${paths.my_dataset}               #the root if defined in config/environment/used_env.yaml
-     input1: ...                    #All your other input arguments
+     _target_: datasets.MyDataset.Custom_dataset  # path to dataset class
+     root: /home/.../Datasets/my_dataset          #the root to the data as an example input
+     #root: ${paths.my_dataset}                   #the root if defined in config/environment/used_env.yaml
+     input1: ...                                  #All your other input arguments
      input2: ...
-   # DATASET is used to store information about the dataset which are needed during training
-   DATASET:
-     # Required dataser arguments
-     NAME:            # Used for the logging directory
-     NUM_CLASSES:     # Needed for defining the model and the metrics
-     # (Optional) but needed if ignore index should be used
-     IGNORE_INDEX:    # Needed for the loss function, if no ignore indes set to 255 or another number
-                      # which do no occur in your dataset 
-     # (Optional) needed if weighted lossfunctions are used
-     CLASS_WEIGHTS: [ 0.9, 1.1, ...]                
-     # (Optional) can be used for nicer for logging 
-     CLASS_LABELS:
-        - class1
-        - class2 ...
    ````
 3. **Train on your Dataset**
    ````shell
@@ -890,16 +870,14 @@ The final score is composed of first calculating the score for each class and th
 By default only this final score is returned and logged, if additionally the score for each class is required use  **mean_IoU_Class** or **mean_Dice_Class**.
 Some additional configurations are provided, adopt them in the config files or override them from
 commandline:
-- **METRIC.NAME**: Name of the metric that should be optimized. The name has to be one the metrics which is logged to tensorboard.
+- **name**: Name of the metric that should be optimized. The name has to be one the metrics which is logged to tensorboard.
 If a step-wise or image-wise computed metric should be optimized, the "_stepwise" or "_per_image" postfix has to be used (e.g. meanDice_stepwise).
 If the metric should be optimized for a single class, add the class name (for mean_Dice_Class and mean_IoU_Class) e.g. meanDice_class1. 
-- **METRIC.call_global**: The metric is updated in each step and computed once at the end of each epoch. 
+- **metric_global**: The metric is updated in each step and computed once at the end of each epoch. 
 True by default.
-- **METRIC.call_stepwise**: The metric is computed in each step and averaged at the end of each epoch (avg. over all batches).
-False by default. Can be combined with *METRIC.call_global* but only one of *METRIC.call_stepwise* and *METRIC.call_per_img* can be True.
-- **METRIC.call_per_img**: The metric is computed for each image and averaged at the end of each epoch (avg. over all images).
-False by default. Can be combined with *METRIC.call_global* but only one of *METRIC.call_stepwise* and *METRIC.call_per_img* can be True.
-- **METRIC.train_metric**: True or False (False by default), provides the possibility to have a separate metric during
+- **metric_per_img**: The metric is computed for each image and averaged at the end of each epoch (avg. over all images).
+False by default. Can be combined with *metric_global*.
+- **train_metric**: True or False (False by default), provides the possibility to have a separate metric during
   training.
 
 ````shell
@@ -907,7 +885,6 @@ python training.py metric=mean_IoU         # mean Intersection over Onion (IoU)
 python training.py metric=mean_Dice        # mean Dice score
 python training.py metric=mean_IoU_Class   # mean IoU with additionally logging scores for each class
 python training.py metric=mean_Dice_Class  # mean Dice with additionally logging scores for each class
-python training.py METRIC.call_stepwise=True METRIC.train_metric=True  # change metric settings
 ````
 
 </p>
@@ -962,22 +939,19 @@ class CustomMetric(Metric):
 After implementing the metric you have to set up the config of the metric.
 Therefore create a *my_metric.yaml* in *config/metric/* and use the following dummy to define the
 metric.
-*METRIC.NAME* should be the name of your target metric which should be one of the metrics defined in
-METRIC.METRICS(if the metric returns a single tensor), if the metric returns a dict *METRIC.NAME* should be a key in this dict.
+*name* should be the name of your target metric which should be one of the metrics defined in
+metrics(if the metric returns a single tensor), if the metric returns a dict *name* should be a key in this dict.
 The remaining Parameters should be set as described in the *Configure* section above
 
 `````yaml
 config/metric/my_metric.yaml
 ─────────────────────────────
-#@package _global_
-METRIC:
-  NAME: mymetric_name          # which metric to optimize - should be on of the names defined in METRIC.METRICS
-  train_metric: False    # If also a train metric is wanted (in addition to a validation metric)
-  call_global: True      # If True metric is updated in each step and computed once at the end of the epoch
-  call_stepwise: False   # If True metric is computed in each step (usually one batch) and averaged over all steps - exclusively with call_per_img but can be combined with call_global.
-  call_per_img: False    # If True metric is computed for each image and averaged over all images - exclusively with call_stepwise but can be combined with call_global.
+name: mymetric_name          # which metric to optimize - should be on of the names defined in METRIC.METRICS
+train_metric: False    # If also a train metric is wanted (in addition to a validation metric)
+metric_global: True      # If True metric is updated in each step and computed once at the end of the epoch
+metric_per_img: False    # If True metric is computed for each image and averaged over all images - exclusively with call_stepwise but can be combined with call_global.
 
-  METRICS:
+metrics:
     mymetric_name: # define the name of the metric, needed for logging and to find the target metric
       _target_: src.metric.myMetricClass  # path to the metric Class
       ...

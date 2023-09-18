@@ -4,6 +4,19 @@ import torch.nn as nn
 import numpy as np
 
 
+class BCEWithLogitsLossPartlyLabeled(torch.nn.BCEWithLogitsLoss):
+    def __init__(self):
+        super().__init__(reduction="none")
+
+    def forward(self, predicted, target, map=None):
+        loss = super().forward(predicted, target.to(torch.float16))
+        loss = torch.mean(loss, dim=(-2, -1))
+        if map is not None:
+            return torch.sum(loss * map)
+        else:
+            return torch.sum(loss)
+
+
 class BCE_PL(nn.Module):
     def __init__(self):
         super(BCE_PL, self).__init__()
@@ -12,11 +25,9 @@ class BCE_PL(nn.Module):
     def forward(self, predicted, target, map=None):
         loss = self.lf(predicted, target)
         loss = torch.mean(loss, dim=(-2, -1))
-
         if map is not None:
             return torch.sum(loss * map)
         else:
-
             return torch.sum(loss)
 
 

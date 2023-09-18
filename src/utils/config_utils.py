@@ -53,12 +53,12 @@ def has_not_empty_attr(obj: Any, attr: str) -> bool:
 
 
 def get_CV_ensemble_config(ckpt_dir, ckpt_type="best"):
-    folds = np.unique([f for f in os.listdir(ckpt_dir) if "fold_" in f])
+    folds = np.unique([f for f in os.listdir(ckpt_dir) if "fold_" in f and "fold_all" not in f])
     ckpts = []
     for fold in folds:
         ckpt = glob.glob(join(ckpt_dir, fold, "*"))
         if ckpt != []:
-            ckpts.append(ckpt[0])
+            ckpts.append(ckpt[-1])
     return {"_target_": "models.model_ensemble.Ensemble", "ckpts": ckpts, "ckpt_type": ckpt_type}
 
 
@@ -78,8 +78,8 @@ def build_predict_config(file, overrides_cl):
                 overrides=overrides_ckpt + overrides_test + overrides_cl,
             )
     # Causes since hydra.runtime parameters are not initialized using hydra.initialize
-    cfg.ORG_CWD = ""
-    cfg.OUTPUT_DIR = ""
+    cfg.logging.output_dir = ""
+    # cfg.OUTPUT_DIR = ""
     return cfg
 
 

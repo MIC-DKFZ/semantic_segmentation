@@ -50,8 +50,8 @@ The output will be saved in *dataset_stats/dataset_name/*. If no output is wante
   - --mask_only: Flag for only analyse Mask Data
   - --supress_output: Flag to supress creation of an output directory and output files
     ````shell
-    python tools/dataset_stats.py dataset=<dataset.name>
-    pyhton tools/dataset_stats.py dataset=Cityscapes
+    python tools/dataset_stats_old.py dataset=<dataset.name>
+    pyhton tools/dataset_stats_old.py dataset=Cityscapes
     ````
 
 ### lr_finder.py 

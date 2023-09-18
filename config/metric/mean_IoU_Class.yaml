@@ -1,13 +1,10 @@
-#@package _global_
-METRIC:
-  NAME: meanIoU           # which metric to optimize - mean IoU over the classes
-  train_metric: False    # If also a train metric is wanted (in addition to a validation metric)
-  call_global: True      # If True metric is updated in each step and computed once at the end of the epoch
-  call_stepwise: False   # If True metric is computed in each step (usually one batch) and averaged over all steps - exclusively with call_per_img
-  call_per_img: False    # If True metric is computed for each image and averaged over all images - exclusively with call_stepwise
-  METRICS:
-    meanIoU:              # Define the Metric
-      _target_: src.metric.IoU.IoU     # Metric Class
-      num_classes: ${DATASET.NUM_CLASSES}      # Number if Classes in the Dataset
-      labels: ${DATASET.CLASS_LABELS}          # Class Labels in the Dataset
-      per_class: True     # Return the mean Metric with or without the Metric for each Class
+name: meanIoU                 # Name of the metric to optimize - is needed for logging and checkpointing
+train_metric: False       # If also a train metric is wanted (in addition to a validation metric)
+metric_per_img: False     # If True metric is computed for each image and averaged over all images
+metric_global: True       # If True metric is updated in each step and computed once at the end of the epoch
+metrics:
+  meanIoU: # Define the Metric
+    _target_: src.metric.iou.IoU     # Metric Class
+    num_classes: ${dataset.num_classes}      # Number of Classes in the Dataset
+    labels: ${dataset.class_labels}          # Class Labels in the Dataset
+    per_class: True     # Return the mean Metric with or without the Metric for each Class

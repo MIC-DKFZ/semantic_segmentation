@@ -1,14 +1,12 @@
-#@package _global_
-CALLBACKS:
-  time_callback:
-    _target_: src.callbacks.callbacks.TimeCallback
-  lr_monitor:
-    _target_: lightning.pytorch.callbacks.LearningRateMonitor
-    logging_interval: 'step'
-  tqdm_progressbar:
-    #_target_: pytorch_lightning.callbacks.progress.TQDMProgressBar
-    _target_: src.callbacks.callbacks.customTQDMProgressBar
-    refresh_rate: 1
-  model_summary:
-    _target_: lightning.pytorch.callbacks.ModelSummary
-    max_depth: 2
+time_callback:
+  _target_: src.callbacks.callbacks.TimeCallback
+lr_monitor:
+  _target_: lightning.pytorch.callbacks.LearningRateMonitor
+  logging_interval: 'step'
+tqdm_progressbar:
+  #_target_: pytorch_lightning.callbacks.progress.TQDMProgressBar
+  _target_: src.callbacks.callbacks.customTQDMProgressBar
+  refresh_rate: 1
+model_summary:
+  _target_: lightning.pytorch.callbacks.ModelSummary
+  max_depth: 2

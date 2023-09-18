@@ -1,9 +1,9 @@
 #@package _global_
 # afterwards you can handle your custom input arguments which are used to initialize the dataset
 dataset:
-  _target_: datasets.COMPUTING.COMPUTING.Computing_dataset
+  _target_: src.datasets.COMPUTING.COMPUTING.Computing_dataset
   root: ${paths.COMPUTING}               #the root if defined in config/environment/used_env.yaml
-  fold: 0
+  fold: ${fold}
 
 # DATASET is used to store information about the dataset which are needed during training
 DATASET:

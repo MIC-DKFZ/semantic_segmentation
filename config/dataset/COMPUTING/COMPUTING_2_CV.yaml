@@ -1,9 +1,9 @@
 #@package _global_
 # afterwards you can handle your custom input arguments which are used to initialize the dataset
 dataset:
-  _target_: datasets.Dataset.Base_Dataset
+  _target_: src.datasets.Dataset.Base_Dataset
   root: ${paths.COMPUTING}               #the root if defined in config/environment/used_env.yaml
-  fold: 0
+  fold: ${fold}
   patch_size: [640,640]
   img_folder: imagesTr
   mask_folder: labelsTr

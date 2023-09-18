@@ -11,7 +11,6 @@ logging.basicConfig(
 )
 
 import hydra
-
 import torch
 import numpy as np
 import cv2
@@ -28,9 +27,7 @@ log = get_logger(__name__)
 set_lightning_logging()
 
 
-def show_prediction(
-    overrides_cl: list, augmentation: str, split: str, segmentation: str, axis: int
-) -> None:
+def show_prediction(overrides_cl: list, augmentation: str, split: str, axis: int) -> None:
     """
     Visualizing a Models Predictions
         Initializing the dataset defined in the config
@@ -46,8 +43,6 @@ def show_prediction(
         which augmentations to use (train,val,test or None)
     split : str
         which split of the dataset to use
-    segmentation : str
-        which type of segmentation is used (semantic, instance or multilabel)
     axis : int
         show img and gt side by side or on top of each other
 
@@ -65,7 +60,7 @@ def show_prediction(
 
     # Define Colormap
     color_map = "viridis"
-    cmap = np.array(cm.get_cmap(color_map, cfg.DATASET.NUM_CLASSES).colors * 255, dtype=np.uint8)[
+    cmap = np.array(cm.get_cmap(color_map, cfg.dataset.num_classes).colors * 255, dtype=np.uint8)[
         :, 0:3
     ]
 
@@ -75,22 +70,22 @@ def show_prediction(
     # Load the config from the Checkpoint
     if ensemble_CV:
         # All runs inside CV have the same config (exept dataset.fold which is not relevant here)
-        file = glob.glob(join(cfg.ckpt_dir, "fold_*", "*", "hydra", "overrides.yaml"))[0]
+        file = glob.glob(join(cfg.ckpt_dir, "fold_*", "*", ".hydra", "overrides.yaml"))[0]
     else:
-        file = join(cfg.ckpt_dir, "hydra", "overrides.yaml")
+        file = join(cfg.ckpt_dir, ".hydra", "overrides.yaml")
     cfg = build_predict_config(file, overrides)
 
     # Instantiating Model and load weights from a Checkpoint
     if ensemble_CV:
         cfg.model = get_CV_ensemble_config(cfg.ckpt_dir)
-        model = hydra.utils.instantiate(cfg.trainermodule, model_config=cfg, _recursive_=False)
+        model = hydra.utils.instantiate(cfg.trainermodule, cfg=cfg, _recursive_=False)
     else:
         ckpt_file = glob.glob(os.path.join(cfg.ckpt_dir, "checkpoints", "best_*"))[0]
         log.info("Checkpoint Directory: %s", ckpt_file)
 
         cfg.trainermodule._target_ += ".load_from_checkpoint"
         model = hydra.utils.instantiate(
-            cfg.trainermodule, ckpt_file, strict=True, model_config=cfg, _recursive_=False
+            cfg.trainermodule, ckpt_file, strict=True, cfg=cfg, _recursive_=False
         )
     model = model.cuda()
     model.eval()
@@ -106,8 +101,7 @@ def show_prediction(
         transforms = hydra.utils.instantiate(cfg.augmentation.test)
 
     # Instantiating Dataset
-    dataset = hydra.utils.instantiate(cfg.dataset, split=split, transforms=transforms)
-
+    dataset = hydra.utils.instantiate(cfg.dataset.dataset, split=split, transforms=transforms)
     # Check if data is normalized, if yes redo this during visualization of the image
     mean = None
     std = None
@@ -119,7 +113,13 @@ def show_prediction(
 
     # Create Visualizer Class
     visualizer = Visualizer(
-        dataset, cmap, model, mean=mean, std=std, segmentation=segmentation, axis=axis
+        dataset,
+        cmap,
+        model,
+        mean=mean,
+        std=std,
+        segmentation=cfg.dataset.segmentation_type,
+        axis=axis,
     )
 
     # Create the cv2 Window
@@ -130,7 +130,7 @@ def show_prediction(
     cv2.createTrackbar("Image ID", "Window", 0, len(dataset) - 1, visualizer.update_window)
 
     cv2.createTrackbar("alpha", "Window", 50, 100, visualizer.update_alpha)
-    if segmentation == "semantic":
+    if cfg.dataset.segmentation_type == "semantic":
         cv2.createTrackbar("correctness", "Window", 0, 100, visualizer.update_alpha)
 
     # Load first image to get the number of channels
@@ -193,12 +193,6 @@ if __name__ == "__main__":
         help="which split to use: train, val or test (by default)",
     )
     parser.add_argument(
-        "--segmentation",
-        type=str,
-        default="semantic",
-        help="semantic, instance or multilabel, depending on the dataset",
-    )
-    parser.add_argument(
         "--axis",
         type=int,
         default=1,
@@ -207,7 +201,6 @@ if __name__ == "__main__":
     args, overrides = parser.parse_known_args()
     augmentation = args.augmentation
     split = args.split
-    segmentation = args.segmentation
     axis = args.axis
 
-    show_prediction(overrides, augmentation, split, segmentation, axis)
+    show_prediction(overrides_cl=overrides, augmentation=augmentation, split=split, axis=axis)

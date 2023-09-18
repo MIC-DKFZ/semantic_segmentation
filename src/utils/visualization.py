@@ -1,12 +1,14 @@
 from PIL import Image
 import torch
 import numpy as np
+import numpy.typing as npt
 import cv2
 from typing import Any
 from lightning import LightningModule
 from torch.utils.data import Dataset
 
 from src.utils.utils import get_logger
+from src.utils.config_utils import first_from_dict
 
 log = get_logger(__name__)
 
@@ -88,7 +90,7 @@ def show_img(
     return convert_numpy_to(img_np, output_type)
 
 
-def show_mask_sem_seg(mask: torch.Tensor, cmap: list, output_type: str = "numpy") -> Any:
+def show_mask_sem_seg(mask: torch.Tensor, cmap: npt.ArrayLike, output_type: str = "numpy") -> Any:
     """
     Visualize a Semantic Segmentation mask
     Create visualization of a tensor by colour encode classes with the given cmap
@@ -97,8 +99,8 @@ def show_mask_sem_seg(mask: torch.Tensor, cmap: list, output_type: str = "numpy"
     Parameters
     ----------
     mask : torch.Tensor
-    cmap : list
-        list with len(num_classes) and encoding each class to a RBB value (0-255)
+    cmap : Any
+        list like (np.array,torch.tensor) with len(num_classes) and encoding each class to a RBB value (0-255)
     output_type : str
 
     Returns
@@ -158,7 +160,7 @@ def show_mask_inst_seg(
     return convert_numpy_to(fig, output_type)
 
 
-def show_mask_multilabel_seg(masks, cmap, output_type: str = "numpy", alpha=0.5):
+def show_mask_multilabel_seg(masks, cmap: npt.ArrayLike, output_type: str = "numpy", alpha=0.5):
     """
     Visualize a multilabel Semantic Segmentation mask
     Create visualization of a tensor by colour encode classes with the given cmap
@@ -177,6 +179,7 @@ def show_mask_multilabel_seg(masks, cmap, output_type: str = "numpy", alpha=0.5)
     -------
     np.ndarry, torch.tensor or PIL.Image, dependent on desired output_type
     """
+
     masks_np = np.array(masks)
     c, w, h = masks_np.shape
     fig = np.zeros((w, h, 3), dtype=np.uint8)
@@ -209,7 +212,7 @@ def show_prediction_inst_seg(pred, img_shape, output_type="numpy", alpha=0.5):
     """
     # pred = [{k: v.detach().cpu() for k, v in t.items()} for t in pred]
     # pred = list(p.detach().cpu() for p in pred)
-    pred = pred[0]
+    pred = pred
     masks = pred["masks"].squeeze(1)
     boxes = pred["boxes"]
     scores = pred["scores"]
@@ -329,6 +332,10 @@ class Visualizer:
 
         # Load Image and Mask, transform image and colorize the mask
         img, mask = self.dataset[img_id][:2]
+        if isinstance(img, dict):
+            img = first_from_dict(img)
+        if isinstance(mask, dict):
+            mask = first_from_dict(mask)
 
         self.img_np = show_img(img, self.mean, self.std, "numpy")
         if self.segmentation == "semantic":
@@ -349,7 +356,7 @@ class Visualizer:
                 self.cor = self.viz_correctness(pred, mask)
             elif self.segmentation == "instance":
                 pred = self.model(img.unsqueeze(0).cuda())[0]
-                pred = [{k: v.detach().cpu() for k, v in pred.items()}]
+                pred = {k: v.detach().cpu() for k, v in pred.items()}
                 self.pred = show_prediction_inst_seg(pred, img_shape=img.shape[-2:])
 
             elif self.segmentation == "multilabel":

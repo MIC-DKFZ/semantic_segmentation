@@ -1,3 +1,4 @@
+from typing import List
 import argparse
 import logging
 import sys
@@ -6,29 +7,34 @@ from os.path import join
 import glob
 
 logging.basicConfig(
-    # level=logging.INFO,
+    level=logging.INFO,
     stream=sys.stdout,
     format="[%(asctime)s][%(name)s][%(levelname)s] - %(message)s",
 )
 
-import hydra
-import torch
-from torch.utils.data import DataLoader
-import lightning as L
 import numpy as np
 import cv2
+import hydra
+from omegaconf import DictConfig
+from torch.utils.data import Dataset, DataLoader
+import lightning as L
+from lightning import LightningModule, Callback, Trainer
+import albumentations
 
-from src.utils.config_utils import has_not_empty_attr, get_CV_ensemble_config
+from src.callbacks.prediction_writer import (
+    SemSegPredictionWriter,
+    InstSegPredictionWriter,
+    SemSegMLPredictionWriter,
+)
+from src.utils.config_utils import has_not_empty_attr, get_CV_ensemble_config, build_predict_config
 from src.utils.utils import get_logger, set_lightning_logging
-from src.callbacks.callbacks import SemSegPredictionWriter
-
 
 log = get_logger(__name__)
 set_lightning_logging()
 
 
-class Prediction_Dataset(torch.utils.data.Dataset):
-    def __init__(self, root, transforms):
+class Prediction_Dataset(Dataset):
+    def __init__(self, root: str, transforms: albumentations.augmentations.transforms):
         self.img_files = glob.glob(join(root, "*"))
         self.transforms = transforms
 
@@ -52,7 +58,7 @@ class Prediction_Dataset(torch.utils.data.Dataset):
             img = transformed["image"]
         return img
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int):
         name = self.img_files[idx].rsplit("/")[-1].rsplit(".")[0]
         img = self.load_img(idx)
         img = self.apply_transforms(img)
@@ -63,7 +69,11 @@ class Prediction_Dataset(torch.utils.data.Dataset):
 
 
 def predict(
-    input_dir: str, output_dir: str, overrides: list, save_probabilities: bool = False
+    input_dir: str,
+    output_dir: str,
+    overrides: list,
+    save_probabilities: bool = False,
+    save_visualsation: bool = False,
 ) -> None:
     """
     Compose config from config/testing.yaml with overwrites from the checkpoint and the overwrites
@@ -90,54 +100,79 @@ def predict(
         b) path to output folder of a cross validation, folder has to contain at least one fold_x
            e.g. .../logs/Cityscapes/hrnet_v1/run__batch_size_3/
     """
-    # Instantiating Hydra and compose cfg
+    # Config - Instantiating Hydra and compose cfg
     hydra.initialize(config_path="config", version_base="1.3")
-    cfg = hydra.compose(config_name="testing", overrides=overrides)
+    cfg: DictConfig = hydra.compose(config_name="testing", overrides=overrides)
 
-    # Check if cfg.ckpt_dir points to a single model or a CV folder
-    ensemble_CV = any([x.startswith("fold_") for x in os.listdir(cfg.ckpt_dir)])
+    # Config - Check if cfg.ckpt_dir points to a single model or a CV folder
+    ensemble_CV: bool = any([x.startswith("fold_") for x in os.listdir(cfg.ckpt_dir)])
 
-    # Load the config from the Checkpoint
+    # Config - Load the config from the Checkpoint
     if ensemble_CV:
         # All runs inside CV have the same config (exept dataset.fold which is not relevant here)
-        file = glob.glob(join(cfg.ckpt_dir, "fold_*", "*", "hydra", "overrides.yaml"))[0]
+        file: str = glob.glob(join(cfg.ckpt_dir, "fold_*", "*", ".hydra", "overrides.yaml"))[0]
     else:
-        file = join(cfg.ckpt_dir, "hydra", "overrides.yaml")
-    cfg = build_predict_config(file, overrides)
+        file: str = join(cfg.ckpt_dir, ".hydra", "overrides.yaml")
+    cfg: DictConfig = build_predict_config(file, overrides)
 
-    # Instantiating Model and load weights from a Checkpoint
+    # Model - Instantiating and load weights from a Checkpoint
     if ensemble_CV:
-        cfg.model = get_CV_ensemble_config(cfg.ckpt_dir)
-        model = hydra.utils.instantiate(cfg.trainermodule, model_config=cfg, _recursive_=False)
+        cfg.model: DictConfig = get_CV_ensemble_config(cfg.ckpt_dir)
+        model: LightningModule = hydra.utils.instantiate(
+            cfg.trainermodule, model_config=cfg, _recursive_=False
+        )
     else:
         ckpt_file = glob.glob(os.path.join(cfg.ckpt_dir, "checkpoints", "best_*"))[0]
         log.info("Checkpoint Directory: %s", ckpt_file)
 
         cfg.trainermodule._target_ += ".load_from_checkpoint"
         model = hydra.utils.instantiate(
-            cfg.trainermodule, ckpt_file, strict=True, model_config=cfg, _recursive_=False
+            cfg.trainermodule, ckpt_file, strict=True, cfg=cfg, _recursive_=False
         )
 
-    # Instantiating Augmentations
-    transforms = hydra.utils.instantiate(cfg.augmentation.test)
+    # Augmentations - Instantiating Albumentations Augmentations
+    transforms: albumentations.augmentations.transforms = hydra.utils.instantiate(
+        cfg.augmentation.test
+    )
 
-    # Instantiating Dataset
-    dataset = Prediction_Dataset(input_dir, transforms)
-    dataloader = DataLoader(dataset, shuffle=False, batch_size=cfg.val_batch_size, num_workers=8)
+    # Dataset - Instantiating
+    dataset: Dataset = Prediction_Dataset(input_dir, transforms)
+    dataloader: DataLoader = DataLoader(
+        dataset, shuffle=False, batch_size=cfg.val_batch_size, num_workers=cfg.num_workers
+    )
 
-    # Instantiating Prediction Writer Callback
-    callbacks = [SemSegPredictionWriter(output_dir, save_probabilities=save_probabilities)]
-    # Instantiating remaining Callbacks
-    for _, cb_conf in cfg.CALLBACKS.items():
+    # Callback - Instantiating Prediction Writer Callback
+    if cfg.dataset.segmentation_type == "semantic":
+        callbacks: List[Callback] = [
+            SemSegPredictionWriter(output_dir, save_probabilities=save_probabilities)
+        ]
+    elif cfg.dataset.segmentation_type == "instance":
+        callbacks: List[Callback] = [
+            InstSegPredictionWriter(output_dir, save_probabilities=save_probabilities)
+        ]
+    elif cfg.dataset.segmentation_type == "multilabel":
+        callbacks: List[Callback] = [
+            SemSegMLPredictionWriter(
+                output_dir,
+                save_probabilities=save_probabilities,
+                save_visualization=save_visualsation,
+                num_classes=cfg.dataset.num_classes,
+                mean=cfg.augmentation.cfg.mean,
+                std=cfg.augmentation.cfg.std,
+            )
+        ]
+
+    # Callback - Instantiating remaining Callbacks
+    for _, cb_conf in cfg.callbacks.items():
         if cb_conf is not None:
-            cb = hydra.utils.instantiate(cb_conf)
+            cb: Callback = hydra.utils.instantiate(cb_conf)
             callbacks.append(cb)
 
-    # Instantiating trainer with trainer_args from config
-    trainer_args = getattr(cfg, "pl_trainer") if has_not_empty_attr(cfg, "pl_trainer") else {}
-    trainer = L.Trainer(callbacks=callbacks, logger=[], **trainer_args)
+    # Trainer - Instantiating with trainer_args from config (cfg.pl_trainer)
+    trainer_args: dict = getattr(cfg, "pl_trainer") if has_not_empty_attr(cfg, "pl_trainer") else {}
+    trainer: Trainer = L.Trainer(callbacks=callbacks, logger=[], **trainer_args)
 
-    # Start Predicting
+    # Predicting
     trainer.predict(model, dataloader)
 
 
@@ -152,6 +187,11 @@ if __name__ == "__main__":
         action="store_true",
         help="Store Softmax probabilities",
     )
+    parser.add_argument(
+        "--save_visualsation",
+        action="store_true",
+        help="Store visualization",
+    )
 
     args, overrides = parser.parse_known_args()
-    predict(args.input, args.output, overrides, args.save_probabilities)
+    predict(args.input, args.output, overrides, args.save_probabilities, args.save_visualsation)

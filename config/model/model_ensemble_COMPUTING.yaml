@@ -1,7 +1,7 @@
 #@package _global_
 
 model:
-  _target_: models.model_ensemble.Ensemble
+  _target_: src.models.model_ensemble.Ensemble
   # Iteration 4
   ckpt_type: "best" # or best
   ckpts:

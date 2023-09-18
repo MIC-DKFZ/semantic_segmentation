@@ -75,7 +75,7 @@ class ConfusionMatrix(Metric):
         Parameters
         ----------
         trainer : pl.Trainer
-            The trainers itself to access the logger and parameters like current epoch etc.
+            The trainer itself to access the logger and parameters like current epoch etc.
         """
 
         def mat_to_figure(

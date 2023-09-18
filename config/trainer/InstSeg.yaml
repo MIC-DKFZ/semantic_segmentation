@@ -1,5 +1,5 @@
 #@package _global_
 trainermodule:
-  _target_: trainers.Instance_Segmentation_Trainer.InstModel
+  _target_: src.trainer.instance_segmentation_trainer.InstModel
 datamodule:
   instance_seg: True

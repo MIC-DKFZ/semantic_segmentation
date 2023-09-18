@@ -1,6 +1,6 @@
 #@package _global_
 model:
-  _target_: models.SegNeXt.get_seg_model
+  _target_: src.models.SegNeXt.get_seg_model
   cfg:
     pretrained: True
     pretrained_weights: ${ORG_CWD}/pretrained/mscan_b.pth

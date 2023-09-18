@@ -1,17 +1,13 @@
-#@package _global_
-
-# define and configure the dataset class which is called by hydra
 dataset:
-  _target_: datasets.Solar_Hydrogen.Solar_Hydrogen.Solar_Hydrogen_Dataset
+  _target_: src.datasets.Solar_Hydrogen.Solar_Hydrogen.Solar_Hydrogen_Dataset
   root:      ${paths.Solar_Hydrogen} #the root to the data
   dtype: ".tif"
   img_folder: ground_truth/images
   label_folder: none
 
-# additional information about the dataset
-DATASET:
-  NAME: Solar_Hydrogen
-  NUM_CLASSES: 2
-  CLASS_LABELS:
-     - background
-     - bubble
+name: Solar_Hydrogen
+num_classes: 2
+segmentation_type: instance
+class_labels:
+   - background
+   - bubble

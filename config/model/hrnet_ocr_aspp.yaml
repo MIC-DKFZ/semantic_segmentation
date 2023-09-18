@@ -1,76 +1,75 @@
-#@package _global_
-model:
-  _target_: models.hrnet_ocr_aspp.get_seg_model
-  cfg:
-    MODEL: ${MODEL}
-    DATASET:
-      NUM_CLASSES: ${DATASET.NUM_CLASSES}
+name: hrnet_ocr_aspp
+pretrained: True
+pretrained_on: ImageNet
+available_weights:
+  ImageNet: hrnetv2_w48_imagenet_pretrained.pth
+  Paddle: HRNet_W48_C_ssld_pretrained.pth
+  Mapillary: mapillary_ocrnet.HRNet_Mscale_fast-rattlesnake.pth
 
-MODEL:
-  NAME:               hrnet_ocr_aspp
-  PRETRAINED:         true
-  pretrained_on:      ImageNet
-  PRETRAINED_WEIGHTS: pretrained/${MODEL.available_weights.${MODEL.pretrained_on}}
-  available_weights:
-    ImageNet:  hrnetv2_w48_imagenet_pretrained.pth
-    Paddle:    HRNet_W48_C_ssld_pretrained.pth
-    Mapillary: mapillary_ocrnet.HRNet_Mscale_fast-rattlesnake.pth
-  ALIGN_CORNERS:      True
-  ASPP_BOT_CH:        256
-  INPUT_CHANNELS:     3
-  OCR:
-    MID_CHANNELS: 512
-    KEY_CHANNELS: 256
-    DROPOUT:      0.05
-    SCALE:        1
-  EXTRA:
-    FINAL_CONV_KERNEL: 1
-    STAGE1:
-      NUM_MODULES: 1
-      NUM_RANCHES: 1
-      BLOCK:       BOTTLENECK
-      NUM_BLOCKS:
-        - 4
-      NUM_CHANNELS:
-        - 64
-      FUSE_METHOD: SUM
-    STAGE2:
-      NUM_MODULES:  1
-      NUM_BRANCHES: 2
-      BLOCK:        BASIC
-      NUM_BLOCKS:
-        - 4
-        - 4
-      NUM_CHANNELS:
-        - 48
-        - 96
-      FUSE_METHOD:  SUM
-    STAGE3:
-      NUM_MODULES:  4
-      NUM_BRANCHES: 3
-      BLOCK:        BASIC
-      NUM_BLOCKS:
-        - 4
-        - 4
-        - 4
-      NUM_CHANNELS:
-        - 48
-        - 96
-        - 192
-      FUSE_METHOD:  SUM
-    STAGE4:
-      NUM_MODULES:  3
-      NUM_BRANCHES: 4
-      BLOCK:        BASIC
-      NUM_BLOCKS:
-        - 4
-        - 4
-        - 4
-        - 4
-      NUM_CHANNELS:
-        - 48
-        - 96
-        - 192
-        - 384
-      FUSE_METHOD:  SUM
+model:
+  _target_: src.models.hrnet_ocr_aspp.get_seg_model
+  cfg:
+    DATASET:
+      NUM_CLASSES: ${dataset.num_classes}
+    MODEL:
+      PRETRAINED: ${model.pretrained}
+      PRETRAINED_WEIGHTS: pretrained/${model.available_weights.${model.pretrained_on}}
+      ALIGN_CORNERS:      True
+      ASPP_BOT_CH:        256
+      INPUT_CHANNELS:     3
+      OCR:
+        MID_CHANNELS: 512
+        KEY_CHANNELS: 256
+        DROPOUT:      0.05
+        SCALE:        1
+      EXTRA:
+        FINAL_CONV_KERNEL: 1
+        STAGE1:
+          NUM_MODULES: 1
+          NUM_RANCHES: 1
+          BLOCK:       BOTTLENECK
+          NUM_BLOCKS:
+            - 4
+          NUM_CHANNELS:
+            - 64
+          FUSE_METHOD: SUM
+        STAGE2:
+          NUM_MODULES:  1
+          NUM_BRANCHES: 2
+          BLOCK:        BASIC
+          NUM_BLOCKS:
+            - 4
+            - 4
+          NUM_CHANNELS:
+            - 48
+            - 96
+          FUSE_METHOD:  SUM
+        STAGE3:
+          NUM_MODULES:  4
+          NUM_BRANCHES: 3
+          BLOCK:        BASIC
+          NUM_BLOCKS:
+            - 4
+            - 4
+            - 4
+          NUM_CHANNELS:
+            - 48
+            - 96
+            - 192
+          FUSE_METHOD:  SUM
+        STAGE4:
+          NUM_MODULES:  3
+          NUM_BRANCHES: 4
+          BLOCK:        BASIC
+          NUM_BLOCKS:
+            - 4
+            - 4
+            - 4
+            - 4
+          NUM_CHANNELS:
+            - 48
+            - 96
+            - 192
+            - 384
+          FUSE_METHOD:  SUM
 

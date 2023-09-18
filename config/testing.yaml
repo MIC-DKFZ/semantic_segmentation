@@ -1,30 +1,18 @@
 #@package _global_
 
-# Default List
-# Use training.yaml and only change/override a few parts
+###### Main Config File for Testing ######
+# This config shows an overview about all parameters and there default values
+# Most of the settings are taken from training.yaml and only minor things are changed
+
+###### Hydra's Default List ######
 defaults:
-  - training
-  - _self_
+  - training                  # Use the settings defined in the training config (training.yaml)
+  - _self_                    # Overwrite behaviour
 
-# (Required) Path to the Checkpoint which should be tested/validated
-ckpt_dir: ???
+###### Checkpoint Directory ######
+ckpt_dir: ???   # (Required) Path to the Checkpoint which should be tested/validated
 
-# Define Test Time Augmentation
-TESTING:
-  SCALES: [1]
-  FLIP: False
-  BINARY_FLIP: False
-
-
-# Customizations of Hydra, change hydra/run/dir to ckpt_dir
+###### Hydra ######
 hydra:
-  output_subdir: hydra
   run:
-    dir: ${ckpt_dir}/testing/${now:%Y-%m-%d_%H-%M-%S}
-  sweep:
-    dir: multi_run_${hydra.run.dir}
-    subdir: ${hydra.job.num}
-  job_logging:
-    handlers:
-      file:
-        filename:  ${hydra.runtime.output_dir}/${hydra.job.name}.log
+    dir: ${ckpt_dir}/testing/${now:%Y-%m-%d_%H-%M-%S}   # Log the results into the checkpoint folder

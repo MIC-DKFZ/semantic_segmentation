@@ -7,9 +7,9 @@ defaults:
 # _target_: should point to your dataset class
 # afterwards you can handle your custom input arguments which are used to initialize the dataset
 dataset:
-  _target_: datasets.COMPUTING.COMPUTING_2.Computing_dataset
+  _target_: src.datasets.COMPUTING.COMPUTING_2.Computing_dataset
   root: ${paths.COMPUTING}               #the root if defined in config/environment/used_env.yaml
-  fold: 0
+  fold: ${fold}
   patch_size: [640,640]
   random_sampling: 0.3
 

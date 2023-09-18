@@ -1,14 +1,10 @@
-#@package _global_
-
-# define and configure the dataset class which is called by hydra
 dataset:
-  _target_: datasets.Solar_Hydrogen.Solar_Hydrogen.Custom_dataset
+  _target_: src.datasets.Solar_Hydrogen.Solar_Hydrogen.Custom_dataset
   root:      ${paths.Solar_Hydrogen_Karol} #the root to the data
 
-# additional information about the dataset
-DATASET:
-  NAME: Solar_Hydrogen_Karol
-  NUM_CLASSES: 2
-  CLASS_LABELS:
-     - background
-     - bubble
+name: Solar_Hydrogen_Karol
+num_classes: 2
+segmentation_type: instance
+class_labels:
+   - background
+   - bubble

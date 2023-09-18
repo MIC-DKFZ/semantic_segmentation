@@ -1,58 +1,138 @@
-#@package _global_
+# @package _global_
 
-# Default List
-# defines which modules from which parameter group are used by default and in which order they are composed
+###### Main Config File for Training ######
+# This config shows an overview about all parameters and there default values
+# DO NOT CHANGE STUFF HERE - instead overwrite arguments from the commandline or
+# create a .yaml file in experiments and overwrite the settings you want to change
+
+###### Hydra's Default List ######
 defaults:
   - _self_
-  - trainer: SemSeg             # Which Trainer to use
-  - metric: mean_IoU            # Metric configuration
-  - model: hrnet_ocr                # Model
-  - dataset: Cityscapes/base         # Dataset
-  - optimizer: SGD              # Optimizer
-  - lr_scheduler: polynomial    # Learning rate scheduler
-  - callbacks: default          # Callbacks
-  - logger: tensorboard         # Logger
-  - augmentation@augmentation.train: norm  # Data Augmentation
-  - augmentation@augmentation.test: norm  # Data Augmentation
-  - augmentation@augmentation.val: norm  # Data Augmentation
-  - experiment/default          # Load Default Hyperparameters
+  - trainer: SemSeg
+  - metric: mean_IoU
+  - model: hrnet
+  - dataset: Cityscapes/base
+  - optimizer: SGD
+  - lr_scheduler: polynomial
+  - callbacks: default
+  - logger: tensorboard
+  - augmentation@augmentation.train: norm
+  - augmentation@augmentation.test: norm
+  - augmentation@augmentation.val: norm
   - optional experiment:
-  - environment: local          # Environment
-
-  - override hydra/hydra_logging: colorlog    # Using colorlog plugin of hydra for logging
+  - optional environment: local
+  # Using colorlog plugin of hydra for logging
+  - override hydra/hydra_logging: colorlog
   - override hydra/job_logging: colorlog
 
-# Logging Related Parameters
-ORG_CWD: ${hydra:runtime.cwd}   # Saving the original working dir
-OUTPUT_DIR: ${hydra:runtime.output_dir}
-name: "run"                     # Possibility for naming the experiment
-LOGDIR: logs/                   # Default logging directory
-num_example_predictions: 2      # Save some example predictions during validation/testing
-                                # Just for visualization/inspection, set to 0 if not wanted
+###### Hyperparameters ######
+compile: True                 # If torch.compile should be used
+num_workers: 10               # Number of workers for dataloader
+lr: 0.01                      # Learning Rate
+batch_size: 6                 # Batch size used for training
+val_batch_size: ${batch_size}     # Batch size used for validation/testing
+epochs: 400                   # Number of Epochs
+momentum: 0.9                 # Momentune for SGD optimizer
+weight_decay: 0.0005          # Weight Decay for SGD optimizer
+fold:                         # Fold for Cross Validation, always needs to be in config for logging
 
-# Defining the datamodule
+###### Pytoch Lightning Trainer ######
+loss:
+  function: [ CE, CE, CE, CE]     # List of lossfunctions (for training), should correspond to the number of outputs of the model
+  val_function: [ CE, CE, CE, CE] # List of lossfunctions (for val/testing), should correspond to the number of outputs of the model
+  weight: [1.0, 0.4, 0.05, 0.05]  # Weighting the different lossfunctions
+
+###### Pytoch Lightning Trainer ######
+pl_trainer:                   # parameters for the pytorch lightning trainer
+  accelerator: 'gpu'          # train on GPU
+  devices: -1                 # using all available GPUs
+  max_epochs: ${epochs}       # parsing the number of epochs which is defined as a hyperparameter
+  precision: 16-mixed         # using Mixed Precision
+  benchmark: True             # using benchmark for faster training
+  deterministic: False        # deterministic does not work because of not deterministc CrossEntropyLoss Error - use "warn" instead
+  enable_checkpointing: True  # Enable/Disable Checkpointing
+
+###### Model ######
+model:
+  name: ???                   # Name of the Model is needed for appropriate logging
+  model:
+    _target_: ???             # Path to the actual pytorch model
+
+###### Metric ######
+metric:
+  name: ???                   # Name of the metric to optimize - is needed for logging and checkpointing
+  train_metric: False         # If also a train metric is wanted (in addition to a validation metric)
+  metric_per_img: False       # If True metric is computed for each image and averaged over all images
+  metric_global: True         # If True metric is updated in each step and computed once at the end of the epoch
+  metrics: ???                # List of torchmetrics
+
+###### Dataset ######
+dataset:
+  name: ???                   # Name of the Dataset is needed for appropriate logging
+  num_classes: ???            # Needed since this makes a lot of stuff much easier
+  ignore_index: 255           # Ignore index of the dataset if is used
+  optional class_weights:     # Weighting of classes e.g. for the loss function
+  class_labels: ???           # Class names, is needed because it makes some things easier and more comfortable
+  segmentation_type: semantic     # Typ of segmentation, one of - semantic, instance or multilabel
+  dataset:
+    _target_: ???             # Path to the actual pytorch dataset
+
+###### Data-Augmentations ######
+# Not all the parameters are needed and required dependent on which augmentation pipeline is used
+augmentation:
+  cfg:
+    scale_limit: [-0.5, 1.0]  # Define the scale limits if scaling is used - albumentations definition 0 means no scaling
+    crop_size: [512, 1024]    # Crop/patch size, used for: cropping operations; patch-wise inference; sampling dataset
+    mean: [ 0.485, 0.456, 0.406 ]     # mean for normalization
+    std: [ 0.229, 0.224, 0.225 ]      # std for normalization
+    pad_size: ${augmentation.cfg.crop_size}   # Size for Padding, used for padding operations
+    pad_mode: 0               # Mode for Padding: cv2.BORDER_CONSTANT, cv2.BORDER_REPLICATE, cv2.BORDER_REFLECT, cv2.BORDER_WRAP, cv2.BORDER_REFLECT_101
+    pad_val: 0                # Value to pad the image with if padding is used
+    pad_mask: ${dataset.ignore_index} # Value to pad the mask with if padding is used
+    N: 3                      # Needed when using Randaugment, defines how many operations are used
+    M: 3                      # Needed when using Randaugment, defines the magnitude of the operations
+
+###### Test Time Augmentation ######
+tta:
+  hflip: True                 # If horizontal flipping should be used during testing
+  vflip: False                # If vertical flipping should be used during testing
+  scales: [0.5, 0.75, 1, 1.25, 1.5, 1.75]     # Which scales should be used during testing: [1] means no scaling is used
+  use_patching: False         # Use patch_wise inference during: validation, testing and inference
+  patch_size: ${augmentation.cfg.crop_size}   # Which patch-size to use when use_patching is True
+  patch_overlap: 0.5          # Overlap between Patches
+
+###### Logging ######
+logging:
+  name: "run"                 # To give custom names (as prefix) to the experiments
+  logdir: logs/               # Logdir
+  output_dir: ${hydra:runtime.output_dir}     # Output dir, determined by hydra
+  num_example_predictions: 2        # Number of example predictions which are logged during validation
+
+###### Datamodule ######
 datamodule:
-  _target_: datasets.DataModules.BaseDataModule   # Base Data Module
-  num_workers: ${num_workers}      # Parsing all needed experiment
-  batch_size: ${batch_size}
+  _target_: src.datasets.DataModules.BaseDataModule   # Base Data Module
+  dataset: ${dataset.dataset}       # Parsing the Dataset defined in the dataset config
+  batch_size: ${batch_size}         # Parsing all needed experiment parameter
   val_batch_size: ${val_batch_size}
-  augmentations: ${augmentation} # Parsing the Data augmentation, defined in the augmentation config
-  dataset: ${dataset}             # Parsing the Dataset defined in the dataset config
+  num_workers: ${num_workers}
+  segmentation_type: ${dataset.segmentation_type}
+  augmentations: ${augmentation}    # Parsing the Data augmentation, defined in the augmentation config
 
-# Defining the saving behavior. Only used when checkpointing is enabled in the pl_trainer
+###### Checkpointing ######
+# only used when pl_trainer.enable_checkpointing=True
 ModelCheckpoint:
   _target_: src.callbacks.callbacks.customModelCheckpoint   # Custom checkpoint Callback with a few modifications
-  monitor: "metric/${METRIC.NAME}"        # Name of the metric during logging
-  mode: "max"                             # min or max: should be metric me maximised or minimized
-  filename: 'best_epoch_{epoch}__${METRIC.NAME}_{metric/${METRIC.NAME}:.4f}'
-  auto_insert_metric_name: False          # Needs to be false for better naming of checkpoint
-  save_last: True                         # If the last checkpoint should be saved too
+  monitor: "metric/${metric.name}"  # Name of the metric during logging
+  mode: "max"                       # min or max: should be metric me maximised or minimized
+  filename: 'best_epoch_{epoch}__${metric.name}_{metric/${metric.name}:.4f}'
+  auto_insert_metric_name: False    # Needs to be false for better naming of checkpoint
+  save_last: True                   # If the last checkpoint should be saved too
+  save_weights_only: False          # If only state dict should be saved - if True not possible to continue training
 
-# Customizations of Hydra
+###### Hydra ######
 hydra:
-  output_subdir: hydra
   run:
-    dir: ${LOGDIR}/${DATASET.NAME}/${MODEL.NAME}/${name}__${path_formatter:${hydra.job.override_dirname}}/${fold_formatter:${dataset}}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: ${logging.logdir}/${dataset.name}/${model.name}/${logging.name}__${path_formatter:${hydra.job.override_dirname}}/${fold_formatter:${fold}}/${now:%Y-%m-%d_%H-%M-%S}
     # Example Dir: /.../Semantic_Segmentation/logs/Cityscapes/hrnet/baseline__lossfunction_CE/2022-02-14_15-42-43/<ouputs>
     # using path_formatter with is defined in training.py to resolve problems which may occur with characters like [,],",or ',' in paths
   sweep:
@@ -65,15 +145,15 @@ hydra:
   job:
     config:
       override_dirname:
-        kv_sep: "_"         # do not use "=" to prevent problems when parsing paths
+        kv_sep: "_"           # do not use "=" to prevent problems when parsing paths
         item_sep: "__"
-        exclude_keys:       # excluding some key from ${hydra.job.override_dirname}
-          - model           # already used in the path
-          - dataset         # already used in the path
-          - environment     # no needed information for the experiments
-          - finetune_from   # to long
-          - continue_from   # to long
-          - name            # already used in the path
-          - LOGDIR          # no needed information for the experiments
-          - pl_trainer.enable_checkpointing
-          - dataset.fold
+        exclude_keys:         # excluding some key from ${hydra.job.override_dirname}
+          - model             # already used in the path
+          - dataset           # already used in the path
+          - fold              # already used in path
+          - environment       # no needed information for the experiments
+          - finetune_from     # to long
+          - continue_from     # to long
+          - logging.name      # already used in the path
+          - logging.logdir    # no needed information for the experiments
+          - pl_trainer.enable_checkpointing   # no needed information for the experiments

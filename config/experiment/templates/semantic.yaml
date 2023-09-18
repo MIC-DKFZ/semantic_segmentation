@@ -1,0 +1,39 @@
+# @package _global_
+
+# Define which Dataset and which augmentation pipeline to use
+defaults:
+#  - override /augmentation@augmentation.train: <augmentations>     # Opional
+#  - override /augmentation@augmentation.val: <augmentations>       # Opional
+#  - override /augmentation@augmentation.test: <augmentations>      # Opional
+  - override /dataset: <my_semantic_segmentation_dataset>
+
+###### Data-Augmentations ######
+# Not all the parameters are needed and required dependent on which augmentation pipeline is used
+augmentation:
+  cfg:
+    scale_limit: [-0.5, 1.0]  # Define the scale limits if scaling is used - albumentations definition 0 means no scaling
+    crop_size: [512, 1024]    # Crop/patch size, used for: cropping operations; patch-wise inference; sampling dataset
+    mean: [ 0.485, 0.456, 0.406 ]     # mean for normalization
+    std: [ 0.229, 0.224, 0.225 ]      # std for normalization
+    pad_size: ${augmentation.cfg.crop_size}   # Size for Padding, used for padding operations
+    pad_mode: 0               # Mode for Padding: cv2.BORDER_CONSTANT, cv2.BORDER_REPLICATE, cv2.BORDER_REFLECT, cv2.BORDER_WRAP, cv2.BORDER_REFLECT_101
+    pad_val: 0                # Value to pad the image with if padding is used
+    pad_mask: ${dataset.ignore_index} # Value to pad the mask with if padding is used
+
+
+###### Hyperparameters ######
+compile: True                 # If torch.compile should be used
+num_workers: 10               # Number of workers for dataloader
+lr: 0.01                      # Learning Rate
+batch_size: 6                 # Batch size used for training
+val_batch_size: ${batch_size}     # Batch size used for validation/testing
+epochs: 400                   # Number of Epochs
+momentum: 0.9                 # Momentune for SGD optimizer
+weight_decay: 0.0005          # Weight Decay for SGD optimizer
+fold:                         # Fold for Cross Validation, always needs to be in config for logging
+
+###### Pytoch Lightning Trainer ######
+loss:
+  function: [ CE, CE, CE, CE]     # List of lossfunctions (for training), should correspond to the number of outputs of the model
+  val_function: [ CE, CE, CE, CE] # List of lossfunctions (for val/testing), should correspond to the number of outputs of the model
+  weight: [1.0, 0.4, 0.05, 0.05]  # Weighting the different lossfunctions

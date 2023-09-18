@@ -1,0 +1,33 @@
+# @package _global_
+
+# Define which Dataset and which augmentation pipeline to use
+defaults:
+  - override /augmentation@augmentation.train: scale_crop_hflip
+  - override /augmentation@augmentation.val: pad_norm
+  - override /augmentation@augmentation.test: pad_norm
+  - override /dataset: VOC2010_Context/base
+
+# Configure the augmentation pipeline
+augmentation_cfg:
+  scale_limit: [-0.5, 1.0]
+  crop_size: [500,500]
+  pad_size: [500,500]
+  pad_mode: 0 #cv2.BORDER_CONSTANT, cv2.BORDER_REPLICATE, cv2.BORDER_REFLECT, cv2.BORDER_WRAP, cv2.BORDER_REFLECT_101
+  pad_val: 0
+  pad_mask: ${dataset.ignore_index}
+  mean: [ 0.485, 0.456, 0.406 ]
+  std: [ 0.229, 0.224, 0.225 ]
+  N: 3
+  M: 3
+
+#Hyperparameters for Cityscapes Dataset
+batch_size: 6                  # batch size per gpu for training
+val_batch_size: 6 #${batch_size}   # batch size per gpu for validation
+epochs: 100                     # number of epochs
+lr: 0.004                        # learning rate for training (0.01445439770745928)
+momentum: 0.9                   # momentum for optimizer
+weight_decay: 0.0005            # wd for optimizer
+loss:
+  function: [ "CE", "CE", "CE", "CE"]     # list of lossfunctions
+  val_function: [ "CE", "CE", "CE", "CE"]     # list of lossfunctions
+  weight:   [1.0, 0.4, 0.05, 0.05]            # corresponding weights for each loss function

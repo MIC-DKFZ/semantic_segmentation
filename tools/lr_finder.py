@@ -84,7 +84,7 @@ def find_lr(overrides_cl: list, num_training_samples: int) -> None:
     else:
         # model = SegModel(config=cfg)
         model = hydra.utils.instantiate(cfg.trainermodule, cfg, _recursive_=False)
-    # Initializing trainers
+    # Initializing trainer
     trainer_args = getattr(cfg, "pl_trainer") if has_not_empty_attr(cfg, "pl_trainer") else {}
 
     # ddp=DDPPlugin(find_unused_parameters=False) if number_gpus > 1 else None

@@ -1,0 +1,4 @@
+name: MyModel   # Name of the model, needed for logging
+model:
+  _target_:     # Path to the model File
+  arg1: ...     # Input Argument for the model

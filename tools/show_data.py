@@ -86,7 +86,6 @@ def show_data(overrides_cl: list, augmentation: str, split: str, axis: int) -> N
     cv2.createTrackbar("alpha", "Window", 0, 100, visualizer.update_alpha)
 
     # Load first image to get the number of channels
-    print(dataset)
     img = dataset[0][0]
     if len(img.shape) == 2:
         channels = 2

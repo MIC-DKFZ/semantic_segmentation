@@ -4,7 +4,7 @@ import math
 import warnings
 from torch.nn.modules.utils import _pair as to_2tuple
 
-# from mmseg.models.builder import BACKBONES
+# from mmseg_old.models.builder import BACKBONES
 
 # from mmcv.cnn import build_norm_layer
 # from mmcv.runner import BaseModule

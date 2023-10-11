@@ -13,7 +13,7 @@ from src.loss.Fishinspector import (
     SoftDiceLoss_Multilabel_PL,
     BCEWithLogitsLossPartlyLabeled,
 )
-
+from src.loss.multi_label import SparseBCEWithLogitsLoss
 from src.utils.config_utils import has_not_empty_attr
 
 
@@ -56,6 +56,8 @@ def get_loss_function_from_cfg(name_lf: str, cfg: DictConfig, device: torch.devi
     elif name_lf == "BCEwL":
         BCEwL = torch.nn.BCEWithLogitsLoss()
         loss_function = lambda pred, gt: BCEwL(pred, gt.to(torch.float16))
+    elif name_lf == "sBCEwL":
+        loss_function = SparseBCEWithLogitsLoss()
     elif name_lf == "BCE_PL":
         loss_function = BCEWithLogitsLossPartlyLabeled()
     elif name_lf == "DicePL":

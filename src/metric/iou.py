@@ -1,3 +1,5 @@
+from typing import Any
+
 import torch
 import torchmetrics
 from src.metric.confmat import ConfusionMatrix
@@ -93,6 +95,10 @@ class IoU_MultiLabel(torchmetrics.classification.confusion_matrix.MultilabelConf
         self.per_class = per_class
         # super().__init__(task="multilabel", num_labels=num_classes, **kwargs)
         super().__init__(num_labels=num_classes, **kwargs)
+
+    # def update(self, pred, gt, *args: Any, **kwargs: Any) -> Any:
+    #     pred = torch.sigmoid(pred)
+    #     return super().update(pred, gt, *args, **kwargs)
 
     def compute(self):
         tp = self.confmat[:, 1, 1]

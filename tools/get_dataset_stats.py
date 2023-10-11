@@ -6,6 +6,7 @@ import ruamel.yaml as ryaml
 
 # import yaml
 from omegaconf import OmegaConf
+import multiprocessing
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -23,7 +24,98 @@ import cv2
 from matplotlib import cm
 
 
-def process_dataset(dataset, num_classes):
+def process_batch(dataset, index, segmentation):
+    img, mask = dataset[index]
+    result = {}
+    result["mean"] = torch.mean(img, dim=[1, 2]).tolist()
+    result["std"] = torch.std(img, dim=[1, 2]).tolist()
+    result["size"] = img.shape[1:]
+    if segmentation == "semantic":
+        val, cnt = np.unique(mask, return_counts=True)
+    elif segmentation == "multilabel":
+        res = np.sum(np.array(mask), axis=(1, 2))
+        non_zero_indices = np.nonzero(res)[0]
+        val = []
+        cnt = []
+        for i in non_zero_indices:
+            val.append(i)
+            cnt.append(res[i])
+        val = np.array(val, dtype=int)
+        cnt = np.array(cnt, dtype=int)
+    else:
+        print(f"segmentation type: {segmentation} is not supported, no mask stats will be provided")
+        val = []
+        cnt = []
+
+    result["class_occ"] = val
+    result["class_size"] = cnt
+
+    return result
+
+
+def process_dataset(dataset, num_classes, segmentation="semantic", num_processes=8):
+
+    results = {"mean": [], "std": [], "size": [], "class_occ": [], "class_size": []}
+    pool = multiprocessing.Pool(processes=num_processes)
+    # Get Image and Mask Properties
+    results_list = []
+    for i in tqdm(range(0, len(dataset)), desc="Initializing"):
+        # results_list.append(process_batch(dataset, i, segmentation))
+        results_list.append(
+            pool.starmap_async(
+                process_batch,
+                (
+                    (
+                        dataset,
+                        i,
+                        segmentation,
+                    ),
+                ),
+            )
+        )
+    results_list = [a.get() for a in tqdm(results_list, desc="Processing")]
+    pool.close()
+    pool.join()
+    for r in tqdm(results_list, desc="Aggregating"):
+        results["mean"].append(r[0]["mean"])
+        results["std"].append(r[0]["std"])
+        results["size"].append(r[0]["size"])
+        results["class_occ"].append(r[0]["class_occ"])
+        results["class_size"].append(r[0]["class_size"])
+
+    # Convert Everything into the right format and aggregate the properties
+    output = OmegaConf.create(
+        {
+            "mean": [],
+            "std": [],
+            "img_size": {"shapes": [], "min": None, "max": None, "mean": None},
+            "class_occurrence": None,
+            "class_size": None,
+        }
+    )
+    output.mean = np.mean(np.array(results["mean"]), axis=0).tolist()
+    output.std = np.mean(np.array(results["std"]), axis=0).tolist()
+
+    tuple_dtype = np.dtype([("x", int), ("y", int)])
+    shapes = np.unique(np.array(results["size"], dtype=tuple_dtype))
+    output.img_size.shapes = shapes.tolist()
+    output.img_size.mean = np.round(np.mean(results["size"], axis=0)).astype(int).tolist()
+    output.img_size.min = np.min(results["size"], axis=0).tolist()
+    output.img_size.max = np.max(results["size"], axis=0).tolist()
+
+    occurances = np.zeros(num_classes)
+    sizes = np.zeros(num_classes)
+    for occ, size in zip(results["class_occ"], results["class_size"]):
+        for o, s in zip(occ, size):
+            if o >= 0 and o < num_classes:
+                occurances[o] += 1
+                sizes[o] += s
+    output.class_occurrence = occurances.tolist()
+    output.class_size = (np.round(sizes / occurances)).tolist()
+    return output
+
+
+def process_dataset2(dataset, num_classes, segmentation="semantic"):
 
     results = {"mean": [], "std": [], "size": [], "class_occ": [], "class_size": []}
 
@@ -33,7 +125,23 @@ def process_dataset(dataset, num_classes):
         results["mean"].append(torch.mean(img, dim=[1, 2]).tolist())
         results["std"].append(torch.std(img, dim=[1, 2]).tolist())
         results["size"].append(img.shape[1:])
-        val, cnt = np.unique(mask, return_counts=True)
+        if segmentation == "semantic":
+            val, cnt = np.unique(mask, return_counts=True)
+        elif segmentation == "multilabel":
+            result = np.sum(np.array(mask), axis=(1, 2))
+            non_zero_indices = np.nonzero(result)[0]
+            val = []
+            cnt = []
+            for i in non_zero_indices:
+                val.append(i)
+                cnt.append(result[i])
+        else:
+            print(
+                f"segmentation type: {segmentation} is not supported, no mask stats will be"
+                " provided"
+            )
+            val = []
+            cnt = []
         results["class_occ"].append(val)
         results["class_size"].append(cnt)
 
@@ -92,11 +200,13 @@ def get_dataset_stats(
         "num_classes": None,
         "ignore_index": None,
         "class_labels": None,
+        "segmentation_type": None,
     }
     output.Info.name = cfg.dataset.name
     output.Info.num_classes = cfg.dataset.num_classes
     output.Info.ignore_index = cfg.dataset.ignore_index
     output.Info.class_labels = cfg.dataset.class_labels
+    output.Info.segmentation_type = cfg.dataset.segmentation_type
 
     input_channels = cfg.input_channels if has_not_empty_attr(cfg, "input_channels") else 3
     transforms = A.Compose(
@@ -107,23 +217,27 @@ def get_dataset_stats(
         cfg.dataset.dataset, split="train", transforms=transforms
     )
     dataset_val = hydra.utils.instantiate(cfg.dataset.dataset, split="val", transforms=transforms)
-    dataset_test = hydra.utils.instantiate(cfg.dataset.dataset, split="test", transforms=transforms)
+    # dataset_test = hydra.utils.instantiate(cfg.dataset.dataset, split="test", transforms=transforms)
 
     output.Info.size.train = len(dataset_train)
     output.Info.size.val = len(dataset_val)
-    output.Info.size.test = len(dataset_test)
+    # output.Info.size.test = len(dataset_test)
     """
     Information about the Train Set
     """
     # output.Train = {}
-    output.Train = process_dataset(dataset_train, cfg.dataset.num_classes)
-    output.Val = process_dataset(dataset_val, cfg.dataset.num_classes)
+    output.Train = process_dataset(
+        dataset_train, cfg.dataset.num_classes, cfg.dataset.segmentation_type, cfg.num_workers
+    )
+    output.Val = process_dataset(
+        dataset_val, cfg.dataset.num_classes, cfg.dataset.segmentation_type, cfg.num_workers
+    )
 
     output.All = OmegaConf.create(
         {
             "mean": [],
             "std": [],
-            "img_size": {"shapes": [], "min": None, "max": None, "mean": None},
+            "img_size": {"min": None, "max": None, "mean": None},
             "class_occurrence": None,
             "class_size": None,
         }
@@ -143,15 +257,6 @@ def get_dataset_stats(
         )
         / (len(dataset_val) + len(dataset_train))
     ).tolist()
-
-    tuple_dtype = np.dtype([("x", int), ("y", int)])
-    shapes = np.unique(
-        np.array(output.Train.img_size.shapes + output.Val.img_size.shapes, dtype=tuple_dtype)
-    )
-    output.All.img_size.shapes = shapes.tolist()
-    #     np.unique(
-    #     output.Train.img_size.shapes + output.Val.img_size.shapes
-    # ).tolist())
 
     output.All.img_size.mean = (
         (

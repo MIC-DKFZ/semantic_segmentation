@@ -237,7 +237,6 @@ class SegModel(BaseModel):
         # Model - Predict the input batch
         x, y_gt = batch
         y_pred = self(x)
-
         # Loss - Compute and log the train loss
         loss = self.get_loss(y_pred, y_gt)
         self.log(

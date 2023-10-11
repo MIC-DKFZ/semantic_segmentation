@@ -63,7 +63,7 @@ def testing(cfg: DictConfig) -> None:
     if ensemble_CV:
         cfg.model: DictConfig = get_CV_ensemble_config(cfg.ckpt_dir)
         model: LightningModule = hydra.utils.instantiate(
-            cfg.trainermodule, model_config=cfg, _recursive_=False
+            cfg.trainermodule, cfg=cfg, _recursive_=False
         )
     else:
         ckpt_file: str = glob.glob(os.path.join(cfg.ckpt_dir, "checkpoints", "best_*"))[0]
@@ -74,10 +74,9 @@ def testing(cfg: DictConfig) -> None:
             cfg.trainermodule,
             ckpt_file,
             strict=False,
-            model_config=cfg,
+            cfg=cfg,
             _recursive_=False,
         )
-
     # Datamodule - Instantiating
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.datamodule, _recursive_=False)
 

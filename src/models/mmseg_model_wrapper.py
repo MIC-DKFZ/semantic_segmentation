@@ -33,7 +33,7 @@ class MMSeg_Model(nn.Module):
         self.mmseg_model.CLASSES = num_classes
         self.align_corners = self.mmseg_model.align_corners
         # quit()
-        # mmseg and mmcv messing up with the loggers, so the loggers have to be "repaired" here
+        # mmseg_old and mmcv messing up with the loggers, so the loggers have to be "repaired" here
         for name in logging.root.manager.loggerDict:
             log = get_logger(name)
             for handler in log.root.handlers:

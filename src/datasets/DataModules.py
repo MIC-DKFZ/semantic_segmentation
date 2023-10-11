@@ -59,6 +59,7 @@ class BaseDataModule(LightningDataModule):
         dataset: DictConfig,
         batch_size: int,
         val_batch_size: int,
+        test_batch_size: int,
         num_workers: int,
         augmentations: DictConfig,
         segmentation_type: str = "semantic",
@@ -86,6 +87,7 @@ class BaseDataModule(LightningDataModule):
         self.num_workers = num_workers
         self.batch_size = batch_size
         self.val_batch_size = val_batch_size
+        self.test_batch_size = test_batch_size
         # data augmentations for train,val and test
         self.augmentations = augmentations
         # dataset which is defined in the config
@@ -212,7 +214,7 @@ class BaseDataModule(LightningDataModule):
         return DataLoader(
             self.DS_test,
             pin_memory=True,
-            batch_size=self.val_batch_size,
+            batch_size=self.test_batch_size,
             num_workers=self.num_workers,
             persistent_workers=True if self.num_workers > 0 else False,
             collate_fn=self.collate_fn,

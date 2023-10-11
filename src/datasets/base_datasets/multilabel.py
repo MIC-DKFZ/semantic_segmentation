@@ -20,6 +20,27 @@ log = get_logger(__name__)
 
 
 class MultilabelDataset(BaseDataset):
+    def __init__(self, num_classes, **kwargs):
+
+        self.num_classes = num_classes
+        super().__init__(num_classes=num_classes, **kwargs)
+
+    def get_mask_files(self) -> list:
+
+        mask_files = super().get_mask_files()
+        mask_files = [mask.rsplit("_", 1)[0] for mask in mask_files]
+        mask_files = np.unique(mask_files)
+
+        return list(sorted(mask_files))
+
+    def load_mask(self, idx):
+        masks = []
+        mask_file = self.mask_files[idx]
+        for i in range(0, self.num_classes):
+            mask = cv2.imread(f"{mask_file}{self.label_postfix}_{i}.png", -1)
+            masks.append(mask)
+        return np.array(masks, dtype=np.uint8)
+
     def apply_transforms(
         self, img: np.ndarray, mask: np.ndarray
     ) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -105,9 +126,11 @@ class MultilabelSamplingDataset(MultilabelDataset, SamplingDataset):
         """
         idx = np.random.randint(0, len(self.img_files))
         img, mask = MultilabelDataset.load_data(self, idx)
-        mask = mask.transpose((1, 2, 0))
-        img, mask = random_scale_crop(img, mask, self.patch_size, self.scale_limit)
-        mask = mask.transpose((2, 0, 1))
+
+        if self.patch_size is not None:
+            mask = mask.transpose((1, 2, 0))
+            img, mask = random_scale_crop(img, mask, self.patch_size, self.scale_limit)
+            mask = mask.transpose((2, 0, 1))
         return img, mask
 
     def load_data_sampled(self) -> Tuple[np.ndarray, np.ndarray]:
@@ -141,9 +164,10 @@ class MultilabelSamplingDataset(MultilabelDataset, SamplingDataset):
         img, mask = MultilabelDataset.load_data(self, idx)
 
         # 5. Center Crop the image by the selected Point
-        mask = mask.transpose((1, 2, 0))
-        img, mask = keypoint_scale_crop(img, mask, self.patch_size, (x, y), self.scale_limit)
-        mask = mask.transpose((2, 0, 1))
+        if self.patch_size is not None:
+            mask = mask.transpose((1, 2, 0))
+            img, mask = keypoint_scale_crop(img, mask, self.patch_size, (x, y), self.scale_limit)
+            mask = mask.transpose((2, 0, 1))
         return img, mask
 
 

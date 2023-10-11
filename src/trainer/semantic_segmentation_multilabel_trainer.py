@@ -1,3 +1,5 @@
+from typing import Dict
+
 import torch
 
 from src.trainer.semantic_segmentation_trainer import SegModel
@@ -10,6 +12,12 @@ log = get_logger(__name__)
 
 
 class SegMLModel(SegModel):
+    def forward(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
+        pred = super().forward(x)
+
+        # pred["out"] = torch.sigmoid(pred["out"])
+        return pred
+
     def viz_data(
         self,
         img: torch.Tensor,
@@ -36,6 +44,7 @@ class SegMLModel(SegModel):
 
         """
         threshold = 0.5
+        pred = torch.sigmoid(pred)
         pred = (pred >= threshold).float().detach().cpu()
         gt = gt.cpu()
 

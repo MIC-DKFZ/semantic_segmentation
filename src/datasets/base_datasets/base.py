@@ -102,6 +102,7 @@ class BaseDataset(torch.utils.data.Dataset):
         log.info(
             f"Dataset {self.split}: {len(self.img_files)} images - {len(self.mask_files)} masks"
         )
+        print(f"Dataset {self.split}: {len(self.img_files)} images - {len(self.mask_files)} masks")
 
     def setup(self) -> None:
         """
@@ -123,13 +124,8 @@ class BaseDataset(torch.utils.data.Dataset):
         folder = self.img_folder
         folder = self.img_folder_val if self.split == "val" else folder
         folder = self.img_folder_test if self.split == "test" else folder
-
         img_files = glob.glob(
-            join(
-                self.root,
-                folder,
-                self.img_prefix + "*" + self.img_postfix + self.dtype,
-            )
+            join(self.root, folder, f"{self.img_prefix}*{self.img_postfix}{self.dtype}")
         )
         img_files = list(sorted(img_files))
         return img_files

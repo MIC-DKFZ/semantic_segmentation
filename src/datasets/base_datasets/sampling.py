@@ -148,7 +148,8 @@ class SamplingDataset(BaseDataset):
         """
         idx = np.random.randint(0, len(self.img_files))
         img, mask = super().load_data(idx)
-        img, mask = random_scale_crop(img, mask, self.patch_size, self.scale_limit)
+        if self.patch_size is not None:
+            img, mask = random_scale_crop(img, mask, self.patch_size, self.scale_limit)
         return img, mask
 
     def load_data_sampled(self) -> Tuple[np.ndarray, np.ndarray]:
@@ -182,7 +183,8 @@ class SamplingDataset(BaseDataset):
         img, mask = super().load_data(idx)
 
         # 5. Center Crop the image by the selected Point
-        img, mask = keypoint_scale_crop(img, mask, self.patch_size, (x, y), self.scale_limit)
+        if self.patch_size is not None:
+            img, mask = keypoint_scale_crop(img, mask, self.patch_size, (x, y), self.scale_limit)
         return img, mask
 
     def load_data(self, idx: int) -> tuple:

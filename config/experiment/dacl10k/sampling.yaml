@@ -28,10 +28,10 @@ fold: 1
 batch_size: 6                 # batch size per gpu for training
 val_batch_size: 6 #${batch_size}   # batch size per gpu for validation
 epochs: 400                     # number of epochs
-lr: 0.01                        # learning rate for training (0.01445439770745928)
+lr: 0.1                        # learning rate for training (0.01445439770745928)
 momentum: 0.9                   # momentum for optimizer
 weight_decay: 0.0005            # wd for optimizer
 loss:
-  function: [ "BCE_PL","BCE_PL","BCE_PL","BCE_PL" ]     # list of lossfunctions
-  val_function: [ "BCE_PL","BCE_PL","BCE_PL","BCE_PL" ]     # list of lossfunctions
+  function: [ "BCEwL","BCE_PL","BCE_PL","BCE_PL" ]     # list of lossfunctions
+  val_function: [ "BCEwL","BCE_PL","BCE_PL","BCE_PL" ]     # list of lossfunctions
   weight:   [1.0, 0.4, 0.05, 0.05]            # corresponding weights for each loss function

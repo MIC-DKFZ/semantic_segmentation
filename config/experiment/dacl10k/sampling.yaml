@@ -10,7 +10,7 @@ defaults:
 # Configure the augmentation pipeline
 augmentation:
   cfg:
-    resize_size: [769, 7689]
+    resize_size: [768, 768]
     scale_limit: null
     crop_size: null
     pad_size: null

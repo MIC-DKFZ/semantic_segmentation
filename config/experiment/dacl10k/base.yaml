@@ -1,18 +1,19 @@
 # @package _global_
 defaults:
-  - override /augmentation@augmentation.train: norm_hflip
-  - override /augmentation@augmentation.val: pad_norm
-  - override /augmentation@augmentation.test: pad_norm
-  - override /dataset: Fishinspector/sampling
+  - override /augmentation@augmentation.train: resize
+  - override /augmentation@augmentation.val: resize
+  - override /augmentation@augmentation.test: resize
+  - override /dataset: dacl10k/base
   - override /trainer: SemSegML
   - override /metric: mean_IoU_Class_Multilabel
 
 # Configure the augmentation pipeline
 augmentation:
   cfg:
-    scale_limit: [-0.25, 0.25]
-    crop_size: [190, 776]
-    pad_size: [345, 1024]
+    resize_size: [769,769]
+    scale_limit: null #[0, 0]
+    crop_size: null #[190, 776]
+    pad_size: null #[345, 1024]
     pad_mode: 0 #cv2.BORDER_CONSTANT, cv2.BORDER_REPLICATE, cv2.BORDER_REFLECT, cv2.BORDER_WRAP, cv2.BORDER_REFLECT_101
     pad_val: 0
     pad_mask: 0
@@ -23,13 +24,13 @@ augmentation:
 
 #Hyperparameters for Cityscapes Dataset
 fold: 0
-batch_size: 12                  # batch size per gpu for training
+batch_size: 6                 # batch size per gpu for training
 val_batch_size: 6 #${batch_size}   # batch size per gpu for validation
-epochs: 800                     # number of epochs
-lr: 0.1                        # learning rate for training (0.01445439770745928)
+epochs: 400                     # number of epochs
+lr: 0.05                        # learning rate for training (0.01445439770745928)
 momentum: 0.9                   # momentum for optimizer
 weight_decay: 0.0005            # wd for optimizer
 loss:
-  function: [ "BCEwL","BCE_PL","BCE_PL","BCE_PL"]     # list of lossfunctions
-  val_function: [ "BCEwL","BCE_PL","BCE_PL","BCE_PL"]     # list of lossfunctions
+  function: [ "sBCEwL","BCE_PL","BCE_PL","BCE_PL" ]     # list of lossfunctions
+  val_function: [ "sBCEwL","BCE_PL","BCE_PL","BCE_PL" ]     # list of lossfunctions
   weight:   [1.0, 0.4, 0.05, 0.05]            # corresponding weights for each loss function

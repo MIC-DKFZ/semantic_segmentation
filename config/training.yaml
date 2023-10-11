@@ -31,6 +31,7 @@ num_workers: 10               # Number of workers for dataloader
 lr: 0.01                      # Learning Rate
 batch_size: 6                 # Batch size used for training
 val_batch_size: ${batch_size}     # Batch size used for validation/testing
+test_batch_size: ${batch_size}     # Batch size used for validation/testing
 epochs: 400                   # Number of Epochs
 momentum: 0.9                 # Momentune for SGD optimizer
 weight_decay: 0.0005          # Weight Decay for SGD optimizer
@@ -114,6 +115,7 @@ datamodule:
   dataset: ${dataset.dataset}       # Parsing the Dataset defined in the dataset config
   batch_size: ${batch_size}         # Parsing all needed experiment parameter
   val_batch_size: ${val_batch_size}
+  test_batch_size: ${test_batch_size}
   num_workers: ${num_workers}
   segmentation_type: ${dataset.segmentation_type}
   augmentations: ${augmentation}    # Parsing the Data augmentation, defined in the augmentation config

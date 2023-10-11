@@ -4,7 +4,7 @@ defaults:
   - override /augmentation@augmentation.val: pad_norm
   - override /augmentation@augmentation.test: pad_norm
   - override /dataset: Fishinspector/base
-  - override /trainer: SemSegMC
+  - override /trainer: SemSegML
   - override /metric: mean_IoU_Class_Multilabel
 
 # Configure the augmentation pipeline

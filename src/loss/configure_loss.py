@@ -5,7 +5,8 @@ import torch.nn
 from torch.nn.modules.loss import _Loss
 from omegaconf import DictConfig
 from src.loss.rmi import RMILoss
-from src.loss.Dice_Loss import DiceLoss
+
+from src.loss.Dice_Loss import DiceLoss as DL_custom
 from src.loss.DC_CE_Loss import DC_and_CE_loss, TopKLoss, DC_and_topk_loss
 from src.loss.Fishinspector import (
     BCE_PL,
@@ -15,6 +16,7 @@ from src.loss.Fishinspector import (
 )
 from src.loss.multi_label import SparseBCEWithLogitsLoss
 from src.utils.config_utils import has_not_empty_attr
+from segmentation_models_pytorch.losses import JaccardLoss, DiceLoss
 
 
 def get_loss_function_from_cfg(name_lf: str, cfg: DictConfig, device: torch.device) -> _Loss:
@@ -38,7 +40,9 @@ def get_loss_function_from_cfg(name_lf: str, cfg: DictConfig, device: torch.devi
     num_classes = cfg.num_classes
     ignore_index = cfg.ignore_index
     if name_lf == "CE":
-        loss_function = torch.nn.CrossEntropyLoss(ignore_index=ignore_index)
+        # loss_function = torch.nn.CrossEntropyLoss(ignore_index=ignore_index)
+        lCE = torch.nn.CrossEntropyLoss()
+        loss_function = lambda pred, gt: lCE(pred, gt.to(torch.float16))
     elif name_lf == "wCE":
         weights = torch.FloatTensor(cfg.class_weights).to(device)
         loss_function = torch.nn.CrossEntropyLoss(ignore_index=ignore_index, weight=weights)
@@ -63,9 +67,20 @@ def get_loss_function_from_cfg(name_lf: str, cfg: DictConfig, device: torch.devi
     elif name_lf == "DicePL":
         loss_function = SoftDiceLoss_Multilabel_PL(batch_dice=True, smooth=0.0)
         # loss_function = lambda pred, gt, mask: lf(pred.clone(), gt.clone(), mask)
-
+    elif name_lf == "mlDC":
+        loss_function = DiceLoss(mode="multilabel")
+    elif name_lf == "mlJL":
+        loss_function = JaccardLoss(mode="multilabel")
     elif name_lf == "DC":
-        loss_function = DiceLoss(mode="multiclass", ignore_index=ignore_index)
+        loss_function = DL_custom(mode="multiclass", ignore_index=ignore_index)
+    elif name_lf == "mlDC2":
+        loss_function = DL_custom(mode="multilabel", ignore_index=ignore_index)
+    elif name_lf == "mlDCls":
+        loss_function = DiceLoss(mode="multilabel", smooth=0.1)
+    elif name_lf == "mlJLls":
+        loss_function = JaccardLoss(mode="multilabel", smooth=0.1)
+    elif name_lf == "mlDC2ls":
+        loss_function = DL_custom(mode="multilabel", ignore_index=ignore_index, smooth=0.1)
     elif name_lf == "DC_CE":
         DC_and_CE = DC_and_CE_loss(
             {"batch_dice": True, "smooth": 0, "do_bg": False},

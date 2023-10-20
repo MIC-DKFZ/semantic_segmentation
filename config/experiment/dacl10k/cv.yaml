@@ -3,7 +3,7 @@ defaults:
   - override /augmentation@augmentation.train: resize_brightness_contrast_flip
   - override /augmentation@augmentation.val: resize
   - override /augmentation@augmentation.test: resize
-  - override /dataset: dacl10k/base
+  - override /dataset: dacl10k/cv
   - override /trainer: SemSegML
   - override /metric: mean_IoU_Class_Multilabel
 
@@ -27,9 +27,10 @@ tta:
   hflip: True
 
 #Hyperparameters for Cityscapes Dataset
+fold: 0
 batch_size: 8                 # batch size per gpu for training
 val_batch_size: ${batch_size}   # batch size per gpu for validation
-epochs: 115 #230 on two gpus, 115 on one gpu                     # number of epochs
+epochs: 115                     # number of epochs
 lr: 0.01                        # learning rate for training (0.01445439770745928)
 momentum: 0.9                   # momentum for optimizer
 weight_decay: 0.0005            # wd for optimizer

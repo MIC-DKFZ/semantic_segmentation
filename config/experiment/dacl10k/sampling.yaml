@@ -1,6 +1,6 @@
 # @package _global_
 defaults:
-  - override /augmentation@augmentation.train: resize
+  - override /augmentation@augmentation.train: resize_brightness_contrast_flip
   - override /augmentation@augmentation.val: resize
   - override /augmentation@augmentation.test: resize
   - override /dataset: dacl10k/sampling
@@ -23,12 +23,16 @@ augmentation:
     N: 3
 
 
+tta:
+  scales: [1]
+  hflip: True
+#metric:
+#  train_metric: True
 #Hyperparameters for Cityscapes Dataset
-fold: 1
-batch_size: 6                 # batch size per gpu for training
-val_batch_size: 6 #${batch_size}   # batch size per gpu for validation
+batch_size: 8                 # batch size per gpu for training
+val_batch_size: ${batch_size}   # batch size per gpu for validation
 epochs: 400                     # number of epochs
-lr: 0.1                        # learning rate for training (0.01445439770745928)
+lr: 0.01                        # learning rate for training (0.01445439770745928)
 momentum: 0.9                   # momentum for optimizer
 weight_decay: 0.0005            # wd for optimizer
 loss:

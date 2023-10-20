@@ -7,7 +7,7 @@ import shutil
 import multiprocessing
 import json
 from os.path import join, split
-
+from tqdm import tqdm
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw
@@ -20,7 +20,7 @@ TARGET_LIST = [
     "Rust",
     "Rockpocket",
     "Hollowareas",
-    "Cavity",
+    "Cavity",  #
     "Spalling",
     "Graffiti",
     "Weathering",
@@ -36,9 +36,9 @@ TARGET_LIST = [
 target_dict = dict(zip(TARGET_LIST, range(len(TARGET_LIST))))
 
 
-def process_file(img_file, label_file, output_folder):
+def process_file(img_file, label_file, output_folder, name):
     file_name = split(img_file)[-1].replace(".jpg", "")
-    shutil.copy(img_file, join(output_folder, "images", file_name + ".jpg"))
+    shutil.copy(img_file, join(output_folder, "images" + name, file_name + ".jpg"))
 
     with open(label_file, "r") as f:
         data = json.load(f)
@@ -49,44 +49,40 @@ def process_file(img_file, label_file, output_folder):
             if shape["label"] in TARGET_LIST:
                 polygon = [(x, y) for x, y in shape["points"]]  # list to tuple
                 ImageDraw.Draw(target_img).polygon(polygon, outline=1, fill=1)
-            target_mask[target_index] = np.array(target_img)
+            target_mask[target_index] += np.array(target_img)
     for i in range(0, len(TARGET_LIST)):
         cv2.imwrite(
-            join(output_folder, "labels", f"{file_name}_{i}.png"),
-            target_mask[i],
+            join(output_folder, "labels" + name, f"{file_name}_{i}.png"),
+            np.array(target_mask[i] >= 1, dtype=np.uint8),
         )
 
 
-def process_folder(img_folder, lable_folder, output_folder, num_processes=12):
+def process_folder(img_folder, label_folder, output_folder, name, num_processes=12):
 
     os.makedirs(output_folder, exist_ok=True)
-    os.makedirs(join(output_folder, "images"), exist_ok=True)
-    os.makedirs(join(output_folder, "labels"), exist_ok=True)
+    os.makedirs(join(output_folder, "images" + name), exist_ok=True)
+    os.makedirs(join(output_folder, "labels" + name), exist_ok=True)
     img_files = os.listdir(img_folder)
 
     pool = multiprocessing.Pool(processes=num_processes)
     async_results = []
 
     for img_file in img_files:
-        process_file(
-            join(img_folder, img_file),
-            join(lable_folder, img_file.replace(".jpg", ".json")),
-            output_folder,
-        )
         async_results.append(
             pool.starmap_async(
                 process_file,
                 (
                     (
                         join(img_folder, img_file),
-                        join(lable_folder, img_file.replace(".jpg", ".json")),
+                        join(label_folder, img_file.replace(".jpg", ".json")),
                         output_folder,
+                        name,
                     ),
                 ),
             )
         )
 
-    _ = [a.get() for a in async_results]
+    _ = [a.get() for a in tqdm(async_results, desc="Processing...")]
     pool.close()
     pool.join()
 
@@ -100,9 +96,11 @@ if __name__ == "__main__":
     image for each class with {image_name}_{class_index}.png
     """
 
-    root = "/media/l727r/data/Datasets/dacl20k/dacl10k_v2_devphase"
-    output = "/media/l727r/data/Datasets/dacl20k/dacl10k_dataset"
-    process_folder(join(root, "images", "train"), join(root, "annotations", "train"), output)
+    root = "/media/l727r/data/Datasets/dacl10k/dacl10k_v2_devphase"
+    output = "/media/l727r/data/Datasets/dacl10k/dacl10k_dataset"
     process_folder(
-        join(root, "images", "validation"), join(root, "annotations", "validation"), output
+        join(root, "images", "train"), join(root, "annotations", "train"), output, "_train"
+    )
+    process_folder(
+        join(root, "images", "validation"), join(root, "annotations", "validation"), output, "_val"
     )

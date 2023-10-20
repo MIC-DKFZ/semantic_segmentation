@@ -23,3 +23,4 @@ paths:
   COMPUTING: /dkfz/cluster/gpu/data/OE0441/l727r/nnUNet_raw/Dataset254_COMPUTING_it4
   Solar_Hydrogen: /dkfz/cluster/gpu/data/OE0441/l727r/Solar_Hydrogen/New_TrainingData
   Fishinspector: /dkfz/cluster/gpu/data/OE0441/l727r/Dataset222_Fishinspector
+  dacl10k: /dkfz/cluster/gpu/data/OE0441/l727r/dacl10k_dataset

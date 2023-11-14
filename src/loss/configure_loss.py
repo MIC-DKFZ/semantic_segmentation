@@ -40,9 +40,7 @@ def get_loss_function_from_cfg(name_lf: str, cfg: DictConfig, device: torch.devi
     num_classes = cfg.num_classes
     ignore_index = cfg.ignore_index
     if name_lf == "CE":
-        # loss_function = torch.nn.CrossEntropyLoss(ignore_index=ignore_index)
-        lCE = torch.nn.CrossEntropyLoss()
-        loss_function = lambda pred, gt: lCE(pred, gt.to(torch.float16))
+        loss_function = torch.nn.CrossEntropyLoss(ignore_index=ignore_index)
     elif name_lf == "wCE":
         weights = torch.FloatTensor(cfg.class_weights).to(device)
         loss_function = torch.nn.CrossEntropyLoss(ignore_index=ignore_index, weight=weights)
@@ -70,6 +68,8 @@ def get_loss_function_from_cfg(name_lf: str, cfg: DictConfig, device: torch.devi
     elif name_lf == "mlDC":
         loss_function = DiceLoss(mode="multilabel")
     elif name_lf == "mlJL":
+        # lf = JaccardLoss(mode="multilabel", from_logits=False)
+        # loss_function = lambda pred, gt: lf(pred.sigmoid(), gt)
         loss_function = JaccardLoss(mode="multilabel")
     elif name_lf == "DC":
         loss_function = DL_custom(mode="multiclass", ignore_index=ignore_index)

@@ -59,7 +59,11 @@ def get_CV_ensemble_config(ckpt_dir, ckpt_type="best"):
         ckpt = glob.glob(join(ckpt_dir, fold, "*"))
         if ckpt != []:
             ckpts.append(ckpt[-1])
-    return {"_target_": "models.model_ensemble.Ensemble", "ckpts": ckpts, "ckpt_type": ckpt_type}
+    return {
+        "_target_": "src.models.model_ensemble.Ensemble",
+        "ckpts": ckpts,
+        "ckpt_type": ckpt_type,
+    }
 
 
 def build_predict_config(file, overrides_cl):

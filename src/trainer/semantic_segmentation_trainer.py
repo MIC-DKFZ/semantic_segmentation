@@ -7,7 +7,7 @@ from patchly import GridSampler, Aggregator
 
 from src.utils.utils import get_logger
 from src.utils.config_utils import first_from_dict
-from src.utils.visualization import show_mask_sem_seg
+from src.visualization.utils import show_mask_sem_seg
 from src.trainer.base_trainer import BaseModel
 
 log = get_logger(__name__)
@@ -384,6 +384,7 @@ class SegModel(BaseModel):
             Prediction of the model and name of the img
         """
         # Model - Predict the input batch - use patchwise inference (+tta) as defined in self.tta_cfg
+        # print(batch.shape)
         img = batch[0]
         pred = self.forward_patchwise(
             img,

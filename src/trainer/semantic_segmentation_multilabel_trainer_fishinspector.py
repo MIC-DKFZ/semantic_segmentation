@@ -5,7 +5,7 @@ from torchmetrics import MetricCollection
 
 from src.trainer.semantic_segmentation_multilabel_trainer import SegMLModel
 from src.utils.utils import get_logger
-from src.utils.visualization import show_mask_multilabel_seg
+from src.visualization.utils import show_mask_multilabel_seg
 
 log = get_logger(__name__)
 

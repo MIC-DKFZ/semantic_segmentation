@@ -21,7 +21,7 @@ from matplotlib import cm
 from src.utils.config_utils import build_predict_config
 from src.utils.config_utils import get_CV_ensemble_config
 from src.utils.utils import get_logger, set_lightning_logging
-from src.utils.visualization import Visualizer
+from src.visualization.visualizer import Visualizer
 
 log = get_logger(__name__)
 set_lightning_logging()
@@ -101,7 +101,10 @@ def show_prediction(overrides_cl: list, augmentation: str, split: str, axis: int
         transforms = hydra.utils.instantiate(cfg.augmentation.test)
 
     # Instantiating Dataset
-    dataset = hydra.utils.instantiate(cfg.dataset.dataset, split=split, transforms=transforms)
+    # dataset = hydra.utils.instantiate(cfg.dataset.dataset, split=split, transforms=transforms)
+    dataset = hydra.utils.instantiate(
+        cfg.dataclass, split=split, transforms=transforms, _recursive_=False
+    )
     # Check if data is normalized, if yes redo this during visualization of the image
     mean = None
     std = None
@@ -118,7 +121,8 @@ def show_prediction(overrides_cl: list, augmentation: str, split: str, axis: int
         model,
         mean=mean,
         std=std,
-        segmentation=cfg.dataset.segmentation_type,
+        image_loader=cfg.img_loader,
+        label_handler=cfg.label_handler,
         axis=axis,
     )
 

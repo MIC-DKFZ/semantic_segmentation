@@ -1,0 +1,4 @@
+defaults:
+  - TrainVal
+
+_target_: src.datasets.base_datasets.multilabel.MultilabelDataset

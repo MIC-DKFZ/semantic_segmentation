@@ -536,4 +536,21 @@ def get_seg_model(cfg):
         # model.init_weights()
         model.load_weights(cfg.MODEL.PRETRAINED_WEIGHTS)
 
+        # layers_to_freeze = [
+        #     "conv1",
+        #     "bn1",
+        #     "conv2",
+        #     "bn2",
+        #     "layer1",
+        #     "transition1",
+        #     "stage2",
+        #     "transition2",
+        #     "stage3",
+        #     "transition3",
+        #     # "stage4",
+        # ]
+        # for name, param in model.named_parameters():
+        #     for layer in layers_to_freeze:
+        #         if name.startswith(layer):
+        #             param.requires_grad = False
     return model

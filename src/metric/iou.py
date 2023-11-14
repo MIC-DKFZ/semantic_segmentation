@@ -3,6 +3,7 @@ from typing import Any
 import torch
 import torchmetrics
 from src.metric.confmat import ConfusionMatrix
+import torch.nn.functional as F
 
 
 class IoU(ConfusionMatrix):
@@ -96,9 +97,10 @@ class IoU_MultiLabel(torchmetrics.classification.confusion_matrix.MultilabelConf
         # super().__init__(task="multilabel", num_labels=num_classes, **kwargs)
         super().__init__(num_labels=num_classes, **kwargs)
 
-    # def update(self, pred, gt, *args: Any, **kwargs: Any) -> Any:
-    #     pred = torch.sigmoid(pred)
-    #     return super().update(pred, gt, *args, **kwargs)
+    def update(self, pred, gt, *args: Any, **kwargs: Any) -> Any:
+        pred = torch.sigmoid(pred)
+        # pred = F.logsigmoid(pred).exp()
+        return super().update(pred, gt, *args, **kwargs)
 
     def compute(self):
         tp = self.confmat[:, 1, 1]

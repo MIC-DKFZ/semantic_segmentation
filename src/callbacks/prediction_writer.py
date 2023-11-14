@@ -1,20 +1,68 @@
 import os
 from os.path import join
+import torch
 
 import cv2
 import numpy as np
 import torch.nn.functional as F
 from lightning.pytorch.callbacks import BasePredictionWriter
 from matplotlib import cm
+import hydra
 
 from src.utils.config_utils import first_from_dict
-from src.utils.visualization import (
+from src.visualization.utils import (
     show_img,
     show_mask_multilabel_seg,
     show_mask_sem_seg,
-    show_prediction_inst_seg,
-    show_mask_inst_seg,
 )
+
+
+class PredictionWriter(BasePredictionWriter):
+    """
+    How to save semantic segmentation predictions
+    """
+
+    def __init__(
+        self,
+        output_dir,
+        label_handler,
+        save_probabilities=False,
+        save_visualization=False,
+        write_interval="batch",
+    ):
+        super().__init__(write_interval)
+        self.output_dir = output_dir
+        self.save_probabilities = save_probabilities
+        self.save_visualization = save_visualization
+        # self.mean = mean
+        # self.std = std
+
+        self.label_handler = hydra.utils.instantiate(label_handler)
+
+        os.makedirs(self.output_dir, exist_ok=True)
+
+    def write_on_batch_end(
+        self, trainer, pl_module, prediction, batch_indices, batch, batch_idx, dataloader_idx
+    ):
+        images, names = batch
+        prediction = first_from_dict(prediction)
+        prediction = self.label_handler.to_cpu(prediction)
+
+        for name, pred in zip(names, prediction):
+            file_name = join(self.output_dir, name)
+
+            self.label_handler.save_prediction(pred, file_name)
+
+            if self.save_probabilities:
+                self.label_handler.save_probabilities(pred, file_name)
+            if self.save_visualization:
+                self.label_handler.save_visualization(pred, file_name)
+
+    def __del__(self):
+        if hasattr(self.label_handler, "collect_results") and callable(
+            self.label_handler.collect_results
+        ):
+            self.label_handler.collect_results(self.output_dir)
 
 
 class SemSegPredictionWriter(BasePredictionWriter):
@@ -95,9 +143,6 @@ class SemSegMLPredictionWriter(SemSegPredictionWriter):
 
         alpha_cor = 0.5
         fig = cv2.addWeighted(img_viz, 1 - alpha_cor, mask_viz, alpha_cor, 0.0)
-        # fig[mask_viz == [0, 0, 0]] = img_viz[mask_viz == [0, 0, 0]]
-        # fig[mask_viz == [255, 255, 255]] = img_viz[mask_viz == [255, 255, 255]]
-        # fig = cv2.cvtColor(fig, cv2.COLOR_BGR2RGB)
 
         cv2.imwrite(join(self.output_dir, name + "_viz.png"), fig)
 
@@ -105,11 +150,9 @@ class SemSegMLPredictionWriter(SemSegPredictionWriter):
         self, trainer, pl_module, prediction, batch_indices, batch, batch_idx, dataloader_idx
     ):
         img, names = batch
-        prediction_sm = first_from_dict(prediction)
+        prediction_raw = first_from_dict(prediction)
+        prediction_sm = torch.sigmoid(prediction_raw)
         prediction = (prediction_sm >= 0.5).float()
-        prediction_sm = (
-            F.softmax(prediction_sm, dim=1) if self.save_probabilities else prediction_sm
-        )
 
         prediction = prediction.detach().cpu().numpy()
         prediction_sm = prediction_sm.detach().cpu().numpy()

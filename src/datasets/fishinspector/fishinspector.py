@@ -209,11 +209,15 @@ class FishinspectorSamplingDataset(MultilabelSamplingDataset, FishinspectorBase)
 
 
 if __name__ == "__main__":
-    print(FishinspectorSamplingDataset.mro())
-    quit()
+    from src.data_handler.image_loader import RGBLoader
+    from src.data_handler.label_handler_fishinspector import MultiLabelSegmentationHandlerFI
+
+    # img_loader=
     root = "/media/l727r/data/UFZ_2023_Fishinspector/Dataset222_Fishinspector"
-    dataset = Fishinspector_sampling_dataset(
+    dataset = FishinspectorDataset(
         root=root,
+        img_loader=RGBLoader(),
+        label_handler=MultiLabelSegmentationHandlerFI(16),
         img_folder="imagesTr",
         num_classes=16,
         label_folder="labelsTr",
@@ -221,7 +225,14 @@ if __name__ == "__main__":
         fold="all",
     )
     img, mask = dataset[0]
-    print(img.shape, mask.shape)
+    lh = MultiLabelSegmentationHandlerFI(16)
+    for i, data in enumerate(dataset):
+        img, mask = data
+        name = dataset.img_files[i].rsplit("/", 1)[-1]
+        if "Lateral" in name and len(lh.get_class_ids(mask)) == 10:
+            print(name, img.shape)
+        if "Dorsal" in name and len(lh.get_class_ids(mask)) == 6:
+            print(name, img.shape)
     quit()
 
     root = "/media/l727r/data/UFZ_2023_Fishinspector/Dataset222_Fishinspector"

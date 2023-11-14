@@ -1,0 +1,10 @@
+name: Maxvit512_large
+pretrained: True
+model:
+  _target_: src.models.SMP.get_seg_model
+  in_channels: 3
+  num_classes: ${dataset.num_classes}
+  pretrained: ${model.pretrained}
+  backbone: tu-maxvit_large_tf_512.in21k_ft_in1k
+  arch: FPN
+

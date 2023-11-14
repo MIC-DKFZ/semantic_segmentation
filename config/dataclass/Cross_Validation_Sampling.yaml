@@ -1,0 +1,16 @@
+defaults:
+  - TrainVal
+
+_target_: src.datasets.base_datasets.cross_validation.sampling.CVSamplingDataset
+# Cross Validation Parameters
+fold: ${fold}
+num_fold: 5
+# Sampling Parameters
+num_classes: ${dataset.num_classes}
+patch_size: ${augmentation.cfg.crop_size}
+scale_limit: ${augmentation.cfg.scale_limit}
+batch_size: ${batch_size}
+num_sampling_points: 10000
+steps_per_epoch: 250
+random_sampling: 0.3
+class_probabilities: null

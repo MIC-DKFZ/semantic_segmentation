@@ -26,4 +26,4 @@ paths:
   #Solar_Hydrogen: /home/l727r/Documents/E132-Projekte/Projects/Helmholtz_Imaging_ACVL/HZDR_2022_Solar_Hydrogen/DefaultDataset
   Solar_Hydrogen_Karol: /media/l727r/data/Solar_Hydrogen/TrainingData_Karol
   Fishinspector: /media/l727r/data/UFZ_2023_Fishinspector/Dataset222_Fishinspector
-  dacl10k: /media/l727r/data/Datasets/dacl10k/dacl10k_dataset
+  dacl10k: /media/l727r/data/Datasets/dacl10k/dacl10k_dataset_512

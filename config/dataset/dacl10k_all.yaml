@@ -1,0 +1,10 @@
+defaults:
+  - dacl10k
+
+
+name: dacl10k_CV                 # Name of the dataset, needed for logging
+# Descripe Folder Structure of the Dataset
+img_folder: images_*
+img_folder_val: null
+label_folder: labels_*
+label_folder_val: null

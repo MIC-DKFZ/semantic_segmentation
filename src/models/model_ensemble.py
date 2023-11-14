@@ -29,27 +29,24 @@ class Ensemble(nn.Module):
         """
         super(Ensemble, self).__init__()
         models = []
-
         for i, ckpt in enumerate(ckpts):
 
             # Init Model
-            model_ckpt = OmegaConf.load(join(ckpt, "hparams.yaml")).model
-            if hasattr(model_ckpt.cfg.MODEL, "PRETRAINED"):
-                model_ckpt.cfg.MODEL.PRETRAINED = False
+            model_ckpt = OmegaConf.load(join(ckpt, "hparams.yaml")).model.model
+
             model = hydra.utils.instantiate(model_ckpt)
 
-            # Load State Dict
-            # if ckpt_type == "best":
-            #     ckpt_file = glob.glob(join(ckpt, "checkpoints", "best_*.ckpt"))[0]
-            # elif ckpt_type == "last":
             ckpt_file = glob.glob(join(ckpt, "checkpoints", ckpt_type + "_*.ckpt"))[0]
-
-            model.load_state_dict(
-                update_state_dict(
-                    ckpt_file, model.state_dict(), ["model.", "module.", "_orig_mod."], f"Model {i}"
-                )
+            ckpt_temp = update_state_dict(
+                ckpt_file,
+                model.state_dict(),
+                ["model.", "module.", "_orig_mod."],
+                f"Model {i}",
             )
-            # model.eval().cuda()
+
+            model.load_state_dict(ckpt_temp)
+
+            model.eval().cuda()
             models.append(model)
 
         self.models = models
@@ -70,10 +67,11 @@ class Ensemble(nn.Module):
         """
         out = None
         for m in self.models:
+            pred = m(x)
             if out is None:
-                out = first_from_dict(m(x))
+                out = first_from_dict(pred) if isinstance(pred, dict) else pred
             else:
-                out += first_from_dict(m(x))
+                out += first_from_dict(pred) if isinstance(pred, dict) else pred
 
         out_avg = out / len(self.models)
 

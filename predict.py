@@ -3,7 +3,7 @@ import argparse
 import logging
 import sys
 import os
-from os.path import join
+from os.path import join, split
 import glob
 
 logging.basicConfig(
@@ -13,7 +13,6 @@ logging.basicConfig(
 )
 
 import numpy as np
-import cv2
 import hydra
 from omegaconf import DictConfig
 from torch.utils.data import Dataset, DataLoader
@@ -21,32 +20,24 @@ import lightning as L
 from lightning import LightningModule, Callback, Trainer
 import albumentations
 
-from src.callbacks.prediction_writer import (
-    SemSegPredictionWriter,
-    InstSegPredictionWriter,
-    SemSegMLPredictionWriter,
-)
+from src.callbacks.prediction_writer import PredictionWriter
+
 from src.utils.config_utils import has_not_empty_attr, get_CV_ensemble_config, build_predict_config
 from src.utils.utils import get_logger, set_lightning_logging
 
 log = get_logger(__name__)
 set_lightning_logging()
 
+# LightningModule.load_from_checkpoint()
+
 
 class Prediction_Dataset(Dataset):
-    def __init__(self, root: str, transforms: albumentations.augmentations.transforms):
-        self.img_files = glob.glob(join(root, "*"))
-        self.transforms = transforms
+    def __init__(self, root: str, img_loader, transforms=None, dtype=".png"):
 
-    def load_img(self, idx: int) -> np.ndarray:
-        """
-        Load a single image (self.img_files[idx]).
-        Output shape: [w,h,3]
-        """
-        # Read Image and Convert to RGB (cv2 reads images in BGR)
-        img = cv2.imread(self.img_files[idx])
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        return img
+        self.transforms = transforms
+        self.dtype = dtype
+        self.img_loader = hydra.utils.instantiate(img_loader)
+        self.img_files = glob.glob(join(root, f"*{self.dtype}"))
 
     def apply_transforms(self, img: np.ndarray) -> tuple:
         """
@@ -59,8 +50,8 @@ class Prediction_Dataset(Dataset):
         return img
 
     def __getitem__(self, idx: int):
-        name = self.img_files[idx].rsplit("/")[-1].rsplit(".")[0]
-        img = self.load_img(idx)
+        name = split(self.img_files[idx])[-1].replace(self.dtype, "")
+        img = self.img_loader.load_img(self.img_files[idx])
         img = self.apply_transforms(img)
         return img, name
 
@@ -72,6 +63,7 @@ def predict(
     input_dir: str,
     output_dir: str,
     overrides: list,
+    ckpt_type: str = "best",
     save_probabilities: bool = False,
     save_visualsation: bool = False,
 ) -> None:
@@ -117,12 +109,12 @@ def predict(
 
     # Model - Instantiating and load weights from a Checkpoint
     if ensemble_CV:
-        cfg.model: DictConfig = get_CV_ensemble_config(cfg.ckpt_dir)
+        cfg.model.model: DictConfig = get_CV_ensemble_config(cfg.ckpt_dir, ckpt_type=ckpt_type)
         model: LightningModule = hydra.utils.instantiate(
-            cfg.trainermodule, model_config=cfg, _recursive_=False
+            cfg.trainermodule, cfg=cfg, _recursive_=False
         )
     else:
-        ckpt_file = glob.glob(os.path.join(cfg.ckpt_dir, "checkpoints", "best_*"))[0]
+        ckpt_file = glob.glob(os.path.join(cfg.ckpt_dir, "checkpoints", ckpt_type + "_*"))[0]
         log.info("Checkpoint Directory: %s", ckpt_file)
 
         cfg.trainermodule._target_ += ".load_from_checkpoint"
@@ -134,33 +126,15 @@ def predict(
     transforms: albumentations.augmentations.transforms = hydra.utils.instantiate(
         cfg.augmentation.test
     )
-
     # Dataset - Instantiating
-    dataset: Dataset = Prediction_Dataset(input_dir, transforms)
+    dataset: Dataset = Prediction_Dataset(input_dir, cfg.img_loader, transforms, cfg.dataset.dtype)
     dataloader: DataLoader = DataLoader(
         dataset, shuffle=False, batch_size=cfg.val_batch_size, num_workers=cfg.num_workers
     )
 
-    # Callback - Instantiating Prediction Writer Callback
-    if cfg.dataset.segmentation_type == "semantic":
-        callbacks: List[Callback] = [
-            SemSegPredictionWriter(output_dir, save_probabilities=save_probabilities)
-        ]
-    elif cfg.dataset.segmentation_type == "instance":
-        callbacks: List[Callback] = [
-            InstSegPredictionWriter(output_dir, save_probabilities=save_probabilities)
-        ]
-    elif cfg.dataset.segmentation_type == "multilabel":
-        callbacks: List[Callback] = [
-            SemSegMLPredictionWriter(
-                output_dir,
-                save_probabilities=save_probabilities,
-                save_visualization=save_visualsation,
-                num_classes=cfg.dataset.num_classes,
-                mean=cfg.augmentation.cfg.mean,
-                std=cfg.augmentation.cfg.std,
-            )
-        ]
+    callbacks = [
+        PredictionWriter(output_dir, cfg.label_handler, save_probabilities, save_visualsation)
+    ]
 
     # Callback - Instantiating remaining Callbacks
     for _, cb_conf in cfg.callbacks.items():
@@ -188,10 +162,18 @@ if __name__ == "__main__":
         help="Store Softmax probabilities",
     )
     parser.add_argument(
-        "--save_visualsation",
+        "--save_visualization",
         action="store_true",
         help="Store visualization",
     )
+    parser.add_argument("-c", "--ckpt_type", default="best", help="best or last")
 
     args, overrides = parser.parse_known_args()
-    predict(args.input, args.output, overrides, args.save_probabilities, args.save_visualsation)
+    predict(
+        args.input,
+        args.output,
+        overrides,
+        args.ckpt_type,
+        args.save_probabilities,
+        args.save_visualization,
+    )

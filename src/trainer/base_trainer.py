@@ -20,15 +20,10 @@ log = get_logger(__name__)
 
 
 class BaseModel(L.LightningModule):
-    # TODO include Torchmetric plot()
     # TODO update exclude keys
     # TODO Max steps more elegant
-    # TODO Predict Data Loading
     # TODO Predict Multilabel and Instance
     # TODO Ignore BG
-    # TODO resize TTA
-    # TODO viz in prediction summary writer
-    # TODO training.py logging correct output dir
     # Base Trainer for Semantic Segmentation, Multilabel Segmentation and Instance Segmentation
     def __init__(self, cfg: DictConfig) -> None:
         """
@@ -88,7 +83,9 @@ class BaseModel(L.LightningModule):
 
         # Instantiate Optimizer
         optimizer: torch.optim.Optimizer = hydra.utils.instantiate(
-            self.optimizer_cfg, self.parameters()
+            # self.optimizer_cfg, self.parameters()
+            self.optimizer_cfg,
+            filter(lambda p: p.requires_grad, self.parameters()),
         )
 
         # Instantiate LR Scheduler and Config

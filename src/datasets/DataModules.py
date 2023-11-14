@@ -113,13 +113,13 @@ class BaseDataModule(LightningDataModule):
         if stage in (None, "fit"):
             transforms_train = hydra.utils.instantiate(self.augmentations.train)
             self.DS_train = hydra.utils.instantiate(
-                self.dataset, split="train", transforms=transforms_train
+                self.dataset, split="train", transforms=transforms_train, _recursive_=False
             )
 
         if stage in (None, "fit", "validate"):
             transforms_val = hydra.utils.instantiate(self.augmentations.val)
             self.DS_val = hydra.utils.instantiate(
-                self.dataset, split="val", transforms=transforms_val
+                self.dataset, split="val", transforms=transforms_val, _recursive_=False
             )
         if stage in (None, "test"):
             if has_not_empty_attr(self.augmentations, "TEST"):
@@ -127,7 +127,7 @@ class BaseDataModule(LightningDataModule):
             else:
                 transforms_test = hydra.utils.instantiate(self.augmentations.val)
             self.DS_test = hydra.utils.instantiate(
-                self.dataset, split="test", transforms=transforms_test
+                self.dataset, split="test", transforms=transforms_test, _recursive_=False
             )
 
     def max_steps(self) -> int:

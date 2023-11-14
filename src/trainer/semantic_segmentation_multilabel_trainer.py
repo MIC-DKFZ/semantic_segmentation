@@ -4,7 +4,7 @@ import torch
 
 from src.trainer.semantic_segmentation_trainer import SegModel
 from src.utils.utils import get_logger
-from src.utils.visualization import show_mask_multilabel_seg
+from src.visualization.utils import show_mask_multilabel_seg
 import cv2
 
 cv2.setNumThreads(0)

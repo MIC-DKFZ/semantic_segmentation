@@ -1,0 +1,27 @@
+name: Fishinspector                # Name of the dataset, needed for logging
+num_classes: 16                 # Number of classes in the dataset
+root: ${paths.Fishinspector}                                         # Root to the data
+
+img_folder: "imagesTr"       # Folder to the images for training
+label_folder: "labelsTr"               # Folder to the labels for training
+
+ignore_index: 255               # Ignore Index of the dataset (not required)
+class_weights: [ 0.8373, 0.918, 0.866, 1.0345,1.0166, 0.9969, 0.9754, 1.0489, 0.8786, 1.0023, 0.9539, 0.9843, 1.1116, 0.9037, 1.0865, 1.0955, 1.0865, 1.1529, 1.0507 ]          # weights of classes, when using weighted loss functions (not required)
+segmentation_type: multilabel     # Typ of segmentation, one of - semantic, instance or multilabel
+class_labels:                   # Name for each class
+  - contour_LAT       # 0
+  - yolk_DV           # 1
+  - mouth_tip_LAT     # 2
+  - eye_LAT           # 3
+  - pericard_LAT      # 4
+  - eye1_DV           # 5
+  - contour_DV        # 6
+  - fin1_DV           # 7
+  - otolith1_LAT      # 8
+  - otolith2_LAT      # 9
+  - eye2_DV           # 10
+  - notochord_LAT     # 11
+  - swimbladder_LAT   # 12
+  - yolk_LAT          # 13
+  - fin2_DV           # 14
+  - pigmentation_LAT  # 15

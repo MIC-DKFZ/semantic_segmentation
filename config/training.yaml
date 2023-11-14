@@ -11,7 +11,10 @@ defaults:
   - trainer: SemSeg
   - metric: mean_IoU
   - model: hrnet
-  - dataset: Cityscapes/base
+  - img_loader: RGB
+  - label_handler: semantic_segmentation
+  - dataclass: TrainVal
+  - dataset: ??? #Cityscapes/base
   - optimizer: SGD
   - lr_scheduler: polynomial
   - callbacks: default
@@ -69,14 +72,25 @@ metric:
 
 ###### Dataset ######
 dataset:
+  root: ???
   name: ???                   # Name of the Dataset is needed for appropriate logging
   num_classes: ???            # Needed since this makes a lot of stuff much easier
   ignore_index: 255           # Ignore index of the dataset if is used
   optional class_weights:     # Weighting of classes e.g. for the loss function
   class_labels: ???           # Class names, is needed because it makes some things easier and more comfortable
-  segmentation_type: semantic     # Typ of segmentation, one of - semantic, instance or multilabel
-  dataset:
-    _target_: ???             # Path to the actual pytorch dataset
+  img_folder: ???
+  label_folder: ???
+  img_folder_val: ???
+  label_folder_val: ???
+  img_folder_test: Null
+  label_folder_test: Null
+  dtype: ".png"
+  dtype_mask: ".png"
+  img_prefix: ""
+  img_postfix: ""
+  label_prefix: ""
+  label_postfix: ""
+
 
 ###### Data-Augmentations ######
 # Not all the parameters are needed and required dependent on which augmentation pipeline is used
@@ -112,7 +126,8 @@ logging:
 ###### Datamodule ######
 datamodule:
   _target_: src.datasets.DataModules.BaseDataModule   # Base Data Module
-  dataset: ${dataset.dataset}       # Parsing the Dataset defined in the dataset config
+  #dataset: ${dataset.dataset}       # Parsing the Dataset defined in the dataset config
+  dataset: ${dataclass}       # Parsing the Dataset defined in the dataset config
   batch_size: ${batch_size}         # Parsing all needed experiment parameter
   val_batch_size: ${val_batch_size}
   test_batch_size: ${test_batch_size}

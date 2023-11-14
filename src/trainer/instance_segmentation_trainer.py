@@ -6,7 +6,7 @@ from torchmetrics import MetricCollection
 
 from src.trainer.base_trainer import BaseModel
 from src.utils.utils import get_logger
-from src.utils.visualization import show_prediction_inst_seg, show_mask_inst_seg
+from src.visualization.visualizer import show_prediction_inst_seg, show_mask_inst_seg
 
 log = get_logger(__name__)
 

@@ -1,0 +1,35 @@
+name: dacl10k                 # Name of the dataset, needed for logging
+num_classes: 19                   # Number of classes in the dataset
+root: ${paths.dacl10k}                             # Root to the data
+# Descripe Folder Structure of the Dataset
+img_folder: images_train
+img_folder_val: images_val
+label_folder: labels_train
+label_folder_val: labels_val
+# Descripe image and labelFiles of the Dataset
+dtype: ".png"                 # Data type of the image files
+dtype_mask: ".png"            # Data type of the label files
+label_type: multilabel
+img_type: RGB
+segmentation_type: multilabel
+# labels
+class_labels:                   # Name for each class
+  - Crack
+  - ACrack
+  - Wetspot
+  - Efflorescence
+  - Rust
+  - Rockpocket
+  - Hollowareas
+  - Cavity
+  - Spalling
+  - Graffiti
+  - Weathering
+  - Restformwork
+  - ExposedRebars
+  - Bearing
+  - EJoint
+  - Drainage
+  - PEquipment
+  - JTape
+  - WConccor

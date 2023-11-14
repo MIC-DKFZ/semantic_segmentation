@@ -1,0 +1,7 @@
+defaults:
+  - TrainVal
+
+_target_: src.datasets.base_datasets.cross_validation.CVDataset
+# Cross Validation Parameters
+fold: ${fold}
+num_fold: 5

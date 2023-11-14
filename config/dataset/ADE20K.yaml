@@ -1,0 +1,72 @@
+name: VOC2010_Context                # Name of the dataset, needed for logging
+num_classes: 59                 # Number of classes in the dataset
+root: ${paths.VOC2010_Context}                                        # Root to the data
+
+img_folder: "Images/train"       # Folder to the images for training
+img_folder_val: "Images/val"     # Folder to the images for validation
+label_folder: "Annotations/train"               # Folder to the labels for training
+label_folder_val: "Annotations/val"            # Folder to the labels for validation
+dtype: ".jpg"
+
+ignore_index: 255               # Ignore Index of the dataset (not required)
+segmentation_type: semantic     # Typ of segmentation, one of - semantic, instance or multilabel
+class_labels:                   # Name for each class
+  - aeroplane
+  - bag
+  - bed
+  - bedclothes
+  - bench
+  - bicycle
+  - bird
+  - boat
+  - book
+  - bottle
+  - building
+  - bus
+  - cabinet
+  - car
+  - cat
+  - ceiling
+  - chair
+  - cloth
+  - computer
+  - cow
+  - cup
+  - curtain
+  - dog
+  - door
+  - fence
+  - floor
+  - flower
+  - food
+  - grass
+  - ground
+  - horse
+  - keyboard
+  - light
+  - motorbike
+  - mountain
+  - mouse
+  - person
+  - plate
+  - platform
+  - pottedplant
+  - road
+  - rock
+  - sheep
+  - shelves
+  - sidewalk
+  - sign
+  - sky
+  - snow
+  - sofa
+  - table
+  - track
+  - train
+  - tree
+  - truck
+  - tvmonitor
+  - wall
+  - water
+  - window
+  - wood

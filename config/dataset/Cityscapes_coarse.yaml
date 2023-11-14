@@ -1,0 +1,33 @@
+name: Cityscapes                # Name of the dataset, needed for logging
+num_classes: 19                 # Number of classes in the dataset
+root: ${paths.Cityscapes}                                         # Root to the data
+
+img_folder: "leftImg8bit_trainextra/leftImg8bit/train_extra/*/"        # Folder to the images for training
+img_folder_val: "leftImg8bit_trainvaltest/leftImg8bit/val/*/"     # Folder to the images for validation
+label_folder: "gtCoarse/gtCoarse/train_extra/*/"               # Folder to the labels for training
+label_folder_val:  "gtCoarse/gtCoarse/val/*/"            # Folder to the labels for validation
+label_postfix: "labelIds_19classes"                                # Postfix of the label files
+
+ignore_index: 255               # Ignore Index of the dataset (not required)
+class_weights: [ 0.8373, 0.918, 0.866, 1.0345,1.0166, 0.9969, 0.9754, 1.0489, 0.8786, 1.0023, 0.9539, 0.9843, 1.1116, 0.9037, 1.0865, 1.0955, 1.0865, 1.1529, 1.0507 ]          # weights of classes, when using weighted loss functions (not required)
+segmentation_type: semantic     # Typ of segmentation, one of - semantic, instance or multilabel
+class_labels:                   # Name for each class
+  - road
+  - sidewalk
+  - building
+  - wall
+  - fence
+  - pole
+  - traffic light
+  - traffic sign
+  - vegetation
+  - terrain
+  - sky
+  - person
+  - rider
+  - car
+  - truck
+  - bus
+  - train
+  - motorcycle
+  - bicycle

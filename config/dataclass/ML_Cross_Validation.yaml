@@ -1,0 +1,4 @@
+defaults:
+  - Cross_Validation
+
+_target_: src.datasets.base_datasets.multilabel.MultilabelCVDataset

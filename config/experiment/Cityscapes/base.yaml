@@ -1,9 +1,9 @@
 # @package _global_
-
 # Define which Dataset and which augmentation pipeline to use
 defaults:
   - override /augmentation@augmentation.train: scale_crop_brightness_contrast_hflip #scale_crop_hflip
-  - override /dataset: Cityscapes/base
+  - override /dataclass: TrainVal
+  - override /dataset: Cityscapes
 
 # Configure the augmentation pipeline
 augmentation_cfg:

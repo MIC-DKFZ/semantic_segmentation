@@ -1,0 +1,19 @@
+_target_: src.datasets.base_datasets.base.BaseDataset
+# Data Handling
+root: ${dataset.root}
+img_loader: ${img_loader}
+label_handler: ${label_handler}
+# Folder Structure
+img_folder: ${dataset.img_folder}
+label_folder: ${dataset.label_folder}
+img_folder_val: ${dataset.img_folder_val}
+label_folder_val: ${dataset.label_folder_val}
+img_folder_test: ${dataset.img_folder_test}
+label_folder_test: ${dataset.label_folder_test}
+# File Structure
+dtype: ${dataset.dtype}
+dtype_mask: ${dataset.dtype_mask}
+img_prefix: ${dataset.img_prefix}
+img_postfix: ${dataset.img_postfix}
+label_prefix: ${dataset.label_prefix}
+label_postfix: ${dataset.label_postfix}

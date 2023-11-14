@@ -4,10 +4,13 @@ from typing import List, Tuple, Optional
 import json
 
 import numpy as np
-
+import torch
+import albumentations as A
 from src.datasets.base_datasets.base import BaseDataset
 from src.utils.utils import get_logger
-from src.utils.dataset_utils import random_scale_crop, keypoint_scale_crop
+from src.utils.dataset_utils import KeypointCrop
+from acvl_utils.miscellaneous.ptqdm import ptqdm
+
 
 log = get_logger(__name__)
 
@@ -18,8 +21,8 @@ class SamplingDataset(BaseDataset):
         num_classes: int,
         patch_size: Tuple[int, int] = (512, 512),
         scale_limit: Tuple[int, int] = (0, 0),
-        num_sampling_points: int = 10000,
         batch_size: int = 1,
+        num_sampling_points: int = 10000,
         steps_per_epoch: int = 250,
         random_sampling: float = 0.3,
         class_probabilities: Optional[List[float]] = None,
@@ -60,9 +63,14 @@ class SamplingDataset(BaseDataset):
         if self.class_probabilities:
             self.class_probabilities = self.class_probabilities / sum(self.class_probabilities)
 
+        # Init the base class
         super().__init__(num_classes=num_classes, **kwargs)
 
-    def setup(self):
+    def preprocessing(self) -> None:
+        self.preprocessing_sampling()
+        super().preprocessing()
+
+    def setup_files(self):
         """
         Get Paths to the Image and Mask Files
         Preprocessing:
@@ -71,20 +79,40 @@ class SamplingDataset(BaseDataset):
             Contains {self.num_sampling_points} points for each class
             Filer out all images which are not in train split
         """
-        super().setup()
-        # Run Preprocessing
-        self.preprocessing_sampling()
-        # Preprocess the information about which classes occur in which image
-        # we only need the ones of the current split
-        if self.split == "train":
-            with open(join(self.root, "class_occurrences.json"), "r") as file:
-                self.class_occurrences = json.load(file)
-            mask_names = [
-                os.path.split(mask)[-1].replace(self.dtype_mask, "") for mask in self.mask_files
-            ]
-            self.class_occurrences = [
-                [item for item in O_set if item in mask_names] for O_set in self.class_occurrences
-            ]
+        super().setup_files()
+        self.setup_sampling()
+
+    def process_sample(self, mask_file):
+        # mask_file = self.mask_files[idx]
+
+        sampled_points = {}
+        mask_name = os.path.split(mask_file)[-1].replace(self.dtype_mask, "")
+
+        # Load mask, get present Classes and catch ignore label
+        mask = self.label_handler.load_mask(mask_file)
+        unique_vals = self.label_handler.get_class_ids(mask)
+        # Handle ignore label
+        unique_vals = [val for val in unique_vals if self.num_classes > val >= 0]
+
+        for unique_val in unique_vals:
+            # Get pixels with class ID, and select a defined number randomly
+            x, y = self.label_handler.get_class_locations(mask, unique_val)
+            index = np.random.choice(
+                np.arange(len(x)),
+                min(len(x), self.num_sampling_points),
+                replace=False,
+            )
+            x = x[index]
+            y = y[index]
+
+            # Save them to the dict
+            sampled_points[str(unique_val)] = {"x": x.tolist(), "y": y.tolist()}
+
+        # Save sampled points to json file with format: {Class-ID: {'x': x, 'y': y}}
+        with open(join(self.root, "class_locations", mask_name + ".json"), "w") as file:
+            json.dump(sampled_points, file)
+
+        return mask_name, unique_vals
 
     def preprocessing_sampling(self) -> None:
         """
@@ -95,46 +123,59 @@ class SamplingDataset(BaseDataset):
         # Only run preprocessing_sampling if class_occurrences.json not already exists
         if os.path.exists(join(self.root, "class_occurrences.json")):
             return
+        os.makedirs(join(self.root, "class_locations"), exist_ok=True)
 
         log.info(f"Dataset Start with Preprocessing for Sampling")
 
-        os.makedirs(join(self.root, "class_locations"), exist_ok=True)
+        mask_files = self.get_mask_files("train")
 
+        # Preprocessing Sampling
+        results_list = ptqdm(
+            self.process_sample,
+            # list(range(len(mask_files))),
+            mask_files,
+            8,
+            desc="Preprocessing Sampling...",
+        )
+
+        # Save information about which classes occur in which file
         class_occurrences = [[] for _ in range(self.num_classes)]
-        for idx, mask_file in enumerate(self.mask_files):
-            sampled_points = {}
-            mask_name = os.path.split(mask_file)[-1].replace(self.dtype_mask, "")
-
-            # Load mask, get present Classes and catch ignore label
-            mask = self.load_mask(idx)
-            unique_vals = np.unique(mask)
-            unique_vals = [val for val in unique_vals if self.num_classes > val >= 0]
-
-            for unique_val in unique_vals:
-                # Get pixels with class ID, and select a defined number randomly
-                x, y = np.where(mask == unique_val)
-                index = np.random.choice(
-                    np.arange(len(x)),
-                    min(len(x), self.num_sampling_points),
-                    replace=False,
-                )
-                x = x[index]
-                y = y[index]
-
-                # Save them to the dict
-                sampled_points[str(unique_val)] = {"x": x.tolist(), "y": y.tolist()}
-
-            # Save sampled points to json file with format: {Class-ID: {'x': x, 'y': y}}
-            with open(join(self.root, "class_locations", mask_name + ".json"), "w") as file:
-                json.dump(sampled_points, file)
-
-            # Save information about which classes occur in which file
-            for c in unique_vals:
-                class_occurrences[c].append(mask_name)
-
+        for result in results_list:
+            name, not_empty = result
+            for r in not_empty:
+                class_occurrences[r].append(name)
         # Summary of which classes occur in which files in format {Class-ID: [files]}
         with open(join(self.root, "class_occurrences.json"), "w") as file:
             json.dump(class_occurrences, file)
+
+    def setup_sampling(self):
+        if self.split == "train":
+            with open(join(self.root, "class_occurrences.json"), "r") as file:
+                self.class_occurrences = json.load(file)
+            mask_names = [
+                os.path.split(mask)[-1].replace(self.dtype_mask, "") for mask in self.mask_files
+            ]
+            self.class_occurrences = [
+                [item for item in O_set if item in mask_names] for O_set in self.class_occurrences
+            ]
+
+        if self.patch_size:
+
+            self.transforms_point_sampling = A.Compose(
+                [
+                    A.RandomScale(scale_limit=self.scale_limit),
+                    KeypointCrop(height=self.patch_size[0], width=self.patch_size[1]),
+                    A.PadIfNeeded(min_height=self.patch_size[0], min_width=self.patch_size[1]),
+                ],
+                keypoint_params=A.KeypointParams(format="yx"),
+            )
+            self.transforms_random_sampling = A.Compose(
+                [
+                    A.RandomScale(scale_limit=self.scale_limit),
+                    A.PadIfNeeded(min_height=self.patch_size[0], min_width=self.patch_size[1]),
+                    A.RandomCrop(height=self.patch_size[0], width=self.patch_size[1]),
+                ]
+            )
 
     def load_data_random(self) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -147,9 +188,11 @@ class SamplingDataset(BaseDataset):
             Image and mask pair
         """
         idx = np.random.randint(0, len(self.img_files))
-        img, mask = super().load_data(idx)
+        img, mask = self.load_data(idx)
         if self.patch_size is not None:
-            img, mask = random_scale_crop(img, mask, self.patch_size, self.scale_limit)
+            img, mask = self.label_handler.apply_transforms(
+                img, mask, self.transforms_random_sampling
+            )
         return img, mask
 
     def load_data_sampled(self) -> Tuple[np.ndarray, np.ndarray]:
@@ -180,30 +223,35 @@ class SamplingDataset(BaseDataset):
 
         # 4. Find the index of the selected file in self.mask_files and Load Image and Mask
         idx = [i for i, s in enumerate(self.mask_files) if img_file in s][0]
-        img, mask = super().load_data(idx)
+        img, mask = self.load_data(idx)
 
         # 5. Center Crop the image by the selected Point
         if self.patch_size is not None:
-            img, mask = keypoint_scale_crop(img, mask, self.patch_size, (x, y), self.scale_limit)
+            img, mask = self.label_handler.apply_transforms(
+                img, mask, self.transforms_point_sampling, keypoints=[(x, y)]
+            )
         return img, mask
 
-    def load_data(self, idx: int) -> tuple:
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        Load an image and mask pair.
-        During test and val: base data loading
-        Randomly decide (by {self.random_sampling}) if random and sampled data loading
+        Get the image and mask pair and apply the transformations
 
         Returns
         -------
         Tuple[np.ndarray, np.ndarray]
             Image and mask pair
         """
+        # Load Image and Mask
         if self.split != "train":
-            return super().load_data(idx)
+            img, mask = self.load_data(idx)
         elif np.random.random() <= self.random_sampling:
-            return self.load_data_random()
+            img, mask = self.load_data_random()
         else:
-            return self.load_data_sampled()
+            img, mask = self.load_data_sampled()
+
+        # Apply Data Augmentations
+        img, mask = self.label_handler.apply_transforms(img, mask, self.transforms)
+        return img, mask
 
     def __len__(self) -> int:
         """

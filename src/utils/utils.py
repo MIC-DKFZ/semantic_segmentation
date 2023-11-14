@@ -27,7 +27,7 @@ def set_lightning_logging():
         logger for logger in all_loggers.values() if isinstance(logger, logging.Logger)
     ]
 
-    # Check if logger is connected to lightning, if true remove the handler
+    # Check if logger is connected to lightning, if true remove the data_handler
     for logger in active_loggers:
         if logger.handlers != [] and "lightning" in logger.name:
             logger.removeHandler(logger.handlers[0])

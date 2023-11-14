@@ -16,8 +16,9 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 from matplotlib import cm
 
+# import _init_paths
 from src.utils.utils import get_logger, set_lightning_logging
-from src.utils.visualization import Visualizer
+from src.visualization.visualizer import Visualizer
 
 log = get_logger(__name__)
 set_lightning_logging()
@@ -61,7 +62,9 @@ def show_data(overrides_cl: list, augmentation: str, split: str, axis: int) -> N
         transforms = hydra.utils.instantiate(cfg.augmentation.test)
 
     # Instantiating Dataset
-    dataset = hydra.utils.instantiate(cfg.dataset.dataset, split=split, transforms=transforms)
+    dataset = hydra.utils.instantiate(
+        cfg.dataclass, split=split, transforms=transforms, _recursive_=False
+    )
 
     # Check if data is normalized, if yes redo this during visualization of the image
     mean = None
@@ -74,7 +77,14 @@ def show_data(overrides_cl: list, augmentation: str, split: str, axis: int) -> N
 
     # Create Visualizer Class
     visualizer = Visualizer(
-        dataset, cmap, mean=mean, std=std, segmentation=cfg.dataset.segmentation_type, axis=axis
+        # dataset, cmap, mean=mean, std=std, segmentation=cfg.dataset.segmentation_type, axis=axis
+        dataset,
+        cmap,
+        mean=mean,
+        std=std,
+        image_loader=cfg.img_loader,
+        label_handler=cfg.label_handler,
+        axis=axis,
     )
 
     # Create the cv2 Window
@@ -107,7 +117,7 @@ def show_data(overrides_cl: list, augmentation: str, split: str, axis: int) -> N
         elif k == 115:
 
             img_id = cv2.getTrackbarPos("Image ID", "Window")
-            file_name = f"{cfg.DATASET.NAME}__ID{img_id}"
+            file_name = f"{cfg.dataset.name}__ID{img_id}"
             os.makedirs("dataset_visualizations", exist_ok=True)
 
             print(f"Save {file_name}")

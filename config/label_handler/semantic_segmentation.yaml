@@ -1,0 +1,2 @@
+_target_: src.data_handler.label_handler_semseg.SemanticSegmentationHandler
+num_classes: ${dataset.num_classes}

@@ -3,6 +3,41 @@ from numpy import ndarray
 import random
 import albumentations.augmentations.geometric.functional as aF
 import cv2
+import albumentations as A
+
+cv2.setNumThreads(0)
+
+
+class KeypointCrop(A.DualTransform):
+    def __init__(self, height, width, always_apply=False, p=1.0):
+        super(KeypointCrop, self).__init__(always_apply, p)
+        self.height = height
+        self.width = width
+
+    def apply_with_params(self, params, **kwargs):
+        keypoint = kwargs["keypoints"][0]
+        image = kwargs["image"]
+        mask = kwargs["mask"]
+
+        w, h, _ = image.shape
+
+        # Clip the patch to be inside the image with min=0 and max=(w,h) - patch_size
+        x_min = int(max(min(keypoint[0] - np.ceil(self.height / 2), w - self.height), 0))
+        y_min = int(max(min(keypoint[1] - np.ceil(self.width / 2), h - self.width), 0))
+
+        # Compute
+        x_max = int(min(x_min + self.height, w))
+        y_max = int(min(y_min + self.width, h))
+
+        # Copping the image
+        image = image[x_min:x_max, y_min:y_max]
+        mask = mask[x_min:x_max, y_min:y_max]
+        res = {
+            "image": image,
+            "mask": mask,
+            "keypoints": [(keypoint[0] - x_min, keypoint[1] - y_min, 0, 0)],
+        }
+        return res
 
 
 def split_by_ID(files: list, ids: list = None, num_folds: int = 5) -> list:

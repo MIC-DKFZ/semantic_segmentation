@@ -1,9 +1,0 @@
-#@package _global_
-# Dice Score for EncdoCV challenge, works only for binary segmentation
-METRIC:
-  NAME: Dice_binary
-  DURING_TRAIN: False
-  METRIC_CALL: global
-  METRICS:
-    Dice_binary:
-      _target_: src.metric.EndoCV.binary_per_image_Dice

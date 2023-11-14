@@ -30,7 +30,7 @@ log = get_logger(__name__)
 set_lightning_logging()
 register_resolvers()
 
-# @hydra.main(config_path="config", config_name="training", version_base="1.3")
+
 @hydra.main(config_path="config", config_name="training", version_base="1.3")
 def training(cfg: DictConfig) -> None:
     """
@@ -44,7 +44,7 @@ def training(cfg: DictConfig) -> None:
         cfg given by hydra - build from config/training.yaml + commandline arguments
     """
     # Logging - path to Output
-    log.info("Output Directory: %s", os.getcwd())
+    log.info(f"Output Directory:  {hydra.core.hydra_config.HydraConfig.get().runtime.output_dir}")
 
     # Logging - Information about GPU-setup
     avail_GPUS = torch.cuda.device_count()

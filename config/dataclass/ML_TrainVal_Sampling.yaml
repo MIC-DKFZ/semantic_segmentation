@@ -1,0 +1,4 @@
+defaults:
+  - TrainVal_Sampling
+
+_target_: src.datasets.base_datasets.multilabel.MultilabelSamplingDataset

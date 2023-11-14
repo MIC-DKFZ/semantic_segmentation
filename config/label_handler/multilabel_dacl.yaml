@@ -1,0 +1,2 @@
+_target_: src.data_handler.label_handler_dacl.MultiLabelSegmentationHandlerDACL
+num_classes: ${dataset.num_classes}

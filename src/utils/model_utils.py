@@ -13,15 +13,15 @@ def update_state_dict(weight_file, model_dict, replace=None, name="Model"):
         pretrained_dict = torch.load(weight_file, map_location={"cuda:0": "cpu"})
         if "state_dict" in pretrained_dict.keys():
             pretrained_dict = pretrained_dict["state_dict"]
-
         # Replace substrings in the pretrained dict if given
         if replace is not None:
             for r in replace:
                 if isinstance(r, tuple):
-                    pretrained_dict = {k.replace(r[0], r[1]): v for k, v in pretrained_dict.items()}
+                    pretrained_dict = {
+                        k.replace(r[0], r[1], 1): v for k, v in pretrained_dict.items()
+                    }
                 else:
-                    pretrained_dict = {k.replace(r, ""): v for k, v in pretrained_dict.items()}
-
+                    pretrained_dict = {k.replace(r, "", 1): v for k, v in pretrained_dict.items()}
         # Check if layer names match between model_dict and pretrained_dict
         pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict.keys()}
         # Log info about layers in the model_dict which are not found in the pretrained_dict

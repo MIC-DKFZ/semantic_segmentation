@@ -1,20 +1,24 @@
 # @package _global_
 defaults:
-  - override /augmentation@augmentation.train: resize_brightness_contrast_flip
-  - override /augmentation@augmentation.val: resize
-  - override /augmentation@augmentation.test: resize
-  - override /dataset: dacl10k/base
+  - override /augmentation@augmentation.train: randaugmentv3_flip
+  - override /augmentation@augmentation.val: norm
+  - override /augmentation@augmentation.test: norm
+  - override /dataset: dacl10k
+  - override /model: Maxvit_512_xlarge
   - override /trainer: SemSegML
+  - override /dataclass: ML_TrainVal
+  - override /label_handler: multilabel_dacl
   - override /metric: mean_IoU_Class_Multilabel
+  - override /optimizer: MADGRAD
 
 # Configure the augmentation pipeline
 augmentation:
   cfg:
-    resize_size: [768, 768] #[512,512]
-    scale_limit: null #[0, 0]
-    crop_size: null #[190, 776]
-    pad_size: null #[345, 1024]
-    pad_mode: 0 #cv2.BORDER_CONSTANT, cv2.BORDER_REPLICATE, cv2.BORDER_REFLECT, cv2.BORDER_WRAP, cv2.BORDER_REFLECT_101
+    resize_size: [512,512]
+    scale_limit: null
+    crop_size: null
+    pad_size: null
+    pad_mode: 0
     pad_val: 0
     pad_mask: 0
     mean: [ 0.485, 0.456, 0.406 ]
@@ -22,18 +26,19 @@ augmentation:
     M: 3
     N: 3
 
+# Test Time Augmentations
 tta:
-  scales: [1]
+  scales: [ 1]
   hflip: True
 
-#Hyperparameters for Cityscapes Dataset
-batch_size: 8                 # batch size per gpu for training
+#Hyperparameters
+batch_size: 4                   # batch size per gpu for training
 val_batch_size: ${batch_size}   # batch size per gpu for validation
-epochs: 115 #230 on two gpus, 115 on one gpu                     # number of epochs
-lr: 0.01                        # learning rate for training (0.01445439770745928)
+epochs: 65                      # number of epochs
+lr: 0.0002                        # learning rate for training (0.01445439770745928)
 momentum: 0.9                   # momentum for optimizer
-weight_decay: 0.0005            # wd for optimizer
+weight_decay: 0.            # wd for optimizer
 loss:
-  function: [ "BCEwL","BCE_PL","BCE_PL","BCE_PL" ]     # list of lossfunctions
-  val_function: [ "BCEwL","BCE_PL","BCE_PL","BCE_PL" ]     # list of lossfunctions
+  function: [ "mlJL","mlJL","mlJL","mlJL" ]     # list of lossfunctions
+  val_function: [ "mlJL","mlJL","mlJL","mlJL" ]     # list of lossfunctions
   weight:   [1.0, 0.4, 0.05, 0.05]            # corresponding weights for each loss function

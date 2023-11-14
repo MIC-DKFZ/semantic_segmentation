@@ -214,9 +214,11 @@ def get_dataset_stats(
     )
 
     dataset_train = hydra.utils.instantiate(
-        cfg.dataset.dataset, split="train", transforms=transforms
+        cfg.dataclass, split="train", transforms=transforms, _recursive_=False
     )
-    dataset_val = hydra.utils.instantiate(cfg.dataset.dataset, split="val", transforms=transforms)
+    dataset_val = hydra.utils.instantiate(
+        cfg.dataclass, split="val", transforms=transforms, _recursive_=False
+    )
     # dataset_test = hydra.utils.instantiate(cfg.dataset.dataset, split="test", transforms=transforms)
 
     output.Info.size.train = len(dataset_train)

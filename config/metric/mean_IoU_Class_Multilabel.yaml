@@ -9,3 +9,4 @@ metrics:
     name: IoU_ML
     labels: ${dataset.class_labels}          # Class Labels in the Dataset
     per_class: True     # Return the mean Metric with or without the Metric for each Class
+    ignore_index: 255

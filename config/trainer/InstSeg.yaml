@@ -1,5 +1,3 @@
 #@package _global_
 trainermodule:
   _target_: src.trainer.instance_segmentation_trainer.InstModel
-datamodule:
-  instance_seg: True

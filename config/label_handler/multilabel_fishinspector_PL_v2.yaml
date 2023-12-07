@@ -1,4 +1,4 @@
-_target_: src.data_handler.label_handler_dacl.MultiLabelSegmentationHandlerDACL
+_target_: src.data_handler.label_handler_fishinspector.MultiLabelSegmentationHandlerFI_PL_v2
 num_classes: ${dataset.num_classes}
 dtype: ${dataset.dtype_mask}
 prefix: ${dataset.label_prefix}

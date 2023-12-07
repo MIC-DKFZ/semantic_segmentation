@@ -1,3 +1,0 @@
-#@package _global_
-trainermodule:
-  _target_: src.trainer.semantic_segmentation_multilabel_trainer_fishinspector.SegMLModelPL

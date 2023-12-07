@@ -1,0 +1,7 @@
+# @package _global_
+defaults:
+  - Fishinspector/base
+  #- override /training_scheme:
+  - override /trainer: SemSegML_Fishinspector
+  #- override /metric: mean_IoU_Class_Multilabel_PL
+  - override /label_handler: multilabel_fishinspector_PL

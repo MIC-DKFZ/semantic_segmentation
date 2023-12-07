@@ -10,6 +10,7 @@ from src.utils.config_utils import first_from_dict
 from src.visualization.utils import show_mask_sem_seg
 from src.trainer.base_trainer import BaseModel
 
+
 log = get_logger(__name__)
 
 
@@ -39,50 +40,72 @@ class SegModel(BaseModel):
                 x = {"out": x}
         return x
 
-    def forward_tta_flipping(
+    def forwad_tta(
         self,
         x: torch.Tensor,
+        patchwise: bool = False,
+        patch_size: Tuple[int, int] = None,
+        resize: Tuple[int, int] = None,
+        scales: List[float] = [1.0],
+        h_flip: bool = None,
+        v_flip: bool = None,
+        overlap: float = 0.5,
+        weights: str = "gaussian",
+    ):
+        if patchwise:
+            sampler = GridSampler(
+                image=x,
+                spatial_size=x.shape[-2:],
+                patch_size=patch_size,
+                step_size=(
+                    int(patch_size[0] * (1 - overlap)),
+                    int(patch_size[1] * (1 - overlap)),
+                ),
+                spatial_first=False,
+            )
+
+            # Instantiating the Aggregator to aggregate the patches from the GridSampler
+            aggregator = Aggregator(
+                sampler=sampler,
+                output=torch.zeros(
+                    [x.shape[0], self.num_classes, x.shape[-2], x.shape[-1]],
+                    device=x.device,
+                ),
+                spatial_first=False,
+                device=x.device,
+                weights=weights,
+            )
+            # Iterate through the patches from sampler, predict them and give to aggregator
+            for patch, bbox in sampler:
+                pred = self._forward_tta_resize_scale_flip(patch, resize, scales, h_flip, v_flip)
+                aggregator.append(pred, bbox)
+
+            return {"out": aggregator.get_output(inplace=True)}
+        else:
+            return {"out": self._forward_tta_resize_scale_flip(x, resize, scales, h_flip, v_flip)}
+
+    def _forward_tta_resize_scale_flip(
+        self,
+        x: torch.Tensor,
+        resize: Tuple[int, int] = None,
+        scales: List[float] = [1.0],
         h_flip: bool = False,
         v_flip: bool = False,
     ) -> Dict[str, torch.Tensor]:
-        """
-        Input is flipped around defined axis and forwarded to the model
-        Prediction is flipped back to original orientation and averaged about each version
 
-        Parameters
-        ----------
-        x : torch.Tensor
-            Input to predict
-        h_flip: bool, optional
-            If horizontal flipping should be used
-        v_flip: bool, optional
-            If vertical flipping should be used
+        if resize:
+            x_resize = x.size(2), x.size(3)
+            if x_resize == resize:
+                x = F.interpolate(x, tuple(resize), mode="bilinear", align_corners=True)
 
-        Returns
-        -------
-        Dict[str, torch.Tensor]
-            Prediction of the model (only first output)
-        """
+        pred = self._forward_tta_scale_flip(x, scales, h_flip, v_flip)
 
-        y_prediction = first_from_dict(self(x))
+        if resize:
+            if x_resize == resize:
+                pred = F.interpolate(pred, x_resize, mode="bilinear", align_corners=True)
+        return pred
 
-        if not h_flip and not v_flip:
-            return {"out": y_prediction}
-        flip_dims = []
-        if h_flip:
-            flip_dims.append((3,))
-        if v_flip:
-            flip_dims.append((2,))
-        if h_flip and v_flip:
-            flip_dims.append((2, 3))
-
-        for flip_dim in flip_dims:
-            y_prediction += torch.flip(first_from_dict(self(torch.flip(x, flip_dim))), flip_dim)
-
-        y_prediction /= len(flip_dims) + 1
-        return {"out": y_prediction}
-
-    def forward_tta_scaling(
+    def _forward_tta_scale_flip(
         self,
         x: torch.Tensor,
         scales: List[float] = [1.0],
@@ -114,15 +137,17 @@ class SegModel(BaseModel):
 
         # Iterate through the scales and sum the predictions up
         for scale in scales:
-            s_size = int(x_size[0] * scale), int(x_size[1] * scale)
 
             # Scale input to the target scale
             if scale == 1:
                 x_scaled = x
             else:
+                s_size = int(x_size[0] * scale), int(x_size[1] * scale)
                 x_scaled = F.interpolate(x, s_size, mode="bilinear", align_corners=True)
+
             # Prediction of current scaled image
-            y_prediction = first_from_dict(self.forward_tta_flipping(x_scaled, h_flip, v_flip))
+            y_prediction = self._forward_tta_flip(x_scaled, h_flip, v_flip)
+
             # Scale prediction back to the original scale
             if scale != 1:
                 y_prediction = F.interpolate(
@@ -138,82 +163,50 @@ class SegModel(BaseModel):
         # Average the prediction over all scales
         total_pred /= len(scales)
 
-        return {"out": total_pred}
+        return total_pred
 
-    def forward_patchwise(
+    def _forward_tta_flip(
         self,
         x: torch.Tensor,
-        patch_size: Tuple[int, int],
-        use_patching: bool = True,
-        overlap: float = 0.5,
-        weights: str = "gaussian",
-        tta_scales: List[float] = [1.0],
-        tta_hflip: bool = False,
-        tta_vflip: bool = False,
+        h_flip: bool = False,
+        v_flip: bool = False,
     ) -> Dict[str, torch.Tensor]:
         """
-        Inference of the model on patches of the input batches
-        Patches are forwarded to tta pipeline (forward_tta_scaling)
-        Patches are aggregated afterward
+        Input is flipped around defined axis and forwarded to the model
+        Prediction is flipped back to original orientation and averaged about each version
 
         Parameters
         ----------
         x : torch.Tensor
             Input to predict
-        patch_size: Tuple[int, int]
-            Patch size used in GridSampler
-        use_patching: bool
-            If patching sould be used, otherwise forward to tta pipeline (forward_tta_scaling) directly
-        overlap: float, optional
-            Overlap between the patches; 0.1 -> 10% of the patches are shared
-        weights: str, optional
-            Typ of weighting should be used when overlapping patches are used
-        tta_scales: List[float], optional
-            List of scales for tta should be used in forward_tta_scaling
-        tta_hflip: bool, optional
-            If horizontal flipping should be used in forward_tta_scaling
-        tta_vflip: bool, optional
-            If vertical flipping should be used in forward_tta_scaling
+        h_flip: bool, optional
+            If horizontal flipping should be used
+        v_flip: bool, optional
+            If vertical flipping should be used
+
         Returns
         -------
-        Dict[str, torch.Tensor] :
-            Prediction of the model
+        Dict[str, torch.Tensor]
+            Prediction of the model (only first output)
         """
-        # If no patched inference should be used directly apply forward with tta
-        if not use_patching:
-            return self.forward_tta_scaling(x, tta_scales, tta_hflip, tta_vflip)
 
-        # Instantiating the GridSampler to patch the input batch
-        sampler = GridSampler(
-            image=x,
-            spatial_size=x.shape[-2:],
-            patch_size=patch_size,
-            patch_offset=(
-                int(patch_size[0] * (1 - overlap)),
-                int(patch_size[1] * (1 - overlap)),
-            ),
-            spatial_first=False,
-        )
+        y_prediction = first_from_dict(self(x))
 
-        # Instantiating the Aggregator to aggregate the patches from the GridSampler
-        aggregator = Aggregator(
-            sampler=sampler,
-            output=torch.zeros(
-                [x.shape[0], self.num_classes, x.shape[-2], x.shape[-1]],
-                device=x.device,
-            ),
-            spatial_first=False,
-            device=x.device,
-            weights=weights,
-        )
-        # Iterate through the patches from sampler, predict them and give to aggregator
-        for patch, bbox in sampler:
-            pred = first_from_dict(
-                self.forward_tta_scaling(patch, tta_scales, tta_hflip, tta_vflip)
-            )
-            aggregator.append(pred, bbox)
+        if not h_flip and not v_flip:
+            return y_prediction  # {"out": y_prediction}
+        flip_dims = []
+        if h_flip:
+            flip_dims.append((3,))
+        if v_flip:
+            flip_dims.append((2,))
+        if h_flip and v_flip:
+            flip_dims.append((2, 3))
 
-        return {"out": aggregator.get_output(inplace=True)}
+        for flip_dim in flip_dims:
+            y_prediction += torch.flip(first_from_dict(self(torch.flip(x, flip_dim))), flip_dim)
+
+        y_prediction /= len(flip_dims) + 1
+        return y_prediction
 
     def training_step(
         self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int
@@ -279,15 +272,16 @@ class SegModel(BaseModel):
         """
         # Model - Predict the input batch - use patchwise inference if defined self.tta_cfg
         x, y_gt = batch
-        y_pred = self.forward_patchwise(
+        y_pred = self.forwad_tta(
             x,
+            patchwise=self.tta_cfg.patchwise,
             patch_size=self.tta_cfg.patch_size,
-            use_patching=self.tta_cfg.use_patching,
-            overlap=0.5,
+            resize=self.tta_cfg.resize,
+            scales=[1],
+            h_flip=False,
+            v_flip=False,
+            overlap=self.tta_cfg.patch_overlap,
             weights="gaussian",
-            tta_scales=[1],
-            tta_hflip=False,
-            tta_vflip=False,
         )
 
         # Loss - Compute and log the validation loss
@@ -331,15 +325,16 @@ class SegModel(BaseModel):
         """
         # Model - Predict the input batch - use patchwise inference (+tta) as defined in self.tta_cfg
         x, y_gt = batch
-        y_pred = self.forward_patchwise(
+        y_pred = self.forwad_tta(
             x,
+            patchwise=self.tta_cfg.patchwise,
             patch_size=self.tta_cfg.patch_size,
-            use_patching=self.tta_cfg.use_patching,
+            resize=self.tta_cfg.resize,
+            scales=self.tta_cfg.scales,
+            h_flip=self.tta_cfg.hflip,
+            v_flip=self.tta_cfg.vflip,
             overlap=self.tta_cfg.patch_overlap,
             weights="gaussian",
-            tta_scales=self.tta_cfg.scales,
-            tta_hflip=self.tta_cfg.hflip,
-            tta_vflip=self.tta_cfg.vflip,
         )
 
         # Loss - Compute and log the test loss
@@ -386,17 +381,18 @@ class SegModel(BaseModel):
         # Model - Predict the input batch - use patchwise inference (+tta) as defined in self.tta_cfg
         # print(batch.shape)
         img = batch[0]
-        pred = self.forward_patchwise(
+        y_pred = self.forwad_tta(
             img,
+            patchwise=self.tta_cfg.patchwise,
             patch_size=self.tta_cfg.patch_size,
-            use_patching=self.tta_cfg.use_patching,
+            resize=self.tta_cfg.resize,
+            scales=self.tta_cfg.scales,
+            h_flip=self.tta_cfg.hflip,
+            v_flip=self.tta_cfg.vflip,
             overlap=self.tta_cfg.patch_overlap,
             weights="gaussian",
-            tta_scales=self.tta_cfg.scales,
-            tta_hflip=self.tta_cfg.hflip,
-            tta_vflip=self.tta_cfg.vflip,
         )
-        return pred
+        return y_pred
 
     def get_loss(self, y_pred: Dict[str, torch.Tensor], y_gt: torch.Tensor) -> torch.Tensor:
         """
@@ -465,38 +461,3 @@ class SegModel(BaseModel):
         elif self.metric_cfg.metric_global:
             # Metric - Update metric for the current batch
             metric.update(y_pred, y_gt)
-
-    def viz_data(
-        self,
-        img: torch.Tensor,
-        pred: torch.Tensor,
-        gt: torch.Tensor,
-        cmap: torch.Tensor,
-        output_type: str,
-    ) -> torch.Tensor:
-        """
-        Visualize the Data for logging
-        In this Case Prediction and GT are visualized and appended
-
-        Parameters
-        ----------
-        img: torch.Tensor
-        pred: torch.Tensor
-        gt: torch.Tensor
-        cmap: torch.Tensor
-        output_type: str
-
-        Returns
-        -------
-        torch.Tensor
-
-        """
-        pred = pred.argmax(0).detach().cpu()
-        gt = gt.detach().cpu()
-
-        gt = show_mask_sem_seg(gt, cmap, output_type)
-        pred = show_mask_sem_seg(pred, cmap, output_type)
-
-        axis = 0 if gt.shape[1] > 2 * gt.shape[0] else 1
-        fig = torch.cat((pred, gt), axis)
-        return fig

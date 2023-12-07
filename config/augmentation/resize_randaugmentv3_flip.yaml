@@ -1,0 +1,18 @@
+_target_: albumentations.Compose
+transforms:
+  - _target_: albumentations.Resize
+    height: ${augmentation.cfg.resize_size[0]}
+    width: ${augmentation.cfg.resize_size[1]}
+  - _target_: src.augmentations.randaugment.RandAugment_light_scale
+    N: ${augmentation.cfg.N}
+    M: ${augmentation.cfg.M}
+    mode: 2
+    p: 0.5
+  - _target_: albumentations.HorizontalFlip
+    p: 0.25
+  - _target_: albumentations.VerticalFlip
+    p: 0.25
+  - _target_: albumentations.Normalize
+    mean: ${augmentation.cfg.mean}
+    std: ${augmentation.cfg.std}
+  - _target_: albumentations.pytorch.ToTensorV2

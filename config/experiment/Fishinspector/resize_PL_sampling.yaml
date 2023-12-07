@@ -1,0 +1,22 @@
+# @package _global_
+defaults:
+  - Fishinspector/base
+  - override /label_handler: multilabel_fishinspector_PL_v2
+  - override /augmentation@augmentation.train: resize_randaugmentv3_flip
+  - override /augmentation@augmentation.val: resize
+  - override /augmentation@augmentation.test: norm
+  - override /dataclass: ML_Cross_Validation_Sampling
+
+epochs: 250
+# Configure the augmentation pipeline
+augmentation:
+  cfg:
+    scale_limit: null
+    crop_size: null
+    resize_size: [512, 1024]
+
+tta:
+  resize: ${augmentation.cfg.resize_size}
+
+test_batch_size: 1
+#val_batch_size: 1

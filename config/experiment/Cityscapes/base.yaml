@@ -14,6 +14,10 @@ augmentation_cfg:
   N: 3
   M: 3
 
+tta:
+  hflip: True                 # If horizontal flipping should be used during testing
+  scales: [0.5, 0.75, 1, 1.25, 1.5, 1.75]     # Which scales should be used during testing: [1] means no scaling is used
+
 #Hyperparameters for Cityscapes Dataset
 batch_size: 12                   # batch size per gpu for training
 val_batch_size: 6 #${batch_size}   # batch size per gpu for validation

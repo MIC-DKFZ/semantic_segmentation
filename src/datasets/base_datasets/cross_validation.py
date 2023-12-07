@@ -52,6 +52,7 @@ class CVDataset(BaseDataset):
         """
         Get Paths to the Image and Mask Files
         """
+
         if self.split == "test" and self.img_folder_test is None:
             log.info("No Test set is defined: Validation set is used instead during testing")
             split = "val"

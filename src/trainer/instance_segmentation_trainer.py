@@ -6,7 +6,6 @@ from torchmetrics import MetricCollection
 
 from src.trainer.base_trainer import BaseModel
 from src.utils.utils import get_logger
-from src.visualization.visualizer import show_prediction_inst_seg, show_mask_inst_seg
 
 log = get_logger(__name__)
 
@@ -220,39 +219,3 @@ class InstModel(BaseModel):
 
     def get_loss(self, y_pred: dict, y_gt: torch.Tensor) -> torch.Tensor:
         pass
-
-    def viz_data(
-        self,
-        img: torch.Tensor,
-        pred: Dict[str, torch.Tensor],
-        gt: Dict[str, torch.Tensor],
-        cmap: torch.Tensor,
-        output_type: str,
-    ) -> torch.Tensor:
-        """
-        Visualize the Data for logging
-        In this Case Prediction and GT are visualized and appended
-
-        Parameters
-        ----------
-        img: torch.Tensor
-        pred: Dict[str, torch.Tensor]
-        gt: Dict[str, torch.Tensor]
-        cmap: torch.Tensor
-        output_type: str
-
-        Returns
-        -------
-        torch.Tensor
-
-        """
-        img = img.detach().cpu()
-        pred = {k: v.detach().cpu() for k, v in pred.items()}
-        gt = {k: v.detach().cpu() for k, v in gt.items()}
-
-        pred = show_prediction_inst_seg(pred, img.shape[-2:], output_type=output_type)
-        gt = show_mask_inst_seg(gt, img.shape[-2:], output_type=output_type)
-
-        axis = 0 if gt.shape[1] > 2 * gt.shape[0] else 1
-        fig = torch.cat((pred, gt), axis)
-        return fig

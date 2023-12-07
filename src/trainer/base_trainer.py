@@ -49,6 +49,8 @@ class BaseModel(L.LightningModule):
         self.lr_scheduler_cfg: DictConfig = cfg.lr_scheduler
         self.loss_cfg: DictConfig = cfg.loss
         self.tta_cfg: DictConfig = cfg.tta
+        self.img_loader = hydra.utils.instantiate(cfg.img_loader)
+        self.label_handler = hydra.utils.instantiate(cfg.label_handler)
 
         # Config - Get some parameters from the config for easy access
         self.num_classes: int = cfg.dataset.num_classes
@@ -365,19 +367,26 @@ class BaseModel(L.LightningModule):
 
             current_batche_size = len(imgs)
 
-            cmap = torch.tensor(
-                cm.get_cmap("viridis", self.num_classes).colors * 255,
-                dtype=torch.uint8,
-            )[:, 0:3]
+            # cmap = torch.tensor(
+            #     cm.get_cmap("viridis", self.num_classes).colors * 255,
+            #     dtype=torch.uint8,
+            # )[:, 0:3]
             # Log the desired number of images
             for i in range(min(current_batche_size, diff_to_show)):
-                fig = self.viz_data(imgs[i], preds[i], gts[i], cmap, "torch")
+                gt = self.label_handler.to_cpu(gts[i])
+                pred = self.label_handler.to_cpu(preds[i])
+                gt = self.label_handler.viz_mask(gt)
+                pred = self.label_handler.viz_prediction(pred)
+                axis = 0 if gt.shape[1] > 2 * gt.shape[0] else 1
+                fig = torch.cat((torch.Tensor(pred), torch.Tensor(gt)), axis)
+                # fig = self.viz_data(imgs[i], preds[i], gts[i], cmap, "torch")
 
                 # Resize Figure to reduce size of tensorboard files
                 w, h, c = fig.shape
                 max_size = 1024
                 if max(w, h) > max_size:
                     s = max_size / max(w, h)
+
                     fig = fig.permute(2, 0, 1).unsqueeze(0).float()
                     fig = F.interpolate(fig, size=(int(w * s), int(h * s)), mode="nearest")
                     fig = fig.squeeze(0).permute(1, 2, 0)

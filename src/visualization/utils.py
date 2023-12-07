@@ -131,7 +131,7 @@ def show_mask_sem_seg(
 
 
 def show_mask_inst_seg(
-    target: dict, img_shape: list, output_type: str = "numpy", alpha: float = 0.5, *args, **kwargs
+    target: dict, cmap=None, output_type: str = "numpy", alpha: float = 0.5, *args, **kwargs
 ) -> Any:
     """
     Visualize an Instance Segmentation mask
@@ -151,14 +151,15 @@ def show_mask_inst_seg(
     np.ndarry, torch.tensor or PIL.Image, dependent on desired output_type
     """
     if len(target["masks"]) == 0:
-        fig = np.ones((*img_shape, 3), dtype=np.uint8) * 255
-        return convert_numpy_to(fig, output_type)
+        return None
 
     masks = target["masks"].squeeze(1)
-    boxes = target["boxes"]  # .detach().cpu()
-    fig = np.ones((*img_shape, 3), dtype=np.uint8) * 255
-    for mask, box in zip(masks, boxes):
-        color = np.random.randint(0, 255, 3)
+    boxes = target["boxes"]
+    labels = target["labels"]
+    fig = np.ones((*masks.shape[1:], 3), dtype=np.uint8) * 255
+    for mask, box, label in zip(masks, boxes, labels):
+        # color = np.random.randint(0, 255, 3)
+        color = np.random.randint(0, 255, 3) if cmap is None else cmap[label]
 
         # If also the bounding box should be shown
         # x1, y1, x2, y2 = int(box[0]), int(box[1]), int(box[2]), int(box[3])
@@ -203,7 +204,7 @@ def show_mask_multilabel_seg(
     return convert_numpy_to(fig, output_type)
 
 
-def show_prediction_inst_seg(pred, img_shape, output_type="numpy", alpha=0.5, *args, **kwargs):
+def show_prediction_inst_seg(pred, cmap=None, output_type="numpy", alpha=0.5, *args, **kwargs):
     """
     Visualize an Instance Segmentation prediction
     Create visualization of a tensor by colour encode instance (confidence score >=0.5)(Softmax values
@@ -222,21 +223,22 @@ def show_prediction_inst_seg(pred, img_shape, output_type="numpy", alpha=0.5, *a
     -------
     np.ndarry, torch.tensor or PIL.Image, dependent on desired output_type
     """
-    # pred = [{k: v.detach().cpu() for k, v in t.items()} for t in pred]
-    # pred = list(p.detach().cpu() for p in pred)
     pred = pred
     masks = pred["masks"].squeeze(1)
     boxes = pred["boxes"]
     scores = pred["scores"]
+    labels = pred["labels"]
+
+    fig = np.ones((*masks.shape[1:], 3), dtype=np.uint8) * 255
 
     masks = [mask for mask, score in zip(masks, scores) if score >= 0.5]
     boxes = [box for box, score in zip(boxes, scores) if score >= 0.5]
+    labels = [label for label, score in zip(labels, scores) if score >= 0.5]
 
-    fig = np.ones((*img_shape, 3), dtype=np.uint8) * 255
-    for mask, box in zip(masks, boxes):
+    for mask, box, label in zip(masks, boxes, labels):
 
-        color = np.random.randint(0, 255, 3)
-
+        # color = np.random.randint(0, 255, 3)
+        color = np.random.randint(0, 255, 3) if cmap is None else cmap[label]
         # If also the bounding box should be shown
         # x1, y1, x2, y2 = int(box[0]), int(box[1]), int(box[2]), int(box[3])
         # cv2.rectangle(img, (x1, y1), (x2, y2), [int(color[0]), int(color[1]), int(color[2])])

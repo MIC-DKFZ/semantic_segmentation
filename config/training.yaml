@@ -8,28 +8,35 @@
 ###### Hydra's Default List ######
 defaults:
   - _self_
-  - trainer: SemSeg
-  - metric: mean_IoU
-  - model: hrnet
+  # Datahandling
+  - dataset: Cityscapes
   - img_loader: RGB
   - label_handler: semantic_segmentation
-  - dataclass: TrainVal
-  - dataset: ??? #Cityscapes/base
+  - training_scheme: TrainVal
+  # Model Selection
+  - model: hrnet
+  # Training Behaviour
+  - trainer: SemSeg
+  # Further Train Settings
+  - metric: mean_IoU
   - optimizer: SGD
   - lr_scheduler: polynomial
-  - callbacks: default
-  - logger: tensorboard
   - augmentation@augmentation.train: norm
   - augmentation@augmentation.test: norm
   - augmentation@augmentation.val: norm
+  # General Settings
+  - callbacks: default
+  - logger: tensorboard
+  # Overwrite and redefine Setting in experiment or environment
   - optional experiment:
   - optional environment: local
+
   # Using colorlog plugin of hydra for logging
   - override hydra/hydra_logging: colorlog
   - override hydra/job_logging: colorlog
 
 ###### Hyperparameters ######
-compile: True                 # If torch.compile should be used
+compile: False                 # If torch.compile should be used
 num_workers: 10               # Number of workers for dataloader
 lr: 0.01                      # Learning Rate
 batch_size: 6                 # Batch size used for training
@@ -40,7 +47,7 @@ momentum: 0.9                 # Momentune for SGD optimizer
 weight_decay: 0.0005          # Weight Decay for SGD optimizer
 fold:                         # Fold for Cross Validation, always needs to be in config for logging
 
-###### Pytoch Lightning Trainer ######
+###### Loss Function ######
 loss:
   function: [ CE, CE, CE, CE]     # List of lossfunctions (for training), should correspond to the number of outputs of the model
   val_function: [ CE, CE, CE, CE] # List of lossfunctions (for val/testing), should correspond to the number of outputs of the model
@@ -109,10 +116,11 @@ augmentation:
 
 ###### Test Time Augmentation ######
 tta:
-  hflip: True                 # If horizontal flipping should be used during testing
+  hflip: False                 # If horizontal flipping should be used during testing
   vflip: False                # If vertical flipping should be used during testing
-  scales: [0.5, 0.75, 1, 1.25, 1.5, 1.75]     # Which scales should be used during testing: [1] means no scaling is used
-  use_patching: False         # Use patch_wise inference during: validation, testing and inference
+  resize: null
+  scales: [1]     # Which scales should be used during testing: [1] means no scaling is used
+  patchwise: False         # Use patchwise inference during: validation, testing and inference
   patch_size: ${augmentation.cfg.crop_size}   # Which patch-size to use when use_patching is True
   patch_overlap: 0.5          # Overlap between Patches
 
@@ -127,7 +135,7 @@ logging:
 datamodule:
   _target_: src.datasets.DataModules.BaseDataModule   # Base Data Module
   #dataset: ${dataset.dataset}       # Parsing the Dataset defined in the dataset config
-  dataset: ${dataclass}       # Parsing the Dataset defined in the dataset config
+  dataset: ${training_scheme}       # Parsing the Dataset together with training_scheme
   batch_size: ${batch_size}         # Parsing all needed experiment parameter
   val_batch_size: ${val_batch_size}
   test_batch_size: ${test_batch_size}

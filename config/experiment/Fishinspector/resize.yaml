@@ -1,0 +1,20 @@
+# @package _global_
+defaults:
+  - Fishinspector/base
+  - override /augmentation@augmentation.train: resize_randaugmentv3_flip
+  - override /augmentation@augmentation.train: resize_randaugmentv3_flip
+  - override /augmentation@augmentation.val: norm
+  - override /augmentation@augmentation.test: norm
+
+# Configure the augmentation pipeline
+augmentation:
+  cfg:
+    resize_size: [205, 980]
+    #resize_size: [512, 512]
+
+tta:
+  resize: ${augmentation.cfg.resize_size}
+  #resize: [512, 512]
+
+#Hyperparameters for Cityscapes Dataset
+val_batch_size: 1 #${batch_size}   # batch size per gpu for validation

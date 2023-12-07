@@ -14,7 +14,8 @@ from src.loss.Fishinspector import (
     SoftDiceLoss_Multilabel_PL,
     BCEWithLogitsLossPartlyLabeled,
 )
-from src.loss.multi_label import SparseBCEWithLogitsLoss
+from src.loss.multi_label import SparseBCEWithLogitsLoss, JaccardLossPL
+from src.loss.multi_label import MLJaccardLoss, MLBCEWithLogitsLoss, ML_BCE_JL_Loss
 from src.utils.config_utils import has_not_empty_attr
 from segmentation_models_pytorch.losses import JaccardLoss, DiceLoss
 
@@ -67,10 +68,17 @@ def get_loss_function_from_cfg(name_lf: str, cfg: DictConfig, device: torch.devi
         # loss_function = lambda pred, gt, mask: lf(pred.clone(), gt.clone(), mask)
     elif name_lf == "mlDC":
         loss_function = DiceLoss(mode="multilabel")
+    elif name_lf == "mlBCEJL":
+        loss_function = ML_BCE_JL_Loss(ignore_index=ignore_index)
+    elif name_lf == "mlBCE":
+        loss_function = MLBCEWithLogitsLoss(ignore_index=ignore_index)
     elif name_lf == "mlJL":
+        loss_function = MLJaccardLoss(ignore_index=ignore_index)
         # lf = JaccardLoss(mode="multilabel", from_logits=False)
         # loss_function = lambda pred, gt: lf(pred.sigmoid(), gt)
-        loss_function = JaccardLoss(mode="multilabel")
+        # loss_function = JaccardLoss(mode="multilabel")
+    elif name_lf == "mlJLPL":
+        loss_function = JaccardLossPL(mode="multilabel")
     elif name_lf == "DC":
         loss_function = DL_custom(mode="multiclass", ignore_index=ignore_index)
     elif name_lf == "mlDC2":

@@ -1,0 +1,4 @@
+# @package _global_
+defaults:
+  - Fishinspector/base
+  - override /label_handler: multilabel_fishinspector_PL_v2

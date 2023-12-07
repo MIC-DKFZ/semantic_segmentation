@@ -1,1 +1,4 @@
 _target_: src.data_handler.image_loader.RGBLoader
+dtype: ${dataset.dtype}
+prefix: ${dataset.img_prefix}
+postfix: ${dataset.img_postfix}

@@ -45,12 +45,6 @@ def show_data(overrides_cl: list, augmentation: str, split: str, axis: int) -> N
     hydra.initialize(config_path="../config", version_base="1.3")
     cfg = hydra.compose(config_name="training", overrides=overrides_cl)
 
-    # Define Colormap
-    color_map = "viridis"
-    cmap = np.array(cm.get_cmap(color_map, cfg.dataset.num_classes).colors * 255, dtype=np.uint8)[
-        :, 0:3
-    ]
-
     # Instantiating Augmentations
     if augmentation is None:
         transforms = A.Compose([ToTensorV2()])
@@ -79,7 +73,6 @@ def show_data(overrides_cl: list, augmentation: str, split: str, axis: int) -> N
     visualizer = Visualizer(
         # dataset, cmap, mean=mean, std=std, segmentation=cfg.dataset.segmentation_type, axis=axis
         dataset,
-        cmap,
         mean=mean,
         std=std,
         image_loader=cfg.img_loader,

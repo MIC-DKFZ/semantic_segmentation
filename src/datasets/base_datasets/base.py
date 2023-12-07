@@ -95,14 +95,15 @@ class BaseDataset(torch.utils.data.Dataset):
         self.img_folder_test = img_folder_test
         self.label_folder_test = label_folder_test
 
-        if not img_folder_test or not label_folder_test:
-            log.info("No Test set is defined: Validation set is used instead during testing")
-            self.img_folder_test = img_folder_val
-            self.label_folder_test = label_folder_val
-        else:
-            self.img_folder_test = img_folder_test
-            self.label_folder_test = label_folder_test
-
+        # if not img_folder_test or not label_folder_test:
+        #     log.info("No Test set is defined: Validation set is used instead during testing")
+        #     self.img_folder_test = img_folder_val
+        #     self.label_folder_test = label_folder_val
+        # else:
+        #     self.img_folder_test = img_folder_test
+        #     self.label_folder_test = label_folder_test
+        # self.img_folder_test = img_folder_test
+        # self.label_folder_test = label_folder_test
         # Manage File Naming Structure to have more flexibility
         self.img_prefix = img_prefix
         self.img_postfix = img_postfix
@@ -162,11 +163,8 @@ class BaseDataset(torch.utils.data.Dataset):
         folder = self.img_folder_val if split == "val" else folder
         folder = self.img_folder_test if split == "test" else folder
 
-        img_files = glob.glob(
-            join(self.root, folder, f"{self.img_prefix}*{self.img_postfix}{self.dtype}")
-        )
+        img_files = self.img_handler.get_files(join(self.root, folder))
 
-        img_files = list(sorted(img_files))
         return img_files
 
     def get_mask_files(self, split) -> List[str]:
@@ -183,16 +181,13 @@ class BaseDataset(torch.utils.data.Dataset):
         folder = self.label_folder_val if split == "val" else folder
         folder = self.label_folder_test if split == "test" else folder
 
-        mask_files = glob.glob(
-            join(self.root, folder, f"{self.label_prefix}*{self.label_postfix}{self.dtype_mask}")
-        )
+        mask_files = self.label_handler.get_files(join(self.root, folder))
 
-        mask_files = list(sorted(mask_files))
         return mask_files
 
     def load_data(self, idx):
-        img = self.img_handler.load_img(self.img_files[idx])
-        mask = self.label_handler.load_mask(self.mask_files[idx])
+        img = self.img_handler.load_file(self.img_files[idx])
+        mask = self.label_handler.load_file(self.mask_files[idx])
         return img, mask
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:

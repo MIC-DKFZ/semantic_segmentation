@@ -10,14 +10,6 @@ from src.utils.utils import get_logger
 log = get_logger(__name__)
 
 
-# class Viz:
-#     load_img
-#     load_mask
-#     (predict)
-#     overlay (alpha)
-#     show
-
-
 class Visualizer:
     def __init__(
         self,
@@ -54,7 +46,7 @@ class Visualizer:
         self.dataset = dataset
         self.mean = mean
         self.std = std
-
+        # self.segmentation = segmentation
         # Setup Data Handlers
         self.img_handler = (
             hydra.utils.instantiate(image_loader)
@@ -79,12 +71,12 @@ class Visualizer:
         # Load Image and Mask, transform image and colorize the mask
         img, mask = self.dataset[img_id][:2]
 
-        self.img_np = self.img_handler.viz_img(img, self.mean, self.std, output_type="numpy")
+        self.img_np = self.img_handler.show_img(img, self.mean, self.std, output_type="numpy")
         self.mask_np = self.label_handler.viz_mask(mask, output_type="numpy")
 
         # Predict the Image and colorize the prediction
         if self.model is not None:
-            pred = self.label_handler.predict_img(img, self.model)
+            pred = self.label_handler.infer_img(img, self.model)
             self.pred = self.label_handler.viz_prediction(
                 pred, img_shape=img.shape[-2:], output_type="numpy"
             )

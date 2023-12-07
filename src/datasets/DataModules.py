@@ -122,10 +122,7 @@ class BaseDataModule(LightningDataModule):
                 self.dataset, split="val", transforms=transforms_val, _recursive_=False
             )
         if stage in (None, "test"):
-            if has_not_empty_attr(self.augmentations, "TEST"):
-                transforms_test = hydra.utils.instantiate(self.augmentations.test)
-            else:
-                transforms_test = hydra.utils.instantiate(self.augmentations.val)
+            transforms_test = hydra.utils.instantiate(self.augmentations.test)
             self.DS_test = hydra.utils.instantiate(
                 self.dataset, split="test", transforms=transforms_test, _recursive_=False
             )

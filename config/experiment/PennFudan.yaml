@@ -7,6 +7,8 @@ defaults:
   - override /trainer: InstSeg
   - override /dataset: PennFudan
   - override /model: Mask_RCNN
+  - override /training_scheme: Cross_Validation
+  - override /label_handler: instance_segmentation
 
 augmentation:
   cfg:
@@ -24,7 +26,7 @@ augmentation:
 model:
   version: v1
   disable_transforms: False
-
+fold: 0
 #Hyperparameters for the Dataset
 epochs: 200                     # number of epochs
 lr: 0.005                       # learning rate for training (0.01445439770745928)

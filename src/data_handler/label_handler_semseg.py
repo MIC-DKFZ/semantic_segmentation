@@ -1,27 +1,36 @@
+from typing import List, Union, Tuple, Any
+
 import numpy as np
 import torch.nn.functional as F
 import cv2
 from matplotlib import cm
+from numpy import ndarray
+from torch import Tensor
+import albumentations as A
+import torch
 
 from src.visualization.utils import show_mask_sem_seg
-
+from src.data_handler.base_handler import BaseLabelHandler
 
 cv2.setNumThreads(0)
 
 
-class SemanticSegmentationHandler:
-    def __init__(self, num_classes):
-        self.num_classes = num_classes
+class SemanticSegmentationHandler(BaseLabelHandler):
+    def __init__(self, cmap_name="viridis", *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    """
-    Basic behaviour needed for Training
-    """
+        self.cmap = np.array(
+            cm.get_cmap(cmap_name, self.num_classes).colors * 255,
+            dtype=np.uint8,
+        )[:, 0:3]
 
-    def load_mask(self, file):
+    def load_file(self, file: str) -> ndarray:
         mask = cv2.imread(file, -1)
-        return mask
+        return mask.astype(np.uint8)
 
-    def apply_transforms(self, img, mask, transforms, *args, **kwargs):
+    def apply_transforms(
+        self, img: ndarray, mask: ndarray, transforms: A.transforms, *args, **kwargs
+    ) -> Tuple[Union[ndarray, Any, Tensor], Union[ndarray, Any, Tensor]]:
         if transforms is not None:
             transformed = transforms(image=img, mask=mask, *args, **kwargs)
             img = transformed["image"]
@@ -32,10 +41,12 @@ class SemanticSegmentationHandler:
     Needed for Sampling 
     """
 
-    def get_class_ids(self, mask):
+    def get_class_ids(self, mask: ndarray) -> Union[ndarray, List[int]]:
         return np.unique(mask)
 
-    def get_class_locations(self, mask, class_id):
+    def get_class_locations(
+        self, mask: ndarray, class_id: int
+    ) -> Union[Tuple[ndarray, ndarray], Tuple[List[int], List[int]]]:
         x, y = np.where(mask == class_id)
         return x, y
 
@@ -43,29 +54,25 @@ class SemanticSegmentationHandler:
     Needed Prediction Writer
     """
 
-    def to_cpu(self, pred):
+    def to_cpu(self, pred: Tensor) -> Tensor:
         return pred.detach().cpu()
 
-    def save_prediction(self, pred_logits, file):
-        pred = pred_logits.argmax(0).numpy()
+    def save_prediction(self, logits: Tensor, file: str) -> None:
+        pred = logits.argmax(0).numpy()
 
         cv2.imwrite(file + ".png", pred)
 
-    def save_probabilities(self, pred_logits, file):
+    def save_probabilities(self, logits: Tensor, file: str) -> None:
         # TODO, correct dim?
-        pred = F.softmax(pred_logits.float(), dim=1)
+        pred = F.softmax(logits.float(), dim=1)
         pred = pred.numpy()
 
         np.savez(file + ".npz", probabilities=pred)
 
-    def save_visualization(self, pred_logits, file):
-        color_map = "viridis"
-        cmap = np.array(cm.get_cmap(color_map, self.num_classes).colors * 255, dtype=np.uint8)[
-            :, 0:3
-        ]
+    def save_visualization(self, logits: Tensor, file: str) -> None:
 
-        pred = pred_logits.argmax(0).numpy()
-        visualization = show_mask_sem_seg(pred, cmap, "numpy")
+        pred = logits.argmax(0).numpy()
+        visualization = show_mask_sem_seg(pred, self.cmap, "numpy")
         visualization = cv2.cvtColor(visualization, cv2.COLOR_BGR2RGB)
         cv2.imwrite(file + "_viz.png", visualization)
 
@@ -73,14 +80,14 @@ class SemanticSegmentationHandler:
     Needed for Visualization
     """
 
-    def viz_mask(self, mask, cmap, *args, **kwargs):
-        return show_mask_sem_seg(mask, cmap, *args, **kwargs)
-
-    #
-    def viz_prediction(self, pred_logits, cmap, *args, **kwargs):
-        pred = pred_logits.argmax(0).numpy()
-        return show_mask_sem_seg(pred, cmap, *args, **kwargs)
-
     def predict_img(self, img, model):
         pred = model(img.unsqueeze(0).cuda())
         return list(pred.values())[0].squeeze().detach().cpu()
+
+    def viz_mask(self, mask: Tensor, *args, **kwargs) -> None:
+        return show_mask_sem_seg(mask, self.cmap, *args, **kwargs)
+
+    #
+    def viz_prediction(self, logits: Tensor, *args, **kwargs) -> None:
+        pred = logits.argmax(0).numpy()
+        return show_mask_sem_seg(pred, self.cmap, *args, **kwargs)

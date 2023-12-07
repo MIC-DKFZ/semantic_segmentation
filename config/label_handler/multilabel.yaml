@@ -1,2 +1,5 @@
 _target_: src.data_handler.label_handler_multilabel.MultiLabelSegmentationHandler
 num_classes: ${dataset.num_classes}
+dtype: ${dataset.dtype_mask}
+prefix: ${dataset.label_prefix}
+postfix: ${dataset.label_postfix}

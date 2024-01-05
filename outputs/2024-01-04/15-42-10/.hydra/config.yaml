@@ -1,5 +1,0 @@
-loss: ${fold_formatter:${fold}}
-fold: 3
-lf:
-- loss1
-- loss2

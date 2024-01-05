@@ -1,6 +1,0 @@
-loss1:
-  _target_: torch.optim.Adam
-  lr: ${lr}
-  momentum: ${momentum}
-  weight_decay: ${weight_decay}
-  loss2: null

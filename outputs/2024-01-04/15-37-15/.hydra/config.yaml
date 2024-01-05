@@ -1,4 +1,0 @@
-loss: ${path_formatter:loss1}
-lf:
-- loss1
-- loss2

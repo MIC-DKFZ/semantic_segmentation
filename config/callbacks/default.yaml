@@ -7,6 +7,7 @@ tqdm_progressbar:
   #_target_: pytorch_lightning.callbacks.progress.TQDMProgressBar
   _target_: src.callbacks.callbacks.customTQDMProgressBar
   refresh_rate: 1
+  enable: ${logging.progressbar}
 model_summary:
   _target_: lightning.pytorch.callbacks.ModelSummary
   max_depth: 2

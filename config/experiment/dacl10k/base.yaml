@@ -5,8 +5,8 @@ defaults:
   - override /augmentation@augmentation.test: norm
   - override /dataset: dacl10k
   - override /model: Maxvit_512_xlarge
-  - override /trainer: SemSegML
-  - override /dataclass: ML_TrainVal
+  - override /trainer: SemSeg
+  - override /training_scheme: TrainVal
   - override /label_handler: multilabel_dacl
   - override /metric: mean_IoU_Class_Multilabel
   - override /optimizer: MADGRAD

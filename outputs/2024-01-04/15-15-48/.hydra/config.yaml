@@ -1,0 +1,11 @@
+train:
+  loss:
+    _target_: torch.optim.SGD
+    lr: ${lr}
+    momentum: ${momentum}
+    weight_decay: ${weight_decay}
+val:
+  loss:
+    loss2: null
+    _target_: torch.optim.Adam
+    lr: ${lr}

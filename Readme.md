@@ -14,22 +14,9 @@
 <a href="https://black.readthedocs.io/en/stable"><img alt="L: Hydra" src="https://img.shields.io/badge/Code Style-Black-black" ></a>
 
 ---
-<img alt="L: SemSeg" src="https://img.shields.io/badge/Task-Semantic Segmentation-rgb(68, 1, 84)">
-<img alt="L: MultLabel" src="https://img.shields.io/badge/Task-Multilabel Segmentation-rgb(68, 1, 84)">
-<img alt="L: InstSeg" src="https://img.shields.io/badge/Task-Instance Segmentation-rgb(68, 1, 84)">
-
-<a href="https://arxiv.org/pdf/1904.04514.pdf"><img alt="L: HRNet" src="https://img.shields.io/badge/Model -High Resolution Network (HRNet)-rgb(33, 145, 140)" ></a>
-<a href="https://arxiv.org/pdf/1909.11065.pdf"><img alt="L: OCR" src="https://img.shields.io/badge/Model -Object Contextual Representation (OCR)-rgb(33, 145, 140)" ></a>
-<a href="https://arxiv.org/pdf/2005.10821.pdf"><img alt="L: MS" src="https://img.shields.io/badge/Model -Hierarchical Multi Scale Attention (MS OCR)-rgb(33, 145, 140)" ></a>
-<a href="https://arxiv.org/pdf/1706.05587.pdf"><img alt="L: DL" src="https://img.shields.io/badge/Model -DeepLabv3 -rgb(33, 145, 140)" ></a>
-<a href="https://arxiv.org/pdf/1411.4038.pdf"><img alt="L: FCN" src="https://img.shields.io/badge/Model -Fully Convolutional Network (FCN) -rgb(33, 145, 140)" ></a>
-<a href="https://arxiv.org/pdf/1505.04597.pdf"><img alt="L: UNET" src="https://img.shields.io/badge/Model -UNet -rgb(33, 145, 140)" ></a>
-<a href="https://arxiv.org/pdf/1703.06870.pdf"><img alt="L: MRCNN" src="https://img.shields.io/badge/Model - MASK RCNN -rgb(33, 145, 140)" ></a>
-
-<a href="https://www.cityscapes-dataset.com/"><img alt="L: CS" src="https://img.shields.io/badge/Dataset-Cityscapes -rgb(253, 231, 37)" ></a>
-<a href="https://cs.stanford.edu/~roozbeh/pascal-context/"><img alt="L: VOC" src="https://img.shields.io/badge/Dataset-PASCAL VOC 2010 Context -rgb(253, 231, 37)" ></a>
-<a href="http://sceneparsing.csail.mit.edu/"><img alt="L: ADE20K" src="https://img.shields.io/badge/Dataset-ADE20K -rgb(253, 231, 37)" ></a>
-
+<img alt="L: SemSeg" src="https://img.shields.io/badge/Task-Semantic Segmentation-rgb(33, 145, 140)">
+<img alt="L: MultLabel" src="https://img.shields.io/badge/Task-Multilabel Segmentation-rgb(33, 145, 140)">
+<img alt="L: InstSeg" src="https://img.shields.io/badge/Task-Instance Segmentation-rgb(33, 145, 140)">
 
 ---
 </div>
@@ -61,6 +48,8 @@ PASCAL VOC Context datasets is shown in the [experiments](#experiments) section.
 For an advanced use of this framework, the [***config/*
 folder**](/config#walkthrough-the-config-jungle) contains a full explanation of all available
 configurations and how to customize the code to your needs.
+
+**DACL Challenge:** The documentation for the Challenge on [Semantic Bridge Damage Segmentation](https://eval.ai/web/challenges/challenge-page/2130/overview) can be found [here](docs/DACL_Challenge.md).
 
 ## Table of Contents
 - [Overview](#overview)
@@ -153,6 +142,21 @@ system [here](https://pytorch.org/get-started/locally/#start-locally).
 ````shell
 pip install -r requirements.txt
 ````
+
+When using SegNeXt you have to install [mmseg](https://mmsegmentation.readthedocs.io/en/latest/get_started.html).
+
+````
+pip install -U openmim
+mmsegmentation
+mim install mmengine
+mim install "mmcv>=2.0.0"
+pip install "mmsegmentation>=1.0.0"
+mim install mmdet
+pip install regex
+pip install ftfy
+````
+
+
 Among others, this repository is mainly built on the following packages.
 You may want to familiarize yourself with their basic use beforehand.
 
@@ -182,210 +186,7 @@ You may want to familiarize yourself with their basic use beforehand.
 
 ### Setting up the Data
 
-#### Cityscapes
-
-<details><summary>Click to expand/collapse</summary>
-<p>
-
-Download the Cityscapes dataset from [here](https://www.cityscapes-dataset.com/downloads/).
-You have to create an account and afterward download: *leftImg8bit_trainvaltest.zip* (11GB)  and 
-*gtFine_trainvaltest.zip* (241MB).
-Unzip them and put them into a folder, the structure of the folder should now look like this:
-
-````
-cityscapes
-    ├── leftImg8bit_trainvaltest
-    │   └── leftImg8bit
-    │       ├── train
-    │       │   ├── aachen
-    │       │   └── ...  
-    │       └── val
-    │           ├── frankfurt
-    │           └── ...  
-    └── gtFine_trainvaltest
-        └── gtFine
-            ├── test
-            │   └── ...
-            ├── train
-            │   └── ...        
-            └── val
-                └── ...
-
-````
-
-The cityscapes dataset contains 34 classes by default but only 19 of them are used in practices.
-To avoid doing this conversion at each training step, it is done in a preprocessing step.
-To do this preprocessing run the following code with adjusting the data_path to the location which
-contains the *leftImg8bit_trainvaltest* and *gtFine_trainvaltest* folders.
-This will create a new mask for each data sample with the converted class labeling which will be
-merged into the folder/data structure of the cityscapes dataset.
-
-````
-python src/data_processing/process_cityscapes.py --data_path="/home/.../Datasets/cityscapes"
-````
-
-After downloading and setting up the data, the last step is to adjust the path in the configuration.
-Open the file of the environment you are using (by default *config/environment/local.yaml*) and
-adopt the cityscapes path to the location of the folder where your *gtFine_trainvaltest* and 
-*leftImg8bit_trainvaltest* are.
-For this example this would look like this:
-
-````yaml
-config/environment/local.yaml
-  ─────────────────────────────
-...
-paths:
-  cityscapes: /home/.../Datasets/cityscapes
-````
-
-</p>
-</details>
-
-#### Cityscapes_Coarse
-
-<details><summary>Click to expand/collapse</summary>
-<p>
-
-The cityscapes dataset provides 20k additional coarse labeled images.
-This is an extension to cityscapes rather than a separate dataset, so [cityscapes](#cityscapes)
-should be set up first.
-Download the cityscapes_coarse dataset
-from [here](https://www.cityscapes-dataset.com/downloads/) (*leftImg8bit_trainextra.zip (44GB)*
-and *gtCoarse.zip (1.3GB)*) and unzip them into the same folder as your cityscapes data.
-You then should end up with this:
-
-````
-cityscapes
-    ├── leftImg8bit_trainvaltest
-    │   └── leftImg8bit
-    │       └── ...
-    ├── gtFine_trainvaltest
-    │   └── gtFine
-    │       └── ...
-    ├── leftImg8bit_trainextra
-    │   └── leftImg8bit
-    │       └── ...
-    └── gtCoarse
-        └── gtCoarse
-            └── ...
-````
-
-Afterward process the cityscapes_coarse dataset in the same way as it was done for cityscapes by:
-
-````shell
-python src/data_processing/process_cityscapes_coarse.py --data_path="home/.../Datasets/cityscapes"
-````
-
-</p>
-</details>
-
-#### PASCAL Context
-
-<details><summary>Click to expand/collapse</summary>
-<p>
-
-Click [here](https://cs.stanford.edu/~roozbeh/pascal-context/trainval.tar.gz) for directly
-downloading the labels or do it manually by downloading the file *trainval.tar.gz (30.7 MB file)*
-from [PASCAL-Context](https://cs.stanford.edu/~roozbeh/pascal-context/#download).
-Click [here](http://host.robots.ox.ac.uk/pascal/VOC/voc2010/VOCtrainval_03-May-2010.tar) for
-directly downloading the images or do it manually by downloading the file 
-*training/validation data (1.3GB tar file)*
-from [PASCAL VOC](http://host.robots.ox.ac.uk/pascal/VOC/voc2010/index.html#devkit).
-Unzip both files and put them into a folder.
-The structure of you folders should look like this:
-
-````
-Datasets
-    ├── VOCtrainval_03-May-2010/VOCdevkit/VOC2010
-    │   ├── Annotations
-    │   ├── ImageSets
-    │   └── ...
-    └── trainval
-        └──trainval
-            ├── *.mat
-            └── ...
-````
-
-Since the VOC2010 dataset contains a lot of unnecessary stuff (unnecessary for this repo), only the
-required data is extracted and merged with the transformed label data from *trainval/*.
-Run the following script which creates a new folder structure with only the relevant and transformed
-data.
-
-````shell
-python datasets/VOC2010_Context/process_VOC2010_Context.py home/.../Datasets/
-````
-
-Afterwards a new dataset is created and the data from *trainval* and *VOCtrainval_03-May-2010*  is
-not further needed.
-The new dataset looks like this:
-
-````
-Datasets
-    └── VOC2010_Context
-        ├── Annotations
-        │   ├── train
-        │   └── val
-        └── Images
-            ├── train
-            └── val
-````
-
-After downloading and setting up the data, the last step is to adjust the path in the configuration.
-Open the file of the environment you are using (by default *config/environment/local.yaml*) and
-adopt the VOC2010_Context path to the location of the folder where your *Images* and *Annotations*
-are.
-For this example this would look like this:
-
-````yaml
-config/environment/local.yaml
-  ─────────────────────────────
-...
-paths:
-  VOC2010_Context: /home/.../Datasets/VOC2010_Context
-````
-
-</p>
-</details>
-
-#### ADE20K
-
-<details><summary>Click to expand/collapse</summary>
-<p>
-
-Click [here](http://data.csail.mit.edu/places/ADEchallenge/ADEChallengeData2016.zip) for directly downloading the dataset or do it manually from [here](http://sceneparsing.csail.mit.edu/)
-Unzip the folder and you then should end up with this:
-
-````
-ADEChallengeData2016
-    ├── annotations
-    │   ├── training
-    │   └── validation
-    └── images
-        ├── training
-        └── validation
-````
-
-Afterward process the ade20k dataset in the following way:
-
-````shell
-python src/data_processing/process_ade20k.py --data_path="home/.../Datasets/ADEChallengeData2016"
-````
-After downloading and setting up the data, the last step is to adjust the path in the configuration.
-Open the file of the environment you are using (by default *config/environment/local.yaml*) and
-adopt the ADE20K path to the location of the folder where your *images* and *annotations* are.
-For this example this would look like this:
-
-````yaml
-config/environment/local.yaml
-  ─────────────────────────────
-...
-paths:
-  ADE20K: home/.../Datasets/ADEChallengeData2016
-````
-
-</p>
-</details>
-
+How to set up each dataset is described [here](/config/dataset/)
 
 ### Download Pretrained Weights
 
@@ -456,8 +257,8 @@ More details on how to configure and how to customize them can be found here.
 |----------------|-------------|---------------------------|-------------|------------------|---------------|-------------------------|
 | hrnet          | ---         | mean_IoU_Class_Multilabel | SemSegML    | BCEwL            | SGD           | polynomial              |
 | hrnet_ocr      |             |                           |             | BCE              | MADGRAD       | polynomial_epoch        |
-| hrnet_ocr_ms   |             |                           |             | BCE_PL           | ADAMW         | polynomial_warmup       |
-| hrnet_ocr_aspp |             |                           |             |                  |               | polynomial_epoch_warmup |
+| hrnet_ocr_ms   |             |                           |             | mlDC             | ADAMW         | polynomial_warmup       |
+| hrnet_ocr_aspp |             |                           |             | mlJL             |               | polynomial_epoch_warmup |
 | FCN            |             |                           |             |                  |               |                         |
 | DeepLabv3      |             |                           |             |                  |               |                         |
 | UNet           |             |                           |             |                  |               |                         |

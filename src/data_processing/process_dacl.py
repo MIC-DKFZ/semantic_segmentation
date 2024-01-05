@@ -4,6 +4,7 @@ https://github.com/phiyodr/dacl10k-toolkit/blob/master/dacl10k/dacl10kdataset.py
 """
 import os
 import shutil
+import argparse
 import multiprocessing
 import json
 from os.path import join, split
@@ -107,9 +108,14 @@ if __name__ == "__main__":
     images are just copied, masks are converted from polygons in json files to a individual binary
     image for each class with {image_name}_{class_index}.png
     """
-
-    root = "/media/l727r/data/Datasets/dacl10k/dacl10k_v2_devphase"
-    output = "/media/l727r/data/Datasets/dacl10k/dacl10k_dataset_512"
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--root", type=str)
+    parser.add_argument("--output", type=int, default=8)
+    args = parser.parse_args()
+    root = args.root
+    # root = "/media/l727r/data/Datasets/dacl10k/dacl10k_v2_devphase"
+    output = args.output
+    # output = "/media/l727r/data/Datasets/dacl10k/dacl10k_dataset_512"
     process_folder(
         join(root, "images", "train"),
         join(root, "annotations", "train"),

@@ -40,6 +40,7 @@ def get_loss_function_from_cfg(name_lf: str, cfg: DictConfig, device: torch.devi
     """
     num_classes = cfg.num_classes
     ignore_index = cfg.ignore_index
+
     if name_lf == "CE":
         loss_function = torch.nn.CrossEntropyLoss(ignore_index=ignore_index)
     elif name_lf == "wCE":

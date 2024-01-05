@@ -1,0 +1,30 @@
+### Template for defining a Dataset
+defaults:
+  - override /img_loader@_global_.img_loader: RGB    # How to load the image files. One of config/img_loader/*
+  - override /label_handler@_global_.label_handler: semantic_segmentation  # How to load and handle the labels. One of config/label_handler/*
+
+### '???': is required
+### 'optional': can be deleted if not required or keep default
+### otherwise: change to your needs
+name: MyDataset             # (Unique) Name of the Dataset is needed for appropriate logging
+num_classes: ???            # Number of classes inside the dataset (ignore index is not a class!).
+segmentation_type: semantic # Which type of segmentation task to be solved (one of: semantic | multilabel | instance).
+class_labels:               # Class names, is needed because it makes some things (logging, ...) easier and more comfortable.
+  - class_name_1
+  - class_name_2
+  - ...
+ignore_index:               # (optional) Ignore index of the dataset if used (otherwise keep 255).
+class_weights:              # (optional) Weighting of classes int the loss function. Required when a such lossfunction is used.
+root: ???                   # Root to the Dataset. Can be hard coded or defined in the environment.yaml (e.g. ${paths.MyDataset}).
+img_folder: ???             # Folder which contains the training images (Can also be a folder structure).
+label_folder: ???           # Folder which contains the training labels (Can also be a folder structure).
+img_folder_val: ???         # Folder which contains the validation images (Can be Null when doing Cross Validation).
+label_folder_val: ???       # Folder which contains the validation labels (Can be Null when doing Cross Validation).
+img_folder_test:            # Folder which contains the test images (If Null validation data is used for testing).
+label_folder_test:          # Folder which contains the test labels (If Null validation data is used for testing).
+dtype: ".png"               # Data Type of the image files, the '.' is always required (.png | .jpg | .tif | .tiff).
+dtype_mask: ".png"          # Data Type of the label files, the '.' is always required (.png | .tif | .tiff).
+img_prefix: ""              # (optional) Prefix of the image files to distinguish from other files in the folder.
+img_postfix: ""             # (optional) Postfix of the image files to distinguish from other files in the folder.
+label_prefix: ""            # (optional) Prefix of the label files to distinguish from other files in the folder.
+label_postfix: ""           # (optional) Postfix of the label files to distinguish from other files in the folder.

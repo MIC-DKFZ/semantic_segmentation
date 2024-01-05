@@ -1,0 +1,6 @@
+loss:
+  opt:
+    _target_: torch.optim.Adam
+    lr: ${lr}
+    momentum: ${momentum}
+    weight_decay: ${weight_decay}

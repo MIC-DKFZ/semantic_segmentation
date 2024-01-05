@@ -1,6 +1,6 @@
 name: hrnet
 pretrained: True
-pretrained_on: ImageNet
+pretrained_on: Paddle #ImageNet
 available_weights:
   ImageNet: hrnetv2_w48_imagenet_pretrained.pth
   Paddle: HRNet_W48_C_ssld_pretrained.pth

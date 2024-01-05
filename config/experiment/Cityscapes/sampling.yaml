@@ -1,4 +1,5 @@
 # @package _global_
 defaults:
   - Cityscapes/base
-  - override /dataclass: TrainVal_Sampling
+  - override /training_scheme: TrainVal_Sampling
+

@@ -1,0 +1,4 @@
+loss: ${path_formatter:${lf}}
+lf:
+- loss1
+- loss2

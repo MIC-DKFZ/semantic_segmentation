@@ -1,0 +1,7 @@
+name: ???                   # Name of the metric to optimize - is needed for logging and checkpointing
+train_metric: False         # If also a train metric is wanted (in addition to a validation metric)
+metric_per_img: False       # If True metric is computed for each image and averaged over all images
+metric_global: True         # If True metric is updated in each step and computed once at the end of the epoch
+metrics:                    # List of torchmetrics
+  MetricName:
+    _target_:

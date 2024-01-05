@@ -1,9 +1,9 @@
 #@package _global_
 #LOGDIR: logs/
-pl_trainer:
-  enable_checkpointing: False   #Disable checkpointing on this environment
-
-compile: False
+#pl_trainer:
+#  enable_checkpointing: False   #Disable checkpointing on this environment
+checkpointing:
+  enable: False
 
 #Path to Data of different Datasets
 paths:

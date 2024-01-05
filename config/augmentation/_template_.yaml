@@ -1,0 +1,9 @@
+_target_: albumentations.Compose
+transforms:
+  - _target_: albumentations.XXX    # List of all Augmentations which should be used
+  - _target_: ...                   # ...
+
+  - _target_: albumentations.Normalize  # Most likely some normalization is applied
+    mean: ${augmentation.cfg.mean}
+    std: ${augmentation.cfg.std}
+  - _target_: albumentations.pytorch.ToTensorV2 # Convert to Tensor

@@ -1,0 +1,5 @@
+name: Mask2Formet
+model:
+  _target_: src.models.mmseg_wrapper.get_model
+  path: "src/models/mmseg_configs/Mask2Former_s.py"
+  num_classes: ${dataset.num_classes}

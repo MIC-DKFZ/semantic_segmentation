@@ -1,14 +1,7 @@
 #@package _global_
-callbacks:
-  tqdm_progressbar: ~
-pl_trainer:
-    enable_progress_bar: False
-    enable_checkpointing: True
-
-compile: False
-
 logging:
   logdir: /dkfz/cluster/gpu/checkpoints/OE0441/l727r/logs
+  progressbar: False
 
 paths:
   Cityscapes: /dkfz/cluster/gpu/data/OE0441/l727r/cityscapes

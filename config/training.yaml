@@ -2,41 +2,40 @@
 
 ###### Main Config File for Training ######
 # This config shows an overview about all parameters and there default values
-# DO NOT CHANGE STUFF HERE - instead overwrite arguments from the commandline or
-# create a .yaml file in experiments and overwrite the settings you want to change
+# BEST PRACTICE - DO NOT CHANGE STUFF HERE - instead overwrite arguments from the commandline or
+#             create a .yaml file in experiments and overwrite the settings you want to change
 
 ###### Hydra's Default List ######
 defaults:
   - _self_
-  # Datahandling
-  - dataset: Cityscapes
-  - img_loader: RGB
-  - label_handler: semantic_segmentation
-  - training_scheme: TrainVal
-  # Model Selection
-  - model: hrnet
-  # Training Behaviour
-  - trainer: SemSeg
-  # Further Train Settings
-  - metric: mean_IoU
-  - optimizer: SGD
-  - lr_scheduler: polynomial
-  - augmentation@augmentation.train: norm
-  - augmentation@augmentation.test: norm
-  - augmentation@augmentation.val: norm
-  # General Settings
-  - callbacks: default
-  - logger: tensorboard
-  # Overwrite and redefine Setting in experiment or environment
+  # DATAHANDLING
+  - img_loader: RGB                       # How to load the image files
+  - label_handler: semantic_segmentation  # How to load and handle the labels
+  - dataset: Cityscapes                   # Which Dataset to use
+  - training_scheme: TrainVal             # How to use the data for training
+  # MODEL SELECTION
+  - model: hrnet                          # Which Model to use
+  # TRAINING BEHAVIOUR
+  - trainer: SemSeg                       # Behaviour during the training loop
+  # ADDITIONAL TRAINING SETTING
+  - metric: mean_IoU                      # Which Metric to use
+  - optimizer: SGD                        # Which optimizer to use
+  - lr_scheduler: polynomial              # Which learning rate scheduler to use
+  - augmentation@augmentation.train: norm # Augmentations used for training
+  - augmentation@augmentation.val: norm   # Augmentations used for validation
+  - augmentation@augmentation.test: norm  # Augmentations used for testing/inference
+  # FURTHER SETTINGS
+  - callbacks: default                    # Which Callbacks should be used
+  - logger: tensorboard                   # Which Logger to use
+  # OVERWRITE AND REDEFINE SETTINGS IN EXPERIMENT OR ENVIRONMENT
   - optional experiment:
   - optional environment: local
-
-  # Using colorlog plugin of hydra for logging
+  # HYDRA'S COLOLOG PLUGIN FOR LOGGING
   - override hydra/hydra_logging: colorlog
   - override hydra/job_logging: colorlog
 
 ###### Hyperparameters ######
-compile: False                 # If torch.compile should be used
+compile: False                # If torch.compile should be used
 num_workers: 10               # Number of workers for dataloader
 lr: 0.01                      # Learning Rate
 batch_size: 6                 # Batch size used for training
@@ -45,7 +44,7 @@ test_batch_size: ${batch_size}     # Batch size used for validation/testing
 epochs: 400                   # Number of Epochs
 momentum: 0.9                 # Momentune for SGD optimizer
 weight_decay: 0.0005          # Weight Decay for SGD optimizer
-fold:                         # Fold for Cross Validation, always needs to be in config for logging
+fold:                         # Fold for Cross Validation, always needs to be in config for logging - can be empty
 
 ###### Loss Function ######
 loss:
@@ -61,7 +60,8 @@ pl_trainer:                   # parameters for the pytorch lightning trainer
   precision: 16-mixed         # using Mixed Precision
   benchmark: True             # using benchmark for faster training
   deterministic: False        # deterministic does not work because of not deterministc CrossEntropyLoss Error - use "warn" instead
-  enable_checkpointing: True  # Enable/Disable Checkpointing
+  #enable_checkpointing: True  # Enable/Disable Checkpointing
+  enable_checkpointing: ${checkpointing.enable}  # Enable/Disable Checkpointing
 
 ###### Model ######
 model:
@@ -81,9 +81,10 @@ metric:
 dataset:
   root: ???
   name: ???                   # Name of the Dataset is needed for appropriate logging
+  segmentation_type: ???
   num_classes: ???            # Needed since this makes a lot of stuff much easier
   ignore_index: 255           # Ignore index of the dataset if is used
-  optional class_weights:     # Weighting of classes e.g. for the loss function
+  class_weights:     # Weighting of classes e.g. for the loss function
   class_labels: ???           # Class names, is needed because it makes some things easier and more comfortable
   img_folder: ???
   label_folder: ???
@@ -129,7 +130,13 @@ logging:
   name: "run"                 # To give custom names (as prefix) to the experiments
   logdir: logs/               # Logdir
   output_dir: ${hydra:runtime.output_dir}     # Output dir, determined by hydra
+  progressbar: True # True | False
   num_example_predictions: 2        # Number of example predictions which are logged during validation
+checkpointing:
+    enable: True
+    mode: max #min | max
+    save_last: True #True | False
+    weights_only: False #True | False
 
 ###### Datamodule ######
 datamodule:
@@ -144,15 +151,14 @@ datamodule:
   augmentations: ${augmentation}    # Parsing the Data augmentation, defined in the augmentation config
 
 ###### Checkpointing ######
-# only used when pl_trainer.enable_checkpointing=True
 ModelCheckpoint:
   _target_: src.callbacks.callbacks.customModelCheckpoint   # Custom checkpoint Callback with a few modifications
   monitor: "metric/${metric.name}"  # Name of the metric during logging
-  mode: "max"                       # min or max: should be metric me maximised or minimized
+  mode: ${checkpointing.mode}                       # min or max: should be metric me maximised or minimized
   filename: 'best_epoch_{epoch}__${metric.name}_{metric/${metric.name}:.4f}'
   auto_insert_metric_name: False    # Needs to be false for better naming of checkpoint
-  save_last: True                   # If the last checkpoint should be saved too
-  save_weights_only: False          # If only state dict should be saved - if True not possible to continue training
+  save_last: ${checkpointing.save_last}                  # If the last checkpoint should be saved too
+  save_weights_only:  ${checkpointing.weights_only}           # If only state dict should be saved - if True not possible to continue training
 
 ###### Hydra ######
 hydra:

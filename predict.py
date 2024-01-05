@@ -51,7 +51,7 @@ class Prediction_Dataset(Dataset):
 
     def __getitem__(self, idx: int):
         name = split(self.img_files[idx])[-1].replace(self.dtype, "")
-        img = self.img_loader.load_img(self.img_files[idx])
+        img = self.img_loader.load_file(self.img_files[idx])
         img = self.apply_transforms(img)
         return img, name
 

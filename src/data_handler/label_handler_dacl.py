@@ -34,8 +34,8 @@ TARGET_LIST = [
 
 
 class MultiLabelSegmentationHandlerDACL(MultiLabelSegmentationHandler):
-    def __init__(self, num_classes):
-        super().__init__(num_classes)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.all_pred_json = []
 
     """

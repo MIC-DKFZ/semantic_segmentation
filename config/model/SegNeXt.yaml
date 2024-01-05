@@ -1,14 +1,7 @@
-#@package _global_
-# model is used to initialize your custom model,
-# _target_: should point to your model class or a getter function which returns your model
-# afterwards you can handle your custom input arguments which are used to initialize the model
+name: SegNeXt
+pretrained: True
 model:
-   _target_: src.models.mmseg_model_wrapper.MMSeg_Model     # if you want to use a getter function to load weights
-   file: config/model_mmseg/segnext_${MODEL.SIZE}.py
-   num_classes:  ${DATASET.NUM_CLASSES}    # example arguments, for example the number of classes
-   root_dir: ${ORG_CWD}
-# model is used to store information which are needed for your model
-MODEL:
-  # Required model arguments
-  NAME: SegNeXt
-  SIZE: base
+  _target_: src.models.mmseg_wrapper.get_model
+  path: "src/models/mmseg_configs/SegNeXt_l.py"
+  num_classes: ${dataset.num_classes}
+  pretrained: ${model.pretrained}

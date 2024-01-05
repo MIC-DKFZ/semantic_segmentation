@@ -1,0 +1,5 @@
+loss: ${fold_formatter:${lf}}
+fold: 3
+lf:
+- loss1
+- loss2

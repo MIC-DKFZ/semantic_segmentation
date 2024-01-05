@@ -1,0 +1,5 @@
+loss:
+  opt:
+  - loss2: null
+    _target_: torch.optim.Adam
+    lr: ${lr}

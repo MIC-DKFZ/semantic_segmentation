@@ -1,17 +1,11 @@
-name: Cityscapes                # Name of the dataset, needed for logging
-num_classes: 19                 # Number of classes in the dataset
-root: ${paths.Cityscapes}                                         # Root to the data
+defaults:
+  - override /img_loader@_global_.img_loader: RGB  #  How to load the image files
+  - override /label_handler@_global_.label_handler: semantic_segmentation  # How to load and handle the labels
 
-img_folder: "leftImg8bit_trainvaltest/leftImg8bit/train/*/"       # Folder to the images for training
-img_folder_val: "leftImg8bit_trainvaltest/leftImg8bit/val/*/"     # Folder to the images for validation
-label_folder: "gtFine_trainvaltest/gtFine/train/*/"               # Folder to the labels for training
-label_folder_val: "gtFine_trainvaltest/gtFine/val/*/"             # Folder to the labels for validation
-label_postfix: "labelIds_19classes"                               # Postfix of the label files
-
-ignore_index: 255               # Ignore Index of the dataset (not required)
-class_weights: [ 0.8373, 0.918, 0.866, 1.0345,1.0166, 0.9969, 0.9754, 1.0489, 0.8786, 1.0023, 0.9539, 0.9843, 1.1116, 0.9037, 1.0865, 1.0955, 1.0865, 1.1529, 1.0507 ]          # weights of classes, when using weighted loss functions (not required)
-segmentation_type: semantic     # Typ of segmentation, one of - semantic, instance or multilabel
-class_labels:                   # Name for each class
+name: Cityscapes             # (Unique) Name of the Dataset is needed for appropriate logging
+num_classes: 19            # Number of classes inside the dataset (ignore index is not a class!).
+segmentation_type: semantic # Which type of segmentation task to be solved (one of: semantic | multilabel | instance).
+class_labels:               # Class names, is needed because it makes some things (logging, ...) easier and more comfortable.
   - road
   - sidewalk
   - building
@@ -31,3 +25,18 @@ class_labels:                   # Name for each class
   - train
   - motorcycle
   - bicycle
+ignore_index: 255              # (optional) Ignore index of the dataset if used (otherwise keep 255).
+class_weights: [ 0.8373, 0.918, 0.866, 1.0345,1.0166, 0.9969, 0.9754, 1.0489, 0.8786, 1.0023, 0.9539, 0.9843, 1.1116, 0.9037, 1.0865, 1.0955, 1.0865, 1.1529, 1.0507 ]             # (optional) Weighting of classes int the loss function. Required when a such lossfunction is used.
+root: ${paths.Cityscapes}                    # Root to the Dataset. Can be hard coded or defined in the environment.yaml (e.g. ${paths.MyDataset}).
+img_folder: "leftImg8bit_trainvaltest/leftImg8bit/train/*/"             # Folder which contains the training images (Can also be a folder structure).
+label_folder: "gtFine_trainvaltest/gtFine/train/*/"           # Folder which contains the training labels (Can also be a folder structure).
+img_folder_val: "leftImg8bit_trainvaltest/leftImg8bit/val/*/"         # Folder which contains the validation images (Can be Null when doing Cross Validation).
+label_folder_val: "gtFine_trainvaltest/gtFine/val/*/"       # Folder which contains the validation labels (Can be Null when doing Cross Validation).
+img_folder_test:            # Folder which contains the test images (If Null validation data is used for testing).
+label_folder_test:          # Folder which contains the test labels (If Null validation data is used for testing).
+dtype: ".png"               # Data Type of the image files, the '.' is always required (.png | .jpg | .tif | .tiff).
+dtype_mask: ".png"          # Data Type of the label files, the '.' is always required (.png | .tif | .tiff).
+#img_prefix:                 # (optional) Prefix of the image files to distinguish from other files in the folder.
+#img_postfix:                # (optional) Postfix of the image files to distinguish from other files in the folder.
+#label_prefix:               # (optional) Prefix of the label files to distinguish from other files in the folder.
+label_postfix: "labelIds_19classes"              # (optional) Postfix of the label files to distinguish from other files in the folder.

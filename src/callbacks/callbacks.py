@@ -1,17 +1,10 @@
-import os
-from os.path import join
 from tqdm import tqdm
 
 import torch
-import torch.nn.functional as F
 import numpy as np
-import cv2
-
 from lightning.pytorch.callbacks import Callback, ModelCheckpoint
-from lightning.pytorch.callbacks import BasePredictionWriter
 from lightning.pytorch.callbacks.progress import TQDMProgressBar
 from lightning.pytorch.callbacks.progress.tqdm_progress import convert_inf, _update_n
-from src.utils.config_utils import first_from_dict
 
 
 class customModelCheckpoint(ModelCheckpoint):
@@ -37,9 +30,10 @@ class customTQDMProgressBar(TQDMProgressBar):
     https://stackoverflow.com/questions/59455268/how-to-disable-progress-bar-in-pytorch-lightning
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, enable, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.status = "None"
+        self._enabled = enable
 
     def init_validation_tqdm(self):
         ### disable validation tqdm instead only use train_progress_bar###
@@ -81,10 +75,11 @@ class customTQDMProgressBar(TQDMProgressBar):
     def on_validation_epoch_end(
         self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"
     ) -> None:
-        self.status = "Done"
-        self.train_progress_bar.set_postfix(self.get_metrics(trainer, pl_module))
-        self.train_progress_bar.refresh()
-        print("")
+        if self._enabled:
+            self.status = "Done"
+            self.train_progress_bar.set_postfix(self.get_metrics(trainer, pl_module))
+            self.train_progress_bar.refresh()
+            print("")
 
 
 class TimeCallback(Callback):

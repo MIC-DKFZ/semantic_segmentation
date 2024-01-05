@@ -1,0 +1,5 @@
+loss:
+  name: L2
+lf:
+- loss1
+- loss2

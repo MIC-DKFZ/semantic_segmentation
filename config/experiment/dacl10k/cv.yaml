@@ -1,7 +1,7 @@
 # @package _global_
 defaults:
   - dacl10k/base
-  - override /dataclass: ML_Cross_Validation
+  - override /training_scheme: Cross_Validation
   - override /dataset: dacl10k_all
 
 #Hyperparameters
